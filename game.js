@@ -1768,7 +1768,9 @@ let ladderDrag = { active: false, pid: -1, lastClientX: 0, lastClientY: 0, idx: 
 // Commits to a real drag once the finger moves past a small threshold; until then,
 // the tap can still fall through to stomp / relaunch drag so we don't hijack every touch.
 let pendingLadder = null; // { idx, startX, startY, pid }
-const PENDING_LADDER_PX = 6;
+const PENDING_LADDER_PX = 14;
+const LADDER_HIT_RADIUS_PX = 95;     // max screen-px från gubben för att räknas som ladder-tap
+const LADDER_ABOVE_HEAD_PX = 60;     // tap mer än så ovanför gubbens huvud räknas som "siktar i luften"
 
 function ladderManScreenPos(i) {
   const L = state.ladders[i];
@@ -1808,19 +1810,23 @@ function pointerHitTire(clientX, clientY) {
   return nearestLadder !== Infinity && tireDist < nearestLadder - 20;
 }
 
-// Returns index of the ladder hit, or -1 if none
+// Returns index of the ladder hit, or -1 if none.
+// Krav för att räknas som ladder-tap:
+//   - inom LADDER_HIT_RADIUS_PX från gubben på skärmen
+//   - tap ej mer än LADDER_ABOVE_HEAD_PX ovanför gubbens huvudhöjd (annars är det ett luftsikte)
+// Kombinationen ger relaunchen vinst när användaren tappar långt ifrån eller högt ovanför.
 function pointerHitLadder(clientX, clientY) {
   const r = stage.getBoundingClientRect();
   const cx = clientX - r.left;
   const cy = clientY - r.top;
-  // If any ladder-man is on screen, pick the nearest one regardless of tap distance.
-  // Lets the user grab + drag the man from anywhere while the ball flies.
   let bestIdx = -1;
   let bestDist = Infinity;
   for (let i = 0; i < state.ladders.length; i++) {
     const [lx, ly] = ladderManScreenPos(i);
-    if (lx < 0 || lx > W || ly < 0 || ly > H) continue;  // must be visible on screen
+    if (lx < 0 || lx > W || ly < 0 || ly > H) continue;
     const d = Math.hypot(cx - lx, cy - ly);
+    if (d > LADDER_HIT_RADIUS_PX) continue;                // för långt bort
+    if (cy < ly - LADDER_ABOVE_HEAD_PX) continue;          // tydligt ovanför huvudet → siktar i luften
     if (d < bestDist) { bestDist = d; bestIdx = i; }
   }
   return bestIdx;
