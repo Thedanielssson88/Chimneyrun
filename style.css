@@ -493,6 +493,9 @@ canvas {
 .help-card ul { line-height: 1.7; padding-left: 20px; font-size: 0.92em; }
 .help-card li { margin-bottom: 6px; }
 
+/* Topbar-rensning: dölj charge-räknare i topbar (de syns ändå på powerup-knapparna) */
+.hidden-stat { display: none !important; }
+
 /* === TUTORIAL CAROUSEL === */
 .help-card-tutorial { position: relative; padding: 20px; max-width: 460px; }
 .help-close {

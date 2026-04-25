@@ -6489,41 +6489,12 @@ function spawnTornado() {
   tone(180, 0.4, 'sawtooth', 0.06, -120);
 }
 
-// Debug: knapp för att spawna åskmoln. Tornado-knappen togs bort i v118
-// (tornadosystemet är kvar och spawnar automatiskt i öken).
-(function injectWaterDebugBtn() {
-  // Rensa gamla debug-knappar (tornado, storm) som ligger kvar från äldre cache
-  ['btnDebugTornado', 'btnDebugStorm'].forEach(id => {
-    const old = document.getElementById(id);
-    if (old) old.remove();
-  });
-  if (document.getElementById('btnDebugWater')) return;
-  const btn = document.createElement('button');
-  btn.id = 'btnDebugWater';
-  btn.type = 'button';
-  btn.textContent = '💧';
-  btn.title = 'Spawna vattenhål (debug)';
-  btn.style.cssText = [
-    'position:fixed',
-    'top:96px',
-    'right:12px',
-    'z-index:9999',
-    'width:48px',
-    'height:48px',
-    'border-radius:50%',
-    'border:2px solid #38bdf8',
-    'background:rgba(12, 74, 110, 0.92)',
-    'color:#fff',
-    'font-size:24px',
-    'box-shadow:0 4px 12px rgba(0,0,0,0.4)',
-    'cursor:pointer',
-    'display:flex',
-    'align-items:center',
-    'justify-content:center',
-  ].join(';');
-  btn.addEventListener('click', () => window.debugSpawnWater && window.debugSpawnWater());
-  document.body.appendChild(btn);
-})();
+// Rensa gamla debug-knappar (water, tornado, storm) som ligger kvar från äldre cache.
+// Funktionen window.debugSpawnWater finns kvar nedan för anrop från devtools.
+['btnDebugWater', 'btnDebugTornado', 'btnDebugStorm'].forEach(id => {
+  const old = document.getElementById(id);
+  if (old) old.remove();
+});
 
 // Debug: force-spawn ett vattenhål precis framför hjulet.
 window.debugSpawnWater = function () {
