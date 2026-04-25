@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>CHIMNEY RUSH</title>
+<meta name="description" content="Fysikbaserat däckspel i solnedgångs-öknen">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#fbbf24">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Chimney">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+  <header class="topbar">
+    <div class="brand">🏭 <b>CHIMNEY</b> <span class="rush">RUSH</span></div>
+    <div class="stats">
+      <span class="stat">POÄNG: <span id="score">0</span></span>
+      <span class="stat dist-badge">📏 <span id="distLive">0</span>m</span>
+      <span class="stat tires-badge">🛞 <span id="tires">5</span></span>
+      <span class="stat nitro-badge">🔥 <span id="nitroCount">0</span></span>
+      <span class="stat airjump-badge">🪂 <span id="airjumpCount">0</span></span>
+      <span class="stat magnet-badge">🧲 <span id="magnetCount">0</span></span>
+      <span class="stat bomb-badge">💣 <span id="bombCount">0</span></span>
+      <span class="stat shield-badge">🛡️ <span id="shieldCount">0</span></span>
+      <span class="stat">⭐ <span id="stars">0</span>/<span id="starsMax">0</span></span>
+      <span class="stat hs-badge">🏆 <span id="hs">0</span></span>
+    </div>
+    <button class="btn-ghost" id="btnShop" title="Verkstad">🔧</button>
+    <button class="btn-ghost" id="btnHelp">?</button>
+  </header>
+
+  <div id="stage">
+    <canvas id="game"></canvas>
+    <div id="aimHud" class="aim-hud">
+      <div class="meter">
+        <div class="label">RPM</div>
+        <div class="bar"><div id="rpmFill"></div><div class="zone perfect"></div></div>
+        <div class="val"><span id="rpmVal">0</span></div>
+      </div>
+      <div class="meter">
+        <div class="label">VINKEL</div>
+        <div class="bar angle"><div id="angFill"></div></div>
+        <div class="val"><span id="angVal">45</span>°</div>
+      </div>
+    </div>
+
+    <div id="bigScore" class="big-score">
+      <div class="big-score-label">POÄNG</div>
+      <div class="big-score-val" id="bigScoreVal">0</div>
+      <div class="big-mult hidden" id="bigMult">x1</div>
+      <div class="big-pb-chase hidden" id="bigPbChase">🚩 0m till dagsrekord</div>
+    </div>
+
+    <div id="newRecordFX" class="new-record hidden">
+      <div class="nr-title">🏆 NYTT REKORD!</div>
+      <div class="nr-sub" id="nrSub">0</div>
+    </div>
+
+    <div id="bigToast" class="big-toast"></div>
+    <div id="comboToast" class="combo"></div>
+
+    <div id="rollMeter" class="roll-meter hidden">
+      <div class="roll-label">DRA ↕ FÖR ATT SKJUTA · <span id="rollPct">50</span>%</div>
+      <div class="roll-bar"><div id="rollFill" class="roll-fill"></div></div>
+      <div class="roll-val">⚡ KRAFT</div>
+    </div>
+
+    <button id="btnBoost" class="boost-btn hidden" type="button" aria-label="Nitro boost">
+      <span class="boost-icon">🔥</span>
+      <span class="boost-label">BOOST</span>
+      <span class="boost-count" id="btnBoostCount">0</span>
+    </button>
+
+    <button id="btnAirjump" class="airjump-btn hidden" type="button" aria-label="Air jump">
+      <span class="boost-icon">🪂</span>
+      <span class="boost-label">JUMP</span>
+      <span class="boost-count" id="btnAirjumpCount">0</span>
+    </button>
+
+    <button id="btnMagnet" class="magnet-btn hidden" type="button" aria-label="Magnet">
+      <span class="boost-icon">🧲</span>
+      <span class="boost-label">MAGNET</span>
+      <span class="boost-count" id="btnMagnetCount">0</span>
+    </button>
+
+    <button id="btnBomb" class="bomb-btn hidden" type="button" aria-label="Bomb">
+      <span class="boost-icon">💣</span>
+      <span class="boost-label">BOMB</span>
+      <span class="boost-count" id="btnBombCount">0</span>
+    </button>
+
+    <button id="btnShield" class="shield-btn hidden" type="button" aria-label="Shield">
+      <span class="boost-icon">🛡️</span>
+      <span class="boost-label">SKÖLD</span>
+      <span class="boost-count" id="btnShieldCount">0</span>
+    </button>
+
+    <div id="overlay" class="overlay hidden" onclick="if(event.target===this)restart()">
+      <div class="overlay-card">
+        <h2 id="ovTitle">KLAR!</h2>
+        <div class="results">
+          <div><div class="rlabel">Poäng</div><div class="rval" id="ovScore">0</div></div>
+          <div><div class="rlabel">Stjärnor</div><div class="rval" id="ovStars">0</div></div>
+          <div><div class="rlabel">Distans</div><div class="rval" id="ovDist">0 m</div></div>
+        </div>
+        <div class="hs-row">🏆 Personbästa: <span id="ovHighscore">0</span></div>
+        <div class="coins-row">🪙 <span id="ovCoins">+0</span> &nbsp;•&nbsp; Totalt: <span id="ovTotalCoins">0</span></div>
+        <div class="missions-box">
+          <div class="missions-title">📋 Dagens uppdrag</div>
+          <div id="ovMissions" class="missions-list"></div>
+        </div>
+        <div id="ovMedal" class="medal">🥉 BRONS</div>
+        <div class="btn-row">
+          <button class="btn-secondary" onclick="openShop()">🔧 Verkstad</button>
+          <button class="btn-primary" onclick="restart()">⟲ Kör igen</button>
+        </div>
+        <div class="tap-retry-hint">👆 Tryck utanför rutan för ny run</div>
+      </div>
+    </div>
+
+    <div id="midShopOverlay" class="overlay hidden">
+      <div class="overlay-card midshop-card">
+        <h2>🛞 DÄCK SPRACK!</h2>
+        <div class="midshop-sub">Köp uppgraderingar innan nästa skott</div>
+        <div class="midshop-coins">🪙 <span id="midCoins">0</span></div>
+        <div class="midshop-status">
+          <div class="mshop-stat">🛞 <span id="midTires">0</span>/5</div>
+          <div class="mshop-stat">🔥 <span id="midNitro">0</span>/5</div>
+          <div class="mshop-stat">🪂 <span id="midAirjump">0</span>/5</div>
+          <div class="mshop-stat">🧲 <span id="midMagnet">0</span>/5</div>
+          <div class="mshop-stat">🚀 <span id="midRange">0</span>/5</div>
+          <div class="mshop-stat">⚡ <span id="midPower">0</span>/5</div>
+        </div>
+        <div id="midShopGrid" class="midshop-grid"></div>
+        <button class="btn-primary midshop-continue" onclick="midShopContinue()">⟲ Nästa skott</button>
+      </div>
+    </div>
+
+    <div id="shopOverlay" class="overlay hidden">
+      <div class="overlay-card shop-card">
+        <div class="shop-tabs">
+          <button class="shop-tab active" data-tab="upgrade">🔧 VERKSTAD</button>
+          <button class="shop-tab" data-tab="testlab">🧪 TESTLAB</button>
+        </div>
+        <div id="tabUpgrade" class="shop-tab-body">
+          <div class="shop-coins">🪙 <span id="shopCoins">0</span></div>
+          <div id="shopGrid" class="shop-grid"></div>
+        </div>
+        <div id="tabTestlab" class="shop-tab-body hidden">
+          <div class="testlab-actions">
+            <button class="btn-secondary testlab-btn" id="testlabReset">↺ Återställ allt</button>
+            <button class="btn-secondary testlab-btn" id="testlabExport">📋 Kopiera JSON</button>
+          </div>
+          <div id="testlabGrid" class="testlab-grid"></div>
+        </div>
+        <button class="btn-primary" onclick="closeShop()">⟲ Stäng</button>
+      </div>
+    </div>
+
+    <div id="helpSheet" class="help hidden">
+      <div class="help-card">
+        <h3>Så spelar du</h3>
+        <ul>
+          <li><b>Håll skärmen</b> för att revva — <b>dra upp/ned</b> för vinkel</li>
+          <li><b>Släpp</b> för att skjuta iväg däcket</li>
+          <li><b>Tap i luften</b>: <b>stomp</b> 💥 — dyk rakt ner för PERFECT stomp-boost</li>
+          <li><b>BOOST-knappen 🔥</b> (nere till höger): nitro-fart i rörelseriktning</li>
+          <li><b>Flera gubbar med stegar 🪜</b> står längs banan — dra dem fram/tbx. Träffar du en stege studsar du högt upp (+120p)</li>
+          <li><b>Håll på en gubbe under flyget</b> → **slow-motion** så du hinner placera rätt stege</li>
+          <li><b>Pinch 👆👆</b> för att zooma in/ut — spelet auto-zoomar också baserat på fart</li>
+          <li><b>PERFECT-zon</b> på RPM (grön markering) = 1.25x fart</li>
+          <li><b>Studsmattor</b>: 🟢 Mini / 🟠 Standard / 🔴 MEGA — <b>stomp</b> när du träffar för <b>1.8x boost</b>!</li>
+          <li><b>🛞 Däck • 🔥 Nitro • ⭐ Stjärna • 🎈 Ballong • 🪙 Mynt</b> — plocka allt!</li>
+          <li><b>Verkstad 🔧</b>: uppgradera motor, däck, nitro, aero, stege</li>
+          <li><b>3 biomer</b>: Öken → Kanjon → Neon-natt (låg gravitation)</li>
+          <li><b>Dagliga uppdrag</b> ger extra mynt</li>
+        </ul>
+        <button class="btn-primary" onclick="document.getElementById('helpSheet').classList.add('hidden')">Kör!</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="touchHint" class="touch-hint">
+    <div class="hint-inner">
+      👆 <b>HÅLL</b> för att revva &nbsp;·&nbsp; <b>DRA ↕</b> för vinkel &nbsp;·&nbsp; <b>SLÄPP</b> för att skjuta &nbsp;·&nbsp; <b>TAP</b> i luften = stomp &nbsp;·&nbsp; 🔥 = BOOST
+    </div>
+  </div>
+</div>
+
+<script src="game.js"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
+</script>
+</body>
+</html>
