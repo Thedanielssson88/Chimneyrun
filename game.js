@@ -4356,23 +4356,24 @@ function updateHud() {
       }
     }
     // Daily PB chase indicator — använder ABSOLUTA världsmeter så biome-respawn inte ger fel jämförelse.
+    // Visibility/state-klasser sätts på .pb-chase-box (yttre rutan); innerHTML på #bigPbChase (texten).
     const pbChase = document.getElementById('bigPbChase');
-    if (pbChase) {
+    const pbBox = document.getElementById('pbChaseBox');
+    if (pbChase && pbBox) {
       if (dailyPB && dailyPB.date === todayStamp() && dailyPB.distM > 0 && showBig) {
         const curWorldM = Math.max(0, Math.round((state.tire ? state.tire.x : (LEVEL && LEVEL.launchX) || 0) / 5));
         const remaining = dailyPB.distM - curWorldM;
         if (remaining > 0) {
-          pbChase.classList.remove('hidden', 'beat');
+          pbBox.classList.remove('hidden', 'over');
           pbChase.innerHTML = `🚩 <b>${remaining}m</b> till dagsrekord`;
-          pbChase.classList.toggle('near', remaining <= 50);
+          pbBox.classList.toggle('near', remaining <= 50);
         } else {
-          pbChase.classList.remove('hidden');
-          pbChase.classList.add('beat');
-          pbChase.classList.remove('near');
+          pbBox.classList.remove('hidden', 'near');
+          pbBox.classList.add('over');
           pbChase.innerHTML = `🔥 <b>+${-remaining}m</b> över dagsrekord!`;
         }
       } else {
-        pbChase.classList.add('hidden');
+        pbBox.classList.add('hidden');
       }
     }
   }

@@ -39,25 +39,30 @@
 
   <div id="stage">
     <canvas id="game"></canvas>
-    <div id="aimHud" class="aim-hud">
-      <div class="meter">
-        <div class="label">RPM</div>
-        <div class="bar"><div id="rpmFill"></div><div class="zone perfect"></div></div>
-        <div class="val"><span id="rpmVal">0</span></div>
-      </div>
-      <div class="meter">
-        <div class="label">VINKEL</div>
-        <div class="bar angle"><div id="angFill"></div></div>
-        <div class="val"><span id="angVal">45</span>°</div>
-      </div>
-      <div class="meter wind-meter" id="windMeter" title="Tryck för att stänga av/på vinden">
-        <div class="label">VIND</div>
-        <div class="bar wind">
-          <div class="wind-center"></div>
-          <div id="windFill" class="wind-fill"></div>
-          <div id="windArrow" class="wind-arrow">·</div>
+    <div class="left-hud-stack">
+      <div id="aimHud" class="aim-hud">
+        <div class="meter">
+          <div class="label">RPM</div>
+          <div class="bar"><div id="rpmFill"></div><div class="zone perfect"></div></div>
+          <div class="val"><span id="rpmVal">0</span></div>
         </div>
-        <div class="val"><span id="windVal">—</span></div>
+        <div class="meter">
+          <div class="label">VINKEL</div>
+          <div class="bar angle"><div id="angFill"></div></div>
+          <div class="val"><span id="angVal">45</span>°</div>
+        </div>
+        <div class="meter wind-meter" id="windMeter" title="Tryck för att stänga av/på vinden">
+          <div class="label">VIND</div>
+          <div class="bar wind">
+            <div class="wind-center"></div>
+            <div id="windFill" class="wind-fill"></div>
+            <div id="windArrow" class="wind-arrow">·</div>
+          </div>
+          <div class="val"><span id="windVal">—</span></div>
+        </div>
+      </div>
+      <div id="pbChaseBox" class="pb-chase-box hidden">
+        <span id="bigPbChase">🚩 0m till dagsrekord</span>
       </div>
     </div>
 
@@ -65,7 +70,6 @@
       <div class="big-score-label">POÄNG</div>
       <div class="big-score-val" id="bigScoreVal">0</div>
       <div class="big-mult hidden" id="bigMult">x1</div>
-      <div class="big-pb-chase hidden" id="bigPbChase">🚩 0m till dagsrekord</div>
     </div>
 
     <div id="newRecordFX" class="new-record hidden">

@@ -131,10 +131,17 @@ canvas {
 }
 
 /* === AIM HUD === */
-.aim-hud {
+.left-hud-stack {
   position: absolute;
   top: 14px;
   left: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 5;
+  align-items: stretch;
+}
+.aim-hud {
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -144,8 +151,37 @@ canvas {
   padding: 10px 12px;
   backdrop-filter: blur(8px);
   transition: opacity 0.3s, transform 0.3s;
-  z-index: 5;
 }
+.pb-chase-box {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 8px 12px;
+  backdrop-filter: blur(8px);
+  text-align: center;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #fde047;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.7);
+  transition: opacity 0.2s, transform 0.15s, background 0.15s, color 0.15s;
+}
+.pb-chase-box.hidden { display: none; }
+.pb-chase-box b { color: #fff; font-weight: 900; }
+.pb-chase-box.near {
+  color: #ff7a1a;
+  border-color: rgba(255, 122, 26, 0.8);
+  background: rgba(40, 8, 0, 0.7);
+  animation: pbNearPulse 0.7s ease-in-out infinite;
+}
+.pb-chase-box.over {
+  color: #1a0a03;
+  background: linear-gradient(180deg, #fde047, #fbbf24);
+  border-color: #ca8a04;
+  animation: pbBeatPulse 0.55s ease-in-out infinite;
+}
+.pb-chase-box.over b { color: #1a0a03; }
 .aim-hud.hidden { opacity: 0; transform: translateY(-10px); pointer-events: none; }
 .aim-hud .meter { display: flex; align-items: center; gap: 10px; font-size: 12px; }
 .aim-hud .label { width: 52px; font-weight: 700; color: var(--text2); letter-spacing: 0.08em; font-size: 0.78em; }
@@ -218,7 +254,7 @@ canvas {
 /* === BIG SCORE (huge centered score readout) === */
 .big-score {
   position: absolute;
-  top: 58px;
+  top: 14px;
   right: 14px;
   text-align: right;
   pointer-events: none;
@@ -227,10 +263,10 @@ canvas {
   user-select: none;
   opacity: 0;
   transition: opacity 0.2s ease;
-  max-width: 50vw;
+  max-width: 42vw;
+  overflow: hidden;
 }
-.big-score .big-mult,
-.big-score .big-pb-chase {
+.big-score .big-mult {
   display: inline-block;
 }
 .big-score.visible { opacity: 1; }
@@ -242,7 +278,7 @@ canvas {
   text-shadow: 0 2px 8px rgba(0,0,0,0.6);
 }
 .big-score-val {
-  font-size: clamp(44px, 10vw, 84px);
+  font-size: clamp(32px, 7vw, 56px);
   line-height: 0.95;
   font-weight: 900;
   letter-spacing: 0.02em;
@@ -252,6 +288,7 @@ canvas {
     0 0 32px rgba(239, 68, 68, 0.45),
     0 4px 0 rgba(0,0,0,0.35);
   transition: transform 0.12s ease;
+  white-space: nowrap;
 }
 .big-score-val.pulse {
   transform: scale(1.25);
