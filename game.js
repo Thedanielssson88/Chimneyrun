@@ -1826,19 +1826,7 @@ stage.addEventListener('pointerdown', e => {
   e.preventDefault();
   hideTouchHint();
 
-  // Vind-HUD toggle: panel ligger på (W-164..W-16) × (34..78) i canvas-koord.
-  // Måste kollas FÖRE all aim/ladder/relaunch-logik så tappet inte dubbelregistreras.
-  {
-    const _r = stage.getBoundingClientRect();
-    const _lx = e.clientX - _r.left, _ly = e.clientY - _r.top;
-    if (_lx >= W - 164 && _lx <= W - 16 && _ly >= 34 && _ly <= 78) {
-      state.windDisabled = !state.windDisabled;
-      try { localStorage.setItem('chimney_windDisabled', state.windDisabled ? '1' : '0'); } catch {}
-      flashToast(state.windDisabled ? '🚫 VIND AV' : '💨 VIND PÅ', state.windDisabled ? '#94a3b8' : '#22d3ee');
-      tone(state.windDisabled ? 320 : 640, 0.08, 'square', 0.12, 240);
-      return;
-    }
-  }
+  // Vind-HUD toggle flyttades till HTML-elementet #windMeter (se click-handler nedan).
 
   activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
@@ -2114,6 +2102,12 @@ function _bindClick(id, fn) {
   const el = document.getElementById(id);
   if (el) el.addEventListener('click', fn);
 }
+_bindClick('windMeter', () => {
+  state.windDisabled = !state.windDisabled;
+  try { localStorage.setItem('chimney_windDisabled', state.windDisabled ? '1' : '0'); } catch {}
+  flashToast(state.windDisabled ? '🚫 VIND AV' : '💨 VIND PÅ', state.windDisabled ? '#94a3b8' : '#22d3ee');
+  tone(state.windDisabled ? 320 : 640, 0.08, 'square', 0.12, 240);
+});
 _bindClick('btnHelp', openTutorial);
 _bindClick('helpClose', closeTutorial);
 _bindClick('helpSkip', closeTutorial);
@@ -4257,6 +4251,35 @@ function updateHud() {
     angFill.style.background = '';
     if (_aimHudLabels[1]) _aimHudLabels[1].textContent = 'VINKEL';
     if (_aimHudValBoxes[1]) _aimHudValBoxes[1].innerHTML = `<span id="angVal">${Math.round(state.angle)}</span>°`;
+  }
+  // === Vind-mätare (HTML, alla faser) ===
+  {
+    const meter = document.getElementById('windMeter');
+    const fill = document.getElementById('windFill');
+    const arrow = document.getElementById('windArrow');
+    const valEl = document.getElementById('windVal');
+    if (meter && fill && arrow && valEl) {
+      const s = state.windDisabled ? 0 : (state.wind?.strength || 0);
+      const absS = Math.abs(s);
+      // Bar-bredd: 0..50% av total bar (centrum = 50%)
+      const pct = Math.min(50, absS * 100);
+      if (s >= 0) { fill.style.left = '50%'; fill.style.width = pct + '%'; }
+      else        { fill.style.left = (50 - pct) + '%'; fill.style.width = pct + '%'; }
+      // Färg
+      const col = state.windDisabled ? '#475569'
+                : absS < 0.15 ? '#94a3b8'
+                : absS < 0.5  ? (s > 0 ? '#10b981' : '#f97316')
+                              : (s > 0 ? '#22c55e' : '#ef4444');
+      fill.style.background = `linear-gradient(${s >= 0 ? '90deg' : '270deg'}, transparent, ${col})`;
+      // Pil
+      arrow.textContent = state.windDisabled ? '∅' : (absS < 0.15 ? '·' : (s > 0 ? '→' : '←'));
+      arrow.style.color = col;
+      // Text
+      valEl.textContent = state.windDisabled ? 'AV'
+                       : (absS < 0.15 ? 'STILLA'
+                       : `${s > 0 ? 'MED' : 'MOT'} ${absS.toFixed(1)}`);
+      meter.classList.toggle('disabled', !!state.windDisabled);
+    }
   }
   scoreEl.textContent = state.score;
   if (distLiveEl) {
@@ -7484,8 +7507,9 @@ function drawLightningFlash() {
   ctx.restore();
 }
 
-// Wind indicator HUD — top right. Tap on panel toggles wind on/off (handled in pointerdown).
+// Wind indicator HUD — flyttades till HTML-aimHud (#windMeter). Behåller funktionen tom för rollback.
 function drawWindIndicator() {
+  return;
   const s = state.windDisabled ? 0 : state.wind.strength;
   const absS = Math.abs(s);
   const cx = W - 90, cy = 56;

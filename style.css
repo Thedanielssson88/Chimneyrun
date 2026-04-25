@@ -183,6 +183,38 @@ canvas {
 }
 .aim-hud .val { font-family: "Courier New", monospace; font-weight: 800; color: var(--accent); min-width: 40px; text-align: right; }
 
+/* === VIND-MÄTARE i aimHud === */
+.aim-hud .wind-meter { cursor: pointer; user-select: none; }
+.aim-hud .wind-meter .val { color: #fef3c7; font-size: 0.85em; }
+.aim-hud .bar.wind {
+  position: relative;
+  background: #0a1020;
+  overflow: visible;
+}
+.aim-hud .bar.wind .wind-center {
+  position: absolute; left: 50%; top: 0; width: 2px; height: 100%;
+  background: rgba(255,255,255,0.25);
+  transform: translateX(-50%);
+}
+.aim-hud .bar.wind .wind-fill {
+  position: absolute; top: 0; height: 100%;
+  background: linear-gradient(90deg, transparent, var(--accent4));
+  width: 0; left: 50%;
+  transition: width 0.15s linear, left 0.15s linear, background 0.2s linear;
+  border-radius: 999px;
+}
+.aim-hud .bar.wind .wind-arrow {
+  position: absolute; left: 50%; top: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 14px; font-weight: 900; color: #fde047;
+  pointer-events: none; line-height: 1;
+  text-shadow: 0 0 4px rgba(253, 224, 71, 0.6);
+  transition: color 0.2s linear;
+}
+.aim-hud .wind-meter.disabled .wind-fill { background: rgba(100,116,139,0.4); }
+.aim-hud .wind-meter.disabled .wind-arrow { color: #475569; text-shadow: none; }
+.aim-hud .wind-meter.disabled .val { color: #94a3b8; }
+
 /* === BIG SCORE (huge centered score readout) === */
 .big-score {
   position: absolute;
