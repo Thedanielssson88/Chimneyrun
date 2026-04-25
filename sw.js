@@ -1,4 +1,4 @@
-const CACHE = 'chimney-rush-v149';
+const CACHE = 'chimney-rush-v150';
 const ASSETS = [
   './',
   './index.html',

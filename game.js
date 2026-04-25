@@ -1811,11 +1811,13 @@ function pointerHitTire(clientX, clientY) {
 }
 
 // Returns index of the ladder hit, or -1 if none.
-// Krav för att räknas som ladder-tap:
+// Krav för att räknas som ladder-tap (när lenient=false):
 //   - inom LADDER_HIT_RADIUS_PX från gubben på skärmen
 //   - tap ej mer än LADDER_ABOVE_HEAD_PX ovanför gubbens huvudhöjd (annars är det ett luftsikte)
 // Kombinationen ger relaunchen vinst när användaren tappar långt ifrån eller högt ovanför.
-function pointerHitLadder(clientX, clientY) {
+// När lenient=true (t.ex. rollBudget=0, ingen skott-konflikt) plockas närmaste synliga gubbe
+// oavsett avstånd/höjd — då vill man alltid kunna dra gubben.
+function pointerHitLadder(clientX, clientY, lenient) {
   const r = stage.getBoundingClientRect();
   const cx = clientX - r.left;
   const cy = clientY - r.top;
@@ -1825,8 +1827,10 @@ function pointerHitLadder(clientX, clientY) {
     const [lx, ly] = ladderManScreenPos(i);
     if (lx < 0 || lx > W || ly < 0 || ly > H) continue;
     const d = Math.hypot(cx - lx, cy - ly);
-    if (d > LADDER_HIT_RADIUS_PX) continue;                // för långt bort
-    if (cy < ly - LADDER_ABOVE_HEAD_PX) continue;          // tydligt ovanför huvudet → siktar i luften
+    if (!lenient) {
+      if (d > LADDER_HIT_RADIUS_PX) continue;              // för långt bort
+      if (cy < ly - LADDER_ABOVE_HEAD_PX) continue;        // tydligt ovanför huvudet → siktar i luften
+    }
     if (d < bestDist) { bestDist = d; bestIdx = i; }
   }
   return bestIdx;
@@ -1888,7 +1892,10 @@ stage.addEventListener('pointerdown', e => {
     // Once pointerdown commits to a target the choice is locked until pointerup —
     // you must release and tap again outside the tire to move the ladder-man.
     const tapOnTire = pointerHitTire(e.clientX, e.clientY);
-    const hitIdx = tapOnTire ? -1 : pointerHitLadder(e.clientX, e.clientY);
+    // Lenient ladder-pickup när man inte har någon kraft kvar: ingen relaunch-konflikt,
+    // så vilken tap som helst nära en gubbe ska räknas som grab.
+    const _ladderLenient = state.rollBudget <= 0;
+    const hitIdx = tapOnTire ? -1 : pointerHitLadder(e.clientX, e.clientY, _ladderLenient);
     if (hitIdx >= 0) {
       pendingLadder = { idx: hitIdx, startX: e.clientX, startY: e.clientY, pid: e.pointerId };
       try { stage.setPointerCapture(e.pointerId); } catch(_) {}
