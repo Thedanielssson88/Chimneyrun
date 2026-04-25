@@ -166,24 +166,110 @@
     </div>
 
     <div id="helpSheet" class="help hidden">
-      <div class="help-card">
-        <h3>Så spelar du</h3>
-        <ul>
-          <li><b>Håll skärmen</b> för att revva — <b>dra upp/ned</b> för vinkel</li>
-          <li><b>Släpp</b> för att skjuta iväg däcket</li>
-          <li><b>Tap i luften</b>: <b>stomp</b> 💥 — dyk rakt ner för PERFECT stomp-boost</li>
-          <li><b>BOOST-knappen 🔥</b> (nere till höger): nitro-fart i rörelseriktning</li>
-          <li><b>Flera gubbar med stegar 🪜</b> står längs banan — dra dem fram/tbx. Träffar du en stege studsar du högt upp (+120p)</li>
-          <li><b>Håll på en gubbe under flyget</b> → **slow-motion** så du hinner placera rätt stege</li>
-          <li><b>Pinch 👆👆</b> för att zooma in/ut — spelet auto-zoomar också baserat på fart</li>
-          <li><b>PERFECT-zon</b> på RPM (grön markering) = 1.25x fart</li>
-          <li><b>Studsmattor</b>: 🟢 Mini / 🟠 Standard / 🔴 MEGA — <b>stomp</b> när du träffar för <b>1.8x boost</b>!</li>
-          <li><b>🛞 Däck • 🔥 Nitro • ⭐ Stjärna • 🎈 Ballong • 🪙 Mynt</b> — plocka allt!</li>
-          <li><b>Verkstad 🔧</b>: uppgradera motor, däck, nitro, aero, stege</li>
-          <li><b>3 biomer</b>: Öken → Kanjon → Neon-natt (låg gravitation)</li>
-          <li><b>Dagliga uppdrag</b> ger extra mynt</li>
-        </ul>
-        <button class="btn-primary" onclick="document.getElementById('helpSheet').classList.add('hidden')">Kör!</button>
+      <div class="help-card help-card-tutorial">
+        <button id="helpClose" class="help-close" aria-label="Stäng">×</button>
+        <div class="help-pages">
+
+          <div class="help-page active" data-page="0">
+            <div class="help-anim help-anim-aim">
+              <div class="gauge">
+                <div class="gauge-arc"></div>
+                <div class="gauge-needle"></div>
+                <div class="gauge-label">RPM</div>
+              </div>
+              <div class="finger finger-hold">👆</div>
+            </div>
+            <h3>🎯 Sikta &amp; skjuta</h3>
+            <p><b>HÅLL</b> skärmen för att revva motorn.<br>
+            <b>DRA UPP/NER</b> för att ändra vinkel.<br>
+            <b>SLÄPP</b> för att skjuta iväg däcket!</p>
+          </div>
+
+          <div class="help-page" data-page="1">
+            <div class="help-anim help-anim-perfect">
+              <div class="bar-meter">
+                <div class="bar-fill"></div>
+                <div class="bar-perfect"></div>
+                <div class="bar-marker"></div>
+              </div>
+              <div class="perfect-burst">PERFECT!</div>
+            </div>
+            <h3>💪 PERFECT-zon</h3>
+            <p>Släpp när nålen är i den <b style="color:#22c55e">gröna zonen</b> för bonus-fart och starta combo-trappa.<br>
+            Längre combo = 10× poäng-multiplikator!</p>
+          </div>
+
+          <div class="help-page" data-page="2">
+            <div class="help-anim help-anim-tires">
+              <span class="tire-icon">🛞</span>
+              <span class="tire-icon">🛞</span>
+              <span class="tire-icon tire-fade">🛞</span>
+              <span class="tire-icon tire-fade-2">🛞</span>
+              <span class="tire-icon tire-fade-3">🛞</span>
+            </div>
+            <h3>🛞 Liv = Däck</h3>
+            <p>Du har <b>5 däck</b>. Kraschar du = <b>−1 däck</b>.<br>
+            Slut på däck = game over.<br>
+            Köp fler i <b>mid-shop</b> mellan biomer.</p>
+          </div>
+
+          <div class="help-page" data-page="3">
+            <div class="help-anim help-anim-stomp">
+              <div class="stomp-ground"></div>
+              <div class="stomp-ball">🛞</div>
+              <div class="stomp-tap">👆</div>
+              <div class="stomp-spark">💥</div>
+            </div>
+            <h3>👇 Stomp &amp; Power-Bounce</h3>
+            <p><b>TAP i luften</b> = dyk ner snabbare.<br>
+            <b>TAP precis innan landning</b> = <span style="color:#fde047"><b>POWER-BOUNCE</b></span> (mycket längre studs)!</p>
+          </div>
+
+          <div class="help-page" data-page="4">
+            <div class="help-anim help-anim-relaunch">
+              <div class="relaunch-ball">🛞</div>
+              <div class="relaunch-trail"></div>
+              <div class="relaunch-finger">👆</div>
+              <div class="relaunch-arrow">↗</div>
+            </div>
+            <h3>🔄 Skjut om i luften</h3>
+            <p>Har du <b>roll-budget</b> kvar? <b>DRA på däcket</b> mitt i flyget för att sikta om och skjuta i ny riktning.<br>
+            Räddar dig ur dåliga banor!</p>
+          </div>
+
+          <div class="help-page" data-page="5">
+            <div class="help-anim help-anim-ladder">
+              <div class="ladder-man">🧍</div>
+              <div class="ladder-rung"></div>
+              <div class="ladder-finger">👆</div>
+              <div class="ladder-ball">🛞</div>
+            </div>
+            <h3>🪜 Stege-gubbar</h3>
+            <p><b>TAP &amp; DRA</b> en gubbe för att flytta hans stege dit du vill landa.<br>
+            Träffar du stegen = <b>stor studs</b> uppåt (+120p)!</p>
+          </div>
+
+          <div class="help-page" data-page="6">
+            <div class="help-anim help-anim-powerups">
+              <span class="pu pu-1">💣</span>
+              <span class="pu pu-2">🛡️</span>
+              <span class="pu pu-3">❤️</span>
+              <span class="pu pu-4">🧲</span>
+              <span class="pu pu-5">🔥</span>
+              <span class="pu pu-6">🎈</span>
+            </div>
+            <h3>🎁 Powerups</h3>
+            <p>Plocka upp <b>💣 bomb</b>, <b>🛡️ sköld</b>, <b>❤️ medkit</b>, <b>🧲 magnet</b>, <b>🔥 nitro</b>, <b>🎈 ballong</b>.<br>
+            Använd via knapparna <b>nere till höger</b>.</p>
+          </div>
+
+        </div>
+        <div class="help-nav">
+          <button id="helpPrev" class="btn-ghost help-nav-btn">← Tillbaka</button>
+          <span id="helpDots" class="help-dots">1 / 7</span>
+          <button id="helpNext" class="btn-primary help-nav-btn">Nästa →</button>
+        </div>
+        <button id="helpSkip" class="help-skip">Hoppa över</button>
       </div>
     </div>
   </div>

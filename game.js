@@ -2081,9 +2081,61 @@ stage.addEventListener('wheel', e => {
   }
 }, { passive: false });
 
-document.getElementById('btnHelp').addEventListener('click', () => {
+// === TUTORIAL CAROUSEL ===
+const TUTORIAL_PAGES = 7;
+let tutorialPage = 0;
+
+function renderTutorialPage() {
+  document.querySelectorAll('.help-page').forEach((el, i) => {
+    el.classList.toggle('active', i === tutorialPage);
+  });
+  const dots = document.getElementById('helpDots');
+  if (dots) dots.textContent = `${tutorialPage + 1} / ${TUTORIAL_PAGES}`;
+  const prev = document.getElementById('helpPrev');
+  if (prev) prev.disabled = tutorialPage === 0;
+  const next = document.getElementById('helpNext');
+  if (next) next.textContent = tutorialPage === TUTORIAL_PAGES - 1 ? 'Kör! 🚀' : 'Nästa →';
+  const skip = document.getElementById('helpSkip');
+  if (skip) skip.style.display = tutorialPage === TUTORIAL_PAGES - 1 ? 'none' : 'block';
+}
+
+function openTutorial() {
+  tutorialPage = 0;
+  renderTutorialPage();
   document.getElementById('helpSheet').classList.remove('hidden');
+}
+
+function closeTutorial() {
+  document.getElementById('helpSheet').classList.add('hidden');
+  try { localStorage.setItem('chimneyTutorialSeen', '1'); } catch {}
+}
+
+function _bindClick(id, fn) {
+  const el = document.getElementById(id);
+  if (el) el.addEventListener('click', fn);
+}
+_bindClick('btnHelp', openTutorial);
+_bindClick('helpClose', closeTutorial);
+_bindClick('helpSkip', closeTutorial);
+_bindClick('helpPrev', () => {
+  if (tutorialPage > 0) { tutorialPage--; renderTutorialPage(); }
 });
+_bindClick('helpNext', () => {
+  if (tutorialPage < TUTORIAL_PAGES - 1) {
+    tutorialPage++;
+    renderTutorialPage();
+  } else {
+    closeTutorial();
+  }
+});
+
+// Auto-öppna första gången per device — endast om carousel-noderna finns
+try {
+  if (!localStorage.getItem('chimneyTutorialSeen') && document.getElementById('helpNext')) {
+    setTimeout(openTutorial, 500);
+  }
+} catch {}
+
 document.getElementById('btnShop').addEventListener('click', () => {
   window.openShop();
 });

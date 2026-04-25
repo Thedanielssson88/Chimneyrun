@@ -493,6 +493,287 @@ canvas {
 .help-card ul { line-height: 1.7; padding-left: 20px; font-size: 0.92em; }
 .help-card li { margin-bottom: 6px; }
 
+/* === TUTORIAL CAROUSEL === */
+.help-card-tutorial { position: relative; padding: 20px; max-width: 460px; }
+.help-close {
+  position: absolute; top: 8px; right: 12px; width: 32px; height: 32px;
+  background: transparent; border: none; color: #94a3b8; font-size: 24px;
+  cursor: pointer; line-height: 1; padding: 0;
+}
+.help-close:hover { color: #fff; }
+
+.help-pages { position: relative; min-height: 320px; }
+.help-page { display: none; text-align: center; }
+.help-page.active { display: block; animation: helpFadeIn 0.35s ease; }
+.help-page h3 { margin: 8px 0 6px; color: var(--accent); font-size: 1.15em; }
+.help-page p { margin: 0; font-size: 0.95em; line-height: 1.6; color: #e5e7eb; }
+@keyframes helpFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+.help-anim {
+  height: 150px; display: flex; align-items: center; justify-content: center;
+  margin-bottom: 14px; position: relative; overflow: hidden;
+  background: rgba(0,0,0,0.3); border-radius: 12px;
+}
+
+/* Sida 1 — Sikta & skjuta: RPM-mätare med svängande nål */
+.help-anim-aim .gauge {
+  width: 110px; height: 110px; border-radius: 50%; position: relative;
+  background: conic-gradient(from 225deg, #1f2937 0deg 90deg, #22c55e 90deg 135deg, #ef4444 135deg 270deg, transparent 270deg 360deg);
+  border: 3px solid #334155;
+}
+.help-anim-aim .gauge-arc {
+  position: absolute; inset: 8px; border-radius: 50%; background: #0f172a;
+}
+.help-anim-aim .gauge-needle {
+  position: absolute; left: 50%; top: 50%; width: 4px; height: 44px;
+  background: linear-gradient(to top, #fbbf24, #fde047);
+  transform-origin: bottom center;
+  animation: needleSwing 2.4s ease-in-out infinite;
+  border-radius: 2px;
+  box-shadow: 0 0 6px rgba(253, 224, 71, 0.6);
+}
+@keyframes needleSwing {
+  0%, 100% { transform: translate(-50%, -100%) rotate(-65deg); }
+  50% { transform: translate(-50%, -100%) rotate(65deg); }
+}
+.help-anim-aim .gauge-label {
+  position: absolute; bottom: 14px; left: 0; right: 0; text-align: center;
+  font-size: 11px; font-weight: bold; color: #94a3b8;
+}
+.help-anim-aim .finger {
+  font-size: 32px; margin-left: 16px;
+  animation: fingerPress 2.4s ease-in-out infinite;
+}
+@keyframes fingerPress {
+  0%, 100% { transform: translateY(0) scale(1); }
+  20% { transform: translateY(-6px) scale(1.1); }
+  60% { transform: translateY(-6px) scale(1.1); }
+  80% { transform: translateY(0) scale(1); }
+}
+
+/* Sida 2 — PERFECT-zon: pulserande grön zon */
+.help-anim-perfect .bar-meter {
+  width: 220px; height: 24px; background: #1f2937; border: 2px solid #334155;
+  border-radius: 12px; position: relative; overflow: hidden;
+}
+.help-anim-perfect .bar-fill {
+  position: absolute; inset: 0; width: 100%;
+  background: linear-gradient(90deg, #1f2937 0%, #f59e0b 70%, #ef4444 100%);
+  transform-origin: left; animation: barFill 2.4s ease-in-out infinite;
+}
+@keyframes barFill {
+  0%, 100% { transform: scaleX(0.1); }
+  50% { transform: scaleX(0.95); }
+}
+.help-anim-perfect .bar-perfect {
+  position: absolute; left: 60%; top: 0; width: 22%; height: 100%;
+  background: rgba(34,197,94,0.5); border-left: 2px solid #22c55e;
+  border-right: 2px solid #22c55e;
+  animation: perfectGlow 1.4s ease-in-out infinite;
+}
+@keyframes perfectGlow {
+  0%, 100% { box-shadow: 0 0 4px rgba(34,197,94,0.6) inset; }
+  50% { box-shadow: 0 0 16px rgba(34,197,94,1) inset; }
+}
+.help-anim-perfect .bar-marker {
+  position: absolute; left: 50%; top: -6px; width: 4px; height: 36px;
+  background: #fde047; border-radius: 2px;
+  animation: markerSwing 2.4s ease-in-out infinite;
+  box-shadow: 0 0 4px rgba(253,224,71,0.8);
+}
+@keyframes markerSwing {
+  0% { left: 8%; }
+  50% { left: 70%; }
+  100% { left: 8%; }
+}
+.help-anim-perfect .perfect-burst {
+  position: absolute; top: 16px; left: 50%; transform: translateX(-50%);
+  color: #22c55e; font-weight: 900; font-size: 16px; letter-spacing: 1px;
+  text-shadow: 0 0 8px rgba(34,197,94,0.6);
+  animation: perfectBurst 2.4s ease-in-out infinite;
+  opacity: 0;
+}
+@keyframes perfectBurst {
+  0%, 45% { opacity: 0; transform: translateX(-50%) scale(0.8); }
+  50% { opacity: 1; transform: translateX(-50%) scale(1.2); }
+  60% { opacity: 1; transform: translateX(-50%) scale(1); }
+  80%, 100% { opacity: 0; }
+}
+
+/* Sida 3 — Däck */
+.help-anim-tires { gap: 8px; }
+.help-anim-tires .tire-icon {
+  font-size: 38px; display: inline-block;
+  animation: tireBob 1.4s ease-in-out infinite;
+}
+.help-anim-tires .tire-icon:nth-child(1) { animation-delay: 0s; }
+.help-anim-tires .tire-icon:nth-child(2) { animation-delay: 0.1s; }
+.help-anim-tires .tire-icon:nth-child(3) { animation-delay: 0.2s; }
+.help-anim-tires .tire-icon:nth-child(4) { animation-delay: 0.3s; }
+.help-anim-tires .tire-icon:nth-child(5) { animation-delay: 0.4s; }
+@keyframes tireBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.help-anim-tires .tire-fade   { animation: tireFade 3s ease-in-out infinite; }
+.help-anim-tires .tire-fade-2 { animation: tireFade 3s ease-in-out infinite; animation-delay: 1s; }
+.help-anim-tires .tire-fade-3 { animation: tireFade 3s ease-in-out infinite; animation-delay: 2s; }
+@keyframes tireFade {
+  0%, 70% { opacity: 1; transform: translateY(0); }
+  85% { opacity: 0.3; transform: translateY(20px) rotate(180deg); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Sida 4 — Stomp & Power-Bounce */
+.help-anim-stomp { position: relative; }
+.help-anim-stomp .stomp-ground {
+  position: absolute; bottom: 18px; left: 0; right: 0; height: 4px;
+  background: linear-gradient(90deg, transparent, #f59e0b, transparent);
+}
+.help-anim-stomp .stomp-ball {
+  position: absolute; font-size: 30px; left: 30%;
+  animation: stompBall 2.6s ease-in infinite;
+}
+@keyframes stompBall {
+  0%   { top: 10%;  transform: rotate(0deg); }
+  35%  { top: 60%;  transform: rotate(280deg); }
+  45%  { top: 65%;  transform: rotate(360deg); }
+  60%  { top: 5%;   transform: rotate(540deg); }
+  100% { top: 10%;  transform: rotate(720deg); }
+}
+.help-anim-stomp .stomp-tap {
+  position: absolute; font-size: 26px; left: 60%; top: 50%;
+  animation: stompTap 2.6s ease-in-out infinite;
+  opacity: 0;
+}
+@keyframes stompTap {
+  0%, 30% { opacity: 0; transform: scale(0.6); }
+  40% { opacity: 1; transform: scale(1.3); }
+  50% { opacity: 1; transform: scale(1); }
+  60%, 100% { opacity: 0; }
+}
+.help-anim-stomp .stomp-spark {
+  position: absolute; font-size: 30px; left: 27%; bottom: 16px;
+  animation: stompSpark 2.6s ease-out infinite;
+  opacity: 0;
+}
+@keyframes stompSpark {
+  0%, 40% { opacity: 0; transform: scale(0.4); }
+  45% { opacity: 1; transform: scale(1.4); }
+  60% { opacity: 0; transform: scale(2); }
+  100% { opacity: 0; }
+}
+
+/* Sida 5 — Relaunch */
+.help-anim-relaunch { position: relative; }
+.help-anim-relaunch .relaunch-ball {
+  position: absolute; font-size: 32px; left: 30%; top: 40%;
+  animation: relaunchBall 3s ease-in-out infinite;
+}
+@keyframes relaunchBall {
+  0%   { left: 30%; top: 40%; transform: rotate(0); }
+  40%  { left: 30%; top: 40%; transform: rotate(0); }
+  60%  { left: 50%; top: 25%; transform: rotate(180deg); }
+  100% { left: 80%; top: 10%; transform: rotate(540deg); }
+}
+.help-anim-relaunch .relaunch-finger {
+  position: absolute; font-size: 28px; left: 35%; top: 55%;
+  animation: relaunchFinger 3s ease-in-out infinite;
+  opacity: 0;
+}
+@keyframes relaunchFinger {
+  0%, 15% { opacity: 0; left: 35%; top: 55%; }
+  25% { opacity: 1; left: 35%; top: 55%; }
+  45% { opacity: 1; left: 50%; top: 35%; }
+  55% { opacity: 0; left: 50%; top: 35%; }
+  100% { opacity: 0; }
+}
+.help-anim-relaunch .relaunch-arrow {
+  position: absolute; font-size: 36px; left: 42%; top: 30%; color: #fde047;
+  animation: relaunchArrow 3s ease-in-out infinite;
+  opacity: 0;
+  text-shadow: 0 0 8px rgba(253,224,71,0.6);
+}
+@keyframes relaunchArrow {
+  0%, 30% { opacity: 0; }
+  45% { opacity: 1; transform: scale(1.2); }
+  60%, 100% { opacity: 0; }
+}
+
+/* Sida 6 — Stege-gubbar */
+.help-anim-ladder { position: relative; }
+.help-anim-ladder .ladder-man {
+  position: absolute; font-size: 36px; bottom: 14px;
+  animation: ladderMan 3s ease-in-out infinite;
+}
+@keyframes ladderMan {
+  0%, 100% { left: 20%; }
+  50% { left: 60%; }
+}
+.help-anim-ladder .ladder-rung {
+  position: absolute; bottom: 14px; width: 6px; height: 60px;
+  background: repeating-linear-gradient(to bottom, #92400e 0 8px, #fbbf24 8px 12px);
+  border-radius: 2px;
+  animation: ladderRung 3s ease-in-out infinite;
+}
+@keyframes ladderRung {
+  0%, 100% { left: calc(20% + 32px); }
+  50% { left: calc(60% + 32px); }
+}
+.help-anim-ladder .ladder-finger {
+  position: absolute; font-size: 24px; bottom: 4px;
+  animation: ladderFinger 3s ease-in-out infinite;
+}
+@keyframes ladderFinger {
+  0%, 100% { left: 22%; opacity: 1; }
+  50% { left: 62%; opacity: 1; }
+}
+.help-anim-ladder .ladder-ball {
+  position: absolute; font-size: 26px; top: 12%;
+  animation: ladderBall 3s ease-in-out infinite;
+}
+@keyframes ladderBall {
+  0% { left: 5%; transform: rotate(0); }
+  60% { left: 50%; top: 18%; transform: rotate(360deg); }
+  75% { left: 60%; top: -10%; transform: rotate(540deg); }
+  100% { left: 95%; top: 60%; transform: rotate(720deg); }
+}
+
+/* Sida 7 — Powerups */
+.help-anim-powerups { gap: 6px; flex-wrap: nowrap; }
+.help-anim-powerups .pu {
+  font-size: 32px; display: inline-block;
+  animation: puBob 1.6s ease-in-out infinite;
+}
+.help-anim-powerups .pu-1 { animation-delay: 0s; }
+.help-anim-powerups .pu-2 { animation-delay: 0.15s; }
+.help-anim-powerups .pu-3 { animation-delay: 0.3s; }
+.help-anim-powerups .pu-4 { animation-delay: 0.45s; }
+.help-anim-powerups .pu-5 { animation-delay: 0.6s; }
+.help-anim-powerups .pu-6 { animation-delay: 0.75s; }
+@keyframes puBob {
+  0%, 100% { transform: translateY(0) scale(1); filter: drop-shadow(0 0 0 transparent); }
+  50% { transform: translateY(-10px) scale(1.15); filter: drop-shadow(0 4px 8px rgba(255,215,0,0.5)); }
+}
+
+/* Tutorial-navigering */
+.help-nav {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-top: 16px; gap: 8px;
+}
+.help-nav-btn {
+  padding: 10px 16px; border-radius: 8px; font-weight: bold; cursor: pointer;
+  font-size: 0.95em; min-width: 110px;
+}
+.help-nav-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.help-dots { color: #94a3b8; font-size: 0.9em; font-weight: bold; }
+.help-skip {
+  display: block; margin: 12px auto 0; padding: 6px 12px;
+  background: transparent; border: none; color: #64748b; cursor: pointer;
+  font-size: 0.85em; text-decoration: underline;
+}
+.help-skip:hover { color: #94a3b8; }
+
 /* === TOUCH HINT === */
 .touch-hint {
   position: absolute;
