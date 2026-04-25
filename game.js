@@ -780,6 +780,8 @@ const state = {
   cam: { x: 0, y: 0, zoom: 0.6, userZoomNear: 1, userZoomFar: 1 },
   score: 0,
   coinsRun: 0,
+  runCoinsAwarded: 0,        // mynt redan tilldelade till progression från denna run (för delta-beräkning i mid-shop)
+  runCoinsSpent: 0,          // mynt spenderade i mid-shop denna run (skyddas vid game-over revoke)
   starsGot: 0,
   tiresLeft: 5,
   maxX: 0,
@@ -1493,6 +1495,8 @@ function restart() {
   state.rpmMaxHoldT = 0;
   state.score = 0;
   state.coinsRun = 0;
+  state.runCoinsAwarded = 0;
+  state.runCoinsSpent = 0;
   state.starsGot = 0;
   state.tiresLeft = 5;
   state.rangeBoost = 0;
@@ -1672,6 +1676,7 @@ function renderMidShop() {
       const cost = midShopCost(it);
       if (progression.coins < cost) return;
       progression.coins -= cost;
+      state.runCoinsSpent = (state.runCoinsSpent || 0) + cost;
       it.apply();
       saveProgression();
       sfxStar();
@@ -3803,6 +3808,19 @@ function finishRun(won) {
     }
     flashToast(`DÄCK KVAR: ${state.tiresLeft}`, '#fbbf24');
 
+    // Tilldela rundans intjänade mynt (delta) till progression så mid-shoppen kan spendera dem.
+    // Beräknas på state.score EFTER 30%-avdraget (se nedan), så vi kallar denna efter avdraget.
+    const _awardRunCoinsDelta = () => {
+      const total = Math.floor(state.score / 8) + Math.floor(state.coinsRun * 2);
+      const delta = total - (state.runCoinsAwarded || 0);
+      if (delta > 0) {
+        progression.coins += delta;
+        state.runCoinsAwarded = total;
+        saveProgression();
+        flashToast(`🪙 +${delta} MYNT`, '#fbbf24');
+      }
+    };
+
     // 30%-poängavdrag med synlig nedräkning. Spelaren behåller 70%.
     const _startScore = state.score;
     const _kept = Math.round(_startScore * 0.7);
@@ -3823,10 +3841,12 @@ function finishRun(won) {
           clearInterval(_tick);
           state.score = _kept;
           updateHud();
+          _awardRunCoinsDelta();
           setTimeout(openMidShop, 250);
         }
       }, _stepDelay);
     } else {
+      _awardRunCoinsDelta();
       setTimeout(openMidShop, 700);
     }
     return;
@@ -3836,11 +3856,20 @@ function finishRun(won) {
   // Highscore har redan fångats ovan på _ursprungliga_ state.score, så det räddas.
   // Vi nollställer score/coinsRun här innan coin-tjäning beräknas.
   if (!won && state.tiresLeft <= 0) {
-    if (state.score > 0 || state.coinsRun > 0) {
+    // Återta outnyttjade run-mynt som tilldelats progression i mid-shop-flöden.
+    // Spenderade mynt (köpta uppgraderingar) behålls — bara osålda mynt försvinner.
+    const _unspent = Math.max(0, (state.runCoinsAwarded || 0) - (state.runCoinsSpent || 0));
+    if (_unspent > 0) {
+      progression.coins = Math.max(0, progression.coins - _unspent);
+      saveProgression();
+    }
+    if (state.score > 0 || state.coinsRun > 0 || _unspent > 0) {
       flashToast('💀 ALLT FÖRLORAT', '#ef4444');
     }
     state.score = 0;
     state.coinsRun = 0;
+    state.runCoinsAwarded = 0;
+    state.runCoinsSpent = 0;
     state.scorePulseT = 14;
     updateHud();
   }
@@ -3848,9 +3877,13 @@ function finishRun(won) {
   const distM = runDistM;
   runStats.distM = distM;
 
-  // Coins earned: 1 coin per 10 score + explicit coin count bonus
-  const earnedCoins = Math.floor(state.score / 8) + Math.floor(state.coinsRun * 2);
+  // Coins earned: 1 coin per 10 score + explicit coin count bonus.
+  // Drar bort vad som redan tilldelats progression via mid-shop-flöden under rundan
+  // så det inte dubbelräknas om man når mål (won=true) efter mid-shop-besök.
+  const _earnedTotal = Math.floor(state.score / 8) + Math.floor(state.coinsRun * 2);
+  const earnedCoins = Math.max(0, _earnedTotal - (state.runCoinsAwarded || 0));
   progression.coins += earnedCoins;
+  state.runCoinsAwarded = _earnedTotal;
 
   // Check missions
   let missionRewards = 0;
