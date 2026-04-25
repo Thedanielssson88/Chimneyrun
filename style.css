@@ -219,15 +219,19 @@ canvas {
 .big-score {
   position: absolute;
   top: 58px;
-  left: 50%;
-  transform: translateX(-50%);
-  text-align: center;
+  right: 14px;
+  text-align: right;
   pointer-events: none;
   z-index: 6;
   font-family: "Impact", "Arial Black", sans-serif;
   user-select: none;
   opacity: 0;
   transition: opacity 0.2s ease;
+  max-width: 50vw;
+}
+.big-score .big-mult,
+.big-score .big-pb-chase {
+  display: inline-block;
 }
 .big-score.visible { opacity: 1; }
 .big-score-label {
