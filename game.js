@@ -306,7 +306,11 @@ let LEVEL = { launchX: 0, launchY: 0, finishX: 0, totalStars: 0 };
 // Biome config: [desert, canyon, neon, ice, volcano]
 const BIOME_LEN = 15000;         // each biome 15000m long
 const WORLD_LEN = BIOME_LEN * 5; // 75000m total — 5 biomes (desert → canyon → neon → ice → volcano)
+const HELL_LEN = BIOME_LEN;      // 15000m hell-biome BAKOM x=0 (måste hoppa över huset)
+const HELL_INDEX = 5;            // hell-biome är index 5 i BIOMES[]
+const WORLD_MIN_X = -HELL_LEN;   // -15000
 function biomeAt(x) {
+  if (x < 0) return HELL_INDEX;
   if (x < BIOME_LEN) return 0;
   if (x < BIOME_LEN * 2) return 1;
   if (x < BIOME_LEN * 3) return 2;
@@ -316,7 +320,22 @@ function biomeAt(x) {
 // Biome start X + launcher offset (matches buildLevel's LEVEL.launchX = 180 for biome 0)
 const RESPAWN_LAUNCH_OFFSET = 180;
 function biomeStartX(x) {
+  // Död i hell → respawn vid biome 0 start (man får INTE respawna i hell)
+  if (biomeAt(x) === HELL_INDEX) return RESPAWN_LAUNCH_OFFSET;
   return biomeAt(x) * BIOME_LEN + RESPAWN_LAUNCH_OFFSET;
+}
+// Smooth-blend helper för boundary-effekter (sky/gravity).
+// Returnerar t ∈ [0,1] där 0 = vid boundary mot prev biome, 1 = djupt inne i current.
+function biomeBlendT(x, blendZone) {
+  const b = biomeAt(x);
+  let within;
+  if (b === HELL_INDEX) within = -x;          // hell går baklänges från x=0
+  else                  within = x - b * BIOME_LEN;
+  return Math.min(1, Math.max(0, within / blendZone));
+}
+function prevBiomeIndex(b) {
+  if (b === HELL_INDEX) return 0;             // hell's "prev" är biome 0 (där du kom från)
+  return Math.max(0, b - 1);
 }
 
 const BIOMES = [
@@ -392,6 +411,20 @@ const BIOMES = [
     geyserFreq: TUNING.geyserFreqVolcano,
     coinDensity: TUNING.coinDensityVolcano, starFreq: TUNING.starFreqVolcano, balloonFreq: TUNING.balloonFreqVolcano, nitroFreq: TUNING.nitroFreqVolcano,
   },
+  { // 5 — HELL (bakom biome 0, x ∈ [-15000, 0]) — det värsta från alla biomer
+    sky: ['#000000', '#1a0303', '#7f1d1d'],
+    groundTop: '#1a0303', groundBot: '#000000', groundLine: '#dc2626',
+    cacti: '#450a0a',
+    // Brutal fysik — högre gravitation, kort terrainStep (smala plattformar), stor amp
+    gravity: 0.62,
+    terrainAmp: 240, terrainStep: 220,
+    // Worst-of-all freq-värden (sätts efter applyTuning() via _seedHellBiome)
+    wallFreq: 0, spinnerFreq: 0, rampFreq: 0, barrelFreq: 0,
+    houseFreq: 0, tntFreq: 0, cannonFreq: 0, bumperFreq: 0,
+    cactusFreq: 0, spikeFreq: 0, waterFreq: 0, lavaFreq: 0, geyserFreq: 0,
+    // Inga belöningar i hell (0 stjärnor, få mynt — hanteras separat i pickup-loop)
+    coinDensity: 0, starFreq: 0, balloonFreq: 0, nitroFreq: 0,
+  },
 ];
 
 function applyTuning() {
@@ -440,6 +473,25 @@ function applyTuning() {
   b0.starFreq = TUNING.starFreqDesert; b1.starFreq = TUNING.starFreqCanyon; b2.starFreq = TUNING.starFreqNeon; b3.starFreq = TUNING.starFreqIce; b4.starFreq = TUNING.starFreqVolcano;
   b0.balloonFreq = TUNING.balloonFreqDesert; b1.balloonFreq = TUNING.balloonFreqCanyon; b2.balloonFreq = TUNING.balloonFreqNeon; b3.balloonFreq = TUNING.balloonFreqIce; b4.balloonFreq = TUNING.balloonFreqVolcano;
   b0.nitroFreq = TUNING.nitroFreqDesert; b1.nitroFreq = TUNING.nitroFreqCanyon; b2.nitroFreq = TUNING.nitroFreqNeon; b3.nitroFreq = TUNING.nitroFreqIce; b4.nitroFreq = TUNING.nitroFreqVolcano;
+  // Hell (BIOMES[5]) — worst-of-all: maxa varje obstacle-frekvens från BIOMES[0..4]
+  // Brutal fysik (gravity/terrainAmp/terrainStep) hardkodad i BIOMES[5] ovan, ej tunable.
+  const hb = BIOMES[5];
+  if (hb) {
+    const _maxFreq = (key) => Math.max(...[b0, b1, b2, b3, b4].map(b => b[key] || 0));
+    hb.wallFreq    = _maxFreq('wallFreq');
+    hb.spinnerFreq = _maxFreq('spinnerFreq');
+    hb.rampFreq    = _maxFreq('rampFreq');
+    hb.barrelFreq  = _maxFreq('barrelFreq');
+    hb.houseFreq   = _maxFreq('houseFreq');
+    hb.tntFreq     = _maxFreq('tntFreq');
+    hb.cannonFreq  = _maxFreq('cannonFreq');
+    hb.bumperFreq  = _maxFreq('bumperFreq');
+    hb.cactusFreq  = _maxFreq('cactusFreq');
+    hb.spikeFreq   = _maxFreq('spikeFreq');
+    hb.waterFreq   = _maxFreq('waterFreq');
+    hb.lavaFreq    = _maxFreq('lavaFreq');
+    hb.geyserFreq  = _maxFreq('geyserFreq');
+  }
   // Refresh upgrades (påverkar vissa globals ovanpå TUNING)
   if (typeof applyUpgrades === 'function') applyUpgrades();
 }
@@ -448,9 +500,8 @@ function applyTuning() {
 function gravityAtX(x) {
   const b = biomeAt(x);
   // Smooth blend across biome boundaries
-  const within = x - b * BIOME_LEN;
-  const t = Math.min(1, within / 500);
-  const prev = b > 0 ? BIOMES[b - 1].gravity : BIOMES[0].gravity;
+  const t = biomeBlendT(x, 500);
+  const prev = BIOMES[prevBiomeIndex(b)].gravity;
   return prev + (BIOMES[b].gravity - prev) * t;
 }
 
@@ -463,8 +514,33 @@ function buildLevel() {
   const chance = p => rng() < p;
 
   // --- TERRAIN: procedurally generate control points per biome ---
+  // HELL-terrain (x ∈ [-HELL_LEN, 0]) byggs separat och prepaneras.
+  const hellPoints = [];
+  hellPoints.push([WORLD_MIN_X - 200, BASE - 60]);
+  {
+    const hb = BIOMES[HELL_INDEX];
+    let hx = WORLD_MIN_X + 200;
+    let hPrevY = BASE + rnd(-40, 60);
+    while (hx < -260) {
+      const phase = hx / 400;
+      const wave = Math.sin(phase) * hb.terrainAmp * 0.6;
+      const noise = rnd(-hb.terrainAmp * 0.5, hb.terrainAmp * 0.5);
+      let y = BASE + wave + noise;
+      const maxDelta = 140;
+      if (y - hPrevY > maxDelta) y = hPrevY + maxDelta;
+      if (hPrevY - y > maxDelta) y = hPrevY - maxDelta;
+      y = Math.max(BASE - 260, Math.min(BASE + 140, y));
+      hellPoints.push([hx, y]);
+      hPrevY = y;
+      hx += hb.terrainStep + rnd(-40, 60);
+    }
+    // Plattform precis innan x=0 så hus-baksidan har mark att stå på
+    hellPoints.push([-220, BASE]);
+    hellPoints.push([-100, BASE]);
+  }
+
   TERRAIN = [
-    [-400, BASE],
+    ...hellPoints,
     [0,    BASE],
     [260,  BASE],       // launch platform end (always flat at start)
   ];
@@ -515,19 +591,23 @@ function buildLevel() {
   // Flat zones that get applied to TERRAIN after obstacle placement so ramps / houses
   // sit on level ground rather than on sloped control points.
   const flats = [];
-  let ox = 900;
+  let ox = WORLD_MIN_X + 600;  // start i hell, fortsätt genom alla biomer
   while (ox < WORLD_LEN - 400) {
+    // Skip biome 0:s launch-zone (x=0..900) — spawn-området måste vara rent.
+    if (ox >= 0 && ox < 900) { ox = 900; continue; }
     if (isInBiomeLaunchZone(ox)) { ox += 200; continue; }
     const biome = BIOMES[biomeAt(ox)];
     const r = rng();
     let cumul = 0;
     // Grace zone: no cactus in the first 300m (1500 world-units after launcher).
     // Player needs a clean runway before the pin-in-place hazard is in play.
+    // Grace gäller ENDAST biome 0+ (ox >= 0); hell ska ha full mängd hazards.
     const CACTUS_GRACE_X = LEVEL.launchX + 1500;
-    const cactusWeight = ox < CACTUS_GRACE_X ? 0 : (biome.cactusFreq || 0);
+    const cactusWeight = (ox >= 0 && ox < CACTUS_GRACE_X) ? 0 : (biome.cactusFreq || 0);
     // Spikes are instant-death — longer grace zone so players can warm up first.
     const SPIKE_GRACE_X = LEVEL.launchX + 3000;
-    const spikeWeight = ox < SPIKE_GRACE_X ? 0 : (biome.spikeFreq || 0);
+    const spikeWeight = (ox >= 0 && ox < SPIKE_GRACE_X) ? 0 : (biome.spikeFreq || 0);
+    const inGraceZone = (ox >= 0 && ox < SPIKE_GRACE_X);
     const types = [
       ['wall',    biome.wallFreq],
       ['spinner', biome.spinnerFreq],
@@ -539,8 +619,8 @@ function buildLevel() {
       ['bumper',  biome.bumperFreq || 0],
       ['cactus',  cactusWeight],
       ['spike',   spikeWeight],
-      ['water',   ox < SPIKE_GRACE_X ? 0 : (biome.waterFreq || 0)],
-      ['lava',    ox < SPIKE_GRACE_X ? 0 : (biome.lavaFreq || 0)],
+      ['water',   inGraceZone ? 0 : (biome.waterFreq || 0)],
+      ['lava',    inGraceZone ? 0 : (biome.lavaFreq || 0)],
       ['geyser',  biome.geyserFreq || 0],
     ];
     const total = types.reduce((s, t) => s + t[1], 0);
@@ -709,6 +789,16 @@ function buildLevel() {
 
   // --- PICKUPS: procedural clusters ---
   PICKUPS = [];
+  // HELL-pickups: bara enstaka mynt (inga stjärnor, inga power-ups, inga balloons).
+  // ~6-10 mynt utspritt över hela hell-zonen som tröstpremie.
+  {
+    const hellCoins = 6 + Math.floor(rng() * 5);
+    for (let i = 0; i < hellCoins; i++) {
+      const cx = WORLD_MIN_X + 600 + rng() * (HELL_LEN - 1000);
+      const cy = terrainAt(cx) - 60 - rng() * 100;
+      PICKUPS.push({ type: 'coin', x: cx, y: cy, taken: false });
+    }
+  }
   let px = 700;
   while (px < WORLD_LEN - 100) {
     if (isInBiomeLaunchZone(px)) { px += 200; continue; }
@@ -885,6 +975,7 @@ const state = {
   rockfallSpawnT: 300,       // frames till nästa rasstens-spawn
   gliderCharges: 0,          // 🪁 glider-pickup charges, max 5
   gliderT: 0,                // 🪁 glider-effekt frames kvar (4s = 240)
+  inHell: false,             // 💀 spelaren är just nu i hell-biomet (x < 0) — för toast-trigger
   combo: { count: 0, timer: 0, mult: 1 },
   time: 0,
   startLaunchX: 0,
@@ -2926,11 +3017,12 @@ function update() {
       }
     }
 
-    // Back-wall / house — only blocks when tire is low enough to hit the house body.
-    // Flying over the roof sends the tire off the level (lost).
+    // Back-wall / house — blockerar däcket från att rulla in i huset från höger.
+    // Hoppar man ÖVER taket landar man i hell-biomet bakom (släpps inte tillbaka).
     const backWallX = LEVEL.launchX - 120;
     const backWallTopY = terrainAt(backWallX) - 106; // match house roof peak in renderer
-    if (t.x - TIRE_R < backWallX && t.y + TIRE_R > backWallTopY) {
+    const houseLeftEdge = LEVEL.launchX - 206;       // husets vänsterkant (launchX - 120 - 86)
+    if (t.x + TIRE_R > houseLeftEdge && t.x - TIRE_R < backWallX && t.y + TIRE_R > backWallTopY) {
       t.x = backWallX + TIRE_R;
       if (t.vx < 0) {
         t.vx = -t.vx * 0.7;
@@ -2939,10 +3031,19 @@ function update() {
         sfxBounce();
       }
     }
-    // Off-level left — tire flew past the house roof and fell off the world
-    if (t.x < LEVEL.launchX - 600 && state.phase === PHASE.FLY && state.finishPending === 0) {
+    // Off-level left — tire flew past the world edge (bortom hell)
+    if (t.x < WORLD_MIN_X - 200 && state.phase === PHASE.FLY && state.finishPending === 0) {
       flashToast('UTANFÖR BANAN!', '#ef4444');
       finishRun(false);
+    }
+    // Hell-biome övergång — toast vid in/ut. inHell speglar tire.x < 0.
+    {
+      const nowInHell = t.x < 0;
+      if (nowInHell !== state.inHell) {
+        if (nowInHell) flashToast('💀 HELL', '#dc2626');
+        else           flashToast('🏜️ ÖKNEN', '#fbbf24');
+        state.inHell = nowInHell;
+      }
     }
 
     // Terrain collision
@@ -4211,8 +4312,12 @@ function finishRun(won) {
       LEVEL.launchX = biomeStartX(state.tire.x);
       state.cam.x = LEVEL.launchX - W * 0.25;
       state.cam.y = terrainAt(LEVEL.launchX) - H * 0.55;
-      const biomeName = ['ÖKNEN', 'KANJONEN', 'NEON', 'ISEN'][_bi] || 'BANAN';
+      // Vid död i hell respawnar man vid ÖKNEN. Annars vid biomet man dog i.
+      const _respawnBi = (_bi === HELL_INDEX) ? 0 : _bi;
+      const biomeName = ['ÖKNEN', 'KANJONEN', 'NEON', 'ISEN', 'VULKANEN'][_respawnBi] || 'BANAN';
       flashToast(`🔁 RESPAWN: ${biomeName}`, '#22d3ee');
+      // Reset inHell-flagga så toast inte triggas spuriöst vid respawn vid x=180.
+      state.inHell = false;
     }
     flashToast(`DÄCK KVAR: ${state.tiresLeft}`, '#fbbf24');
 
@@ -4974,10 +5079,9 @@ function currentBiomeSky() {
   const z = state.cam.zoom || 1;
   const camCenterX = state.cam.x + W / (2 * z);
   const b = biomeAt(camCenterX);
-  const prev = BIOMES[Math.max(0, b - 1)].sky;
+  const prev = BIOMES[prevBiomeIndex(b)].sky;
   const curr = BIOMES[b].sky;
-  const within = camCenterX - b * BIOME_LEN;
-  const t = Math.min(1, Math.max(0, within / 500));
+  const t = biomeBlendT(camCenterX, 500);
   const mix = (a, c) => {
     const ah = a.match(/\w\w/g).map(x => parseInt(x, 16));
     const ch = c.match(/\w\w/g).map(x => parseInt(x, 16));
