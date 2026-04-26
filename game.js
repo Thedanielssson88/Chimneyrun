@@ -110,9 +110,25 @@ function saveRunHistory(arr) {
 }
 function addRunToHistory(entry) {
   const hist = loadRunHistory();
-  hist.push(entry);
-  while (hist.length > RUN_HISTORY_MAX) hist.shift();
+  // Upsert: om en entry med samma runId redan finns, uppdatera den (samma run över flera liv).
+  const idx = entry.runId ? hist.findIndex(e => e.runId === entry.runId) : -1;
+  if (idx >= 0) {
+    hist[idx] = { ...hist[idx], ...entry };
+  } else {
+    hist.push(entry);
+    while (hist.length > RUN_HISTORY_MAX) hist.shift();
+  }
   saveRunHistory(hist);
+}
+function clearCurrentRunFlags() {
+  // Anropas vid run-start så ev. överlevande "current"-markeringar (t.ex. om appen kraschat
+  // mid-run) inte hänger kvar och visar fel runda som "PÅGÅR".
+  const hist = loadRunHistory();
+  let changed = false;
+  for (const e of hist) {
+    if (e.current) { e.current = false; changed = true; }
+  }
+  if (changed) saveRunHistory(hist);
 }
 
 function todayStamp() {
@@ -236,6 +252,8 @@ const distLiveEl = document.getElementById('distLive');
 const starsEl  = document.getElementById('stars');
 const starsMaxEl = document.getElementById('starsMax');
 const tiresEl  = document.getElementById('tires');
+let _prevTires = 5;
+let _tireMaxSlots = 5;
 const rpmFill  = document.getElementById('rpmFill');
 const rpmVal   = document.getElementById('rpmVal');
 const angFill  = document.getElementById('angFill');
@@ -712,12 +730,7 @@ function buildLevel() {
       px += (arcLen * 50 + 120) / _pDiff;
       continue;
     }
-    // Star
-    if (chance(biome.starFreq * 0.25)) {
-      PICKUPS.push({ type: 'star', x: px, y: terrY - 150 - rng() * 80, taken: false });
-      px += 250 / _pDiff;
-      continue;
-    }
+    // Star — hanteras som hard-cap (1-2 per biome) efter loopen, ingen chance-spawn här
     // Balloon cluster
     if (chance(biome.balloonFreq * 0.3)) {
       const n = 1 + Math.floor(rng() * 3);
@@ -731,12 +744,13 @@ function buildLevel() {
     if (chance(biome.nitroFreq * 0.7)) {
       const r = rng();
       let powerType;
-      if (r < 0.24)      powerType = 'airjump';
-      else if (r < 0.40) powerType = 'nitro';
-      else if (r < 0.54) powerType = 'bomb';
-      else if (r < 0.66) powerType = 'magnet';
-      else if (r < 0.76) powerType = 'shield';
-      else if (r < 0.88) powerType = 'medkit';
+      if (r < 0.22)      powerType = 'airjump';
+      else if (r < 0.37) powerType = 'nitro';
+      else if (r < 0.50) powerType = 'bomb';
+      else if (r < 0.61) powerType = 'magnet';
+      else if (r < 0.71) powerType = 'shield';
+      else if (r < 0.82) powerType = 'medkit';
+      else if (r < 0.92) powerType = 'glider';
       else               powerType = 'power';
       PICKUPS.push({ type: powerType, x: px, y: terrY - 120 - rng() * 60, taken: false });
       px += 220 / _pDiff;
@@ -745,9 +759,48 @@ function buildLevel() {
     px += (150 + rng() * 180) / _pDiff;
   }
 
+  // --- STARS: 1-2 stjärnor TOTALT per run, slumpmässigt placerade i valfri biome ---
+  const totalStars = 1 + Math.floor(rng() * 2); // 1 eller 2
+  for (let s = 0; s < totalStars; s++) {
+    let sx = 0, ok = false;
+    for (let tries = 0; tries < 16; tries++) {
+      // Undvik första 800px (launch) och sista 600px
+      const candidate = 800 + rng() * (WORLD_LEN - 1400);
+      if (!isInBiomeLaunchZone(candidate)) { sx = candidate; ok = true; break; }
+    }
+    if (!ok) continue;
+    const sy = terrainAt(sx) - 150 - rng() * 80;
+    PICKUPS.push({ type: 'star', x: sx, y: sy, taken: false });
+  }
+  // Sortera på x så pickup-cull (fast x-band) fungerar effektivt
+  PICKUPS.sort((a, b) => a.x - b.x);
+
   LEVEL.totalStars = PICKUPS.filter(p => p.type === 'star').length;
   starsMaxEl.textContent = LEVEL.totalStars;
   PICKUPS.forEach((p, i) => { if (p.type === 'balloon') p.baseY = p.y; p._i = i; });
+}
+
+// PERF: Mobil-detektion — shadowBlur på canvas är extremt dyrt på mobil GPU
+// (kan halvera FPS). Vi hoppar över det helt på små skärmar.
+const _isMobile = typeof matchMedia === 'function'
+  ? matchMedia('(max-width: 820px)').matches
+  : false;
+
+// PERF: Hint-baserade start-index för PICKUPS/OBSTACLES iter.
+// PICKUPS är x-sorterad efter buildLevel; OBSTACLES byggs i x-ordning.
+// Vi söker O(1) i typfallet (kameran rör sig framåt), worst-case linjär från hint.
+let _pickupHint = 0;
+let _obstacleHint = 0;
+function _findStartIdx(arr, minX, hint) {
+  if (arr.length === 0) return 0;
+  let i = hint;
+  if (i >= arr.length) i = arr.length - 1;
+  if (i < 0) i = 0;
+  // Walk back if hint is past minX
+  while (i > 0 && arr[i - 1].x >= minX) i--;
+  // Walk forward if hint is before minX
+  while (i < arr.length && arr[i].x < minX) i++;
+  return i;
 }
 
 // Interpolate terrain y at given world x (smoothstep between control points).
@@ -825,6 +878,13 @@ const state = {
   stormSpawnT: 1500,         // frames till nästa stormroll (~25s)
   wetGrounds: [],            // {x1,x2,until} marker som är blöta efter regn
   lightningFlashT: 0,        // visuell blixt-overlay frames
+  fogT: 0,                   // 🌫️ aktiv dimma (frames kvar)
+  fogTotal: 0,               // total fog-duration för fade-in/ut
+  fogSpawnT: 1500,           // frames till nästa fog-roll (canyon/neon)
+  rockfalls: [],             // 🪨 fallande stenar (canyon)
+  rockfallSpawnT: 300,       // frames till nästa rasstens-spawn
+  gliderCharges: 0,          // 🪁 glider-pickup charges, max 5
+  gliderT: 0,                // 🪁 glider-effekt frames kvar (4s = 240)
   combo: { count: 0, timer: 0, mult: 1 },
   time: 0,
   startLaunchX: 0,
@@ -838,6 +898,7 @@ const state = {
   bombCharges: 0,            // 💣 instant up+right blast, max 5
   shieldCharges: 0,          // 🛡️ activates 3s invulnerability, max 3
   shieldT: 0,                // active shield frames (3s = 180)
+  shieldKind: 'normal',      // 'normal' (cyan, från useShield) eller 'star' (gul, från stjärn-pickup)
   magnetT: 0,                // active magnet frames (5s = 300)
   perfect: false,
   stompWindow: 0,            // frames of "perfect stomp" active window
@@ -882,6 +943,7 @@ const state = {
   lastRunDistM: 0,           // distans från senaste game-over
   runMaxDistM: 0,            // max distans den här rundan (inkl. mellan liv)
   paused: false,             // sätts av leaderboard-popup; gör att update() skippar fysik
+  runId: null,               // unikt ID per run; används för upsert i leaderboard-historiken
 };
 
 // Ladder config (bound to TUNING)
@@ -924,6 +986,10 @@ function fire() {
   if (state.phase !== PHASE.AIM) return;
   if (state.tiresLeft <= 0) { flashToast('INGA DÄCK KVAR!', '#ef4444'); return; }
   if (state.rpm < 8) { flashToast('FÖR LÅG RPM!', '#ef4444'); return; }
+  // Säkerställ runId — restart() sätter normalt detta, men på första laddningen
+  // kommer användaren direkt till AIM utan att restart() körts. Utan runId skulle
+  // buildLiveLeaderboardEntry() returnera null och rundan saknas i leaderboarden.
+  if (!state.runId) state.runId = Date.now() + Math.floor(Math.random() * 1000);
   state.tiresLeft--;
   const rad = state.angle * Math.PI / 180;
   const lx = LEVEL.launchX + 60 + Math.cos(rad) * 80;
@@ -1028,11 +1094,16 @@ function useAirjump() {
   if (!state.tire || state.phase !== PHASE.FLY || state.airjumpCharges <= 0) return;
   const t = state.tire;
   state.airjumpCharges--;
-  if (state.stuckOnCactus) unstickFromCactus();
-  // Big upward bounce regardless of position, small forward carry
-  t.vy = -TUNING.airJumpPower;
-  t.vx *= 1.1;
-  if (Math.abs(t.vx) < 4) t.vx += Math.sign(t.vx || 1) * 2;
+  if (state.stuckOnCactus) {
+    // Tryck explicit bort från kaktusen + uppåt så däcket inte faller tillbaka in.
+    const away = state.stuckOnCactus.side === 'left' ? -1 : 1;
+    unstickFromCactus(away * 8, -TUNING.airJumpPower);
+  } else {
+    // Big upward bounce regardless of position, small forward carry
+    t.vy = -TUNING.airJumpPower;
+    t.vx *= 1.1;
+    if (Math.abs(t.vx) < 4) t.vx += Math.sign(t.vx || 1) * 2;
+  }
   state.landT = -999;     // consume any landing window so powerBounce doesn't stack
   bumpMult(0.3);
   awardScore(50, '🪂 AIR JUMP!', '#60a5fa');
@@ -1057,6 +1128,23 @@ function useMagnet() {
   updateMagnetBadge();
 }
 
+function useGlider() {
+  if (!state.tire || state.phase !== PHASE.FLY || state.gliderCharges <= 0) return;
+  if (state.gliderT > 0) return;  // already active
+  const t = state.tire;
+  state.gliderCharges--;
+  state.gliderT = 240; // 4s @ 60fps
+  // Liten lyft direkt så man känner aktiveringen
+  if (t.vy > -2) t.vy = -2;
+  flashToast('🪁 GLIDER 4s!', '#a7f3d0');
+  addParticles(t.x, t.y, '#bae6fd', 22, { up: 5, spread: 8, size: 4 });
+  addParticles(t.x, t.y, '#a7f3d0', 14, { up: 4, spread: 6, size: 3 });
+  shake(3);
+  tone(620, 0.1, 'triangle', 0.14, 320);
+  setTimeout(() => tone(900, 0.12, 'triangle', 0.14, 360), 70);
+  updateGliderBadge();
+}
+
 function useNitro() {
   if (!state.tire || state.nitroCharges <= 0) return;
   const t = state.tire;
@@ -1065,7 +1153,7 @@ function useNitro() {
   if (state.stuckOnCactus) {
     // When stuck, nitro kicks up+away-from-cactus so we have velocity for the boost math below
     const away = state.stuckOnCactus.side === 'left' ? -1 : 1;
-    unstickFromCactus(away * 8, -6);
+    unstickFromCactus(away * 10, -10);
   }
   const speed = Math.sqrt(t.vx * t.vx + t.vy * t.vy) || 1;
   const dx = t.vx / speed, dy = t.vy / speed;
@@ -1122,6 +1210,7 @@ function useShield() {
   if (state.shieldT > 0) return;  // already active
   state.shieldCharges--;
   state.shieldT = 600;  // 10s at 60fps
+  state.shieldKind = 'normal';
   flashToast('🛡️ SKÖLD!', '#22d3ee');
   shake(6);
   tone(660, 0.1, 'sine', 0.14, 300);
@@ -1480,6 +1569,14 @@ function updateFireButton() {
     const cnt = document.getElementById('btnShieldCount');
     if (cnt) cnt.textContent = state.shieldT > 0 ? Math.ceil(state.shieldT / 60) + 's' : state.shieldCharges;
   }
+  const glBtn = document.getElementById('btnGlider');
+  if (glBtn) {
+    const show = state.phase === PHASE.FLY && (state.gliderCharges > 0 || state.gliderT > 0);
+    glBtn.classList.toggle('hidden', !show);
+    glBtn.classList.toggle('active', state.gliderT > 0);
+    const cnt = document.getElementById('btnGliderCount');
+    if (cnt) cnt.textContent = state.gliderT > 0 ? Math.ceil(state.gliderT / 60) + 's' : state.gliderCharges;
+  }
 }
 
 function updateNitroBadge() {
@@ -1513,7 +1610,17 @@ function updateShieldBadge() {
   if (el) el.textContent = state.shieldCharges;
   updateFireButton();
 }
+function updateGliderBadge() {
+  const el = document.getElementById('gliderCount');
+  if (el) el.textContent = state.gliderCharges;
+  updateFireButton();
+}
 function restart() {
+  // Innan vi nollställer state — spara nuvarande live-run till leaderboard så att
+  // abandoned/manually-restarted runs ändå syns. clearCurrentRunFlags() i slutet av
+  // restart() avlägsnar PÅGÅR-flaggan så den blir en vanlig saved entry.
+  const _liveBeforeReset = buildLiveLeaderboardEntry();
+  if (_liveBeforeReset) addRunToHistory(_liveBeforeReset);
   applyUpgrades();
   progression.runs++;
   saveProgression();
@@ -1526,14 +1633,20 @@ function restart() {
   state.runCoinsSpent = 0;
   state.starsGot = 0;
   state.tiresLeft = 5;
+  _tireMaxSlots = state.tiresLeft;
+  _prevTires = state.tiresLeft;
+  // Nytt run-ID per restart() — leaderboard-historiken upsertar via detta så samma run
+  // (över flera liv) uppdaterar samma entry. Sweep ev. kvarvarande "current"-flaggor.
+  state.runId = Date.now() + Math.floor(Math.random() * 1000);
+  clearCurrentRunFlags();
   state.rangeBoost = 0;
   state.powerExtra = 0;
   state.rollBudgetMax = 40;
   state.rollBudget = 0;
   state.maxX = 0;
   state.runMaxDistM = 0;
-  state.lastRunScore = 0;
-  state.lastRunDistM = 0;
+  // Behåll lastRunScore/lastRunDistM över restart så bigScore visar senaste rundan
+  // tills första skottet (fire() nollställer dem då, rad ~959).
   state.tire = null;
   state.particles = [];
   state.popups = [];
@@ -1550,6 +1663,13 @@ function restart() {
   state.stormSpawnT = 450 + Math.floor(Math.random() * 300);
   state.wetGrounds = [];
   state.lightningFlashT = 0;
+  state.fogT = 0;
+  state.fogTotal = 0;
+  state.fogSpawnT = 900 + Math.floor(Math.random() * 600);
+  state.rockfalls = [];
+  state.rockfallSpawnT = 240 + Math.floor(Math.random() * 180);
+  state.gliderCharges = 0;
+  state.gliderT = 0;
   state.fireballs = [];
   state.fireballSpawnT = 120;
   state.ashParticles = [];
@@ -1564,6 +1684,7 @@ function restart() {
   state.bombCharges = 0;
   state.shieldCharges = 0;
   state.shieldT = 0;
+  state.shieldKind = 'normal';
   state.magnetT = 0;
   state.perfect = false;
   state.newRecord = false;
@@ -1607,6 +1728,13 @@ function retry() {
   state.stormSpawnT = 450 + Math.floor(Math.random() * 300);
   state.wetGrounds = [];
   state.lightningFlashT = 0;
+  state.fogT = 0;
+  state.fogTotal = 0;
+  state.fogSpawnT = 900 + Math.floor(Math.random() * 600);
+  state.rockfalls = [];
+  state.rockfallSpawnT = 240 + Math.floor(Math.random() * 180);
+  state.gliderCharges = 0;
+  state.gliderT = 0;
   state.fireballs = [];
   state.fireballSpawnT = 120;
   state.ashParticles = [];
@@ -1634,15 +1762,14 @@ function retry() {
 
 // ====== MID-RUN SHOP (between tire deaths) ======
 const MIDSHOP_ITEMS = [
-  { id: 'tire',    icon: '🛞', name: '+1 Däck',     cost: [2000, 3500, 5500, 8500, 13000], max: 5, stat: () => state.tiresLeft,      apply: () => { state.tiresLeft++; } },
-  { id: 'nitro',   icon: '🔥', name: '+1 Nitro',    cost: [600, 900, 1400, 2100, 3200], max: 5, stat: () => state.nitroCharges,   apply: () => { state.nitroCharges++; } },
-  { id: 'airjump', icon: '🪂', name: '+1 Airjump',  cost: [600, 900, 1400, 2100, 3200], max: 5, stat: () => state.airjumpCharges, apply: () => { state.airjumpCharges++; } },
-  { id: 'magnet',  icon: '🧲', name: '+1 Magnet',   cost: [800, 1200, 1800, 2700, 4000], max: 5, stat: () => state.magnetCharges,  apply: () => { state.magnetCharges++; } },
-  { id: 'bomb',    icon: '💣', name: '+1 Bomb',     cost: [700, 1050, 1600, 2400, 3600], max: 5, stat: () => state.bombCharges || 0, apply: () => { state.bombCharges = (state.bombCharges || 0) + 1; } },
-  { id: 'shield',  icon: '🛡️', name: '+1 Sköld',    cost: [1500, 2300, 3500, 5300, 8000], max: 5, stat: () => state.shieldCharges || 0, apply: () => { state.shieldCharges = (state.shieldCharges || 0) + 1; } },
-  { id: 'medkit',  icon: '❤️', name: 'Heal 100%',   cost: [1200], max: 1, stat: () => (state.health || 0) >= 100 ? 1 : 0, apply: () => { state.health = 100; } },
-  { id: 'range',   icon: '🚀', name: '+15% Räckvidd', cost: [1500, 2200, 3300, 5000, 7500], max: 5, stat: () => state.rangeBoost || 0, apply: () => { state.rangeBoost = (state.rangeBoost || 0) + 1; } },
-  { id: 'power',   icon: '⚡', name: '+30% Kraft',    cost: [800, 1200, 1800, 2700, 4000], max: 5, stat: () => Math.floor((state.powerExtra || 0) / 30), apply: () => { state.powerExtra = Math.min(210, (state.powerExtra || 0) + 30); } },
+  { id: 'tire',    icon: '🛞', name: '+1 Däck',     cost: [20000], max: 5, stat: () => state.tiresLeft,      apply: () => { state.tiresLeft++; } },
+  { id: 'nitro',   icon: '🔥', name: '+1 Nitro',    cost: [2400, 3600, 5600, 8400, 12800], max: 5, stat: () => state.nitroCharges,   apply: () => { state.nitroCharges++; } },
+  { id: 'airjump', icon: '🪂', name: '+1 Airjump',  cost: [2400, 3600, 5600, 8400, 12800], max: 5, stat: () => state.airjumpCharges, apply: () => { state.airjumpCharges++; } },
+  { id: 'magnet',  icon: '🧲', name: '+1 Magnet',   cost: [3200, 4800, 7200, 10800, 16000], max: 5, stat: () => state.magnetCharges,  apply: () => { state.magnetCharges++; } },
+  { id: 'bomb',    icon: '💣', name: '+1 Bomb',     cost: [2800, 4200, 6400, 9600, 14400], max: 5, stat: () => state.bombCharges || 0, apply: () => { state.bombCharges = (state.bombCharges || 0) + 1; } },
+  { id: 'shield',  icon: '🛡️', name: '+1 Sköld',    cost: [6000, 9200, 14000, 21200, 32000], max: 5, stat: () => state.shieldCharges || 0, apply: () => { state.shieldCharges = (state.shieldCharges || 0) + 1; } },
+  { id: 'range',   icon: '🚀', name: '+15% Räckvidd', cost: [6000, 8800, 13200, 20000, 30000], max: 5, stat: () => state.rangeBoost || 0, apply: () => { state.rangeBoost = (state.rangeBoost || 0) + 1; } },
+  { id: 'power',   icon: '⚡', name: '+30% Kraft',    cost: [3200, 4800, 7200, 10800, 16000], max: 5, stat: () => Math.floor((state.powerExtra || 0) / 30), apply: () => { state.powerExtra = Math.min(210, (state.powerExtra || 0) + 30); } },
 ];
 function midShopCost(it) {
   const cur = it.stat();
@@ -1740,10 +1867,43 @@ window.closeLeaderboard = function () {
   state.paused = false;
 };
 
+// Spara live-run vid app-bakgrund/sidstängning så abandoned runs syns i leaderboard
+// nästa session. clearCurrentRunFlags() vid nästa restart() avlägsnar PÅGÅR-flaggan.
+function persistLiveRun() {
+  const live = buildLiveLeaderboardEntry && buildLiveLeaderboardEntry();
+  if (live) addRunToHistory(live);
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) persistLiveRun(); });
+window.addEventListener('pagehide', persistLiveRun);
+
+function buildLiveLeaderboardEntry() {
+  // Skapar en "live" entry från nuvarande state om en run pågår — visas alltid överst
+  // i leaderboarden så spelaren kan jämföra mot andra rundor i realtid.
+  if (!state.runId) return null;
+  const currentLifeDistM = state.tire
+    ? Math.max(0, Math.round(((state.maxX || 0) - (state.startLaunchX || 0)) / 5))
+    : 0;
+  const liveDistM = Math.max(state.runMaxDistM || 0, currentLifeDistM);
+  if (state.score <= 0 && liveDistM <= 0) return null;
+  return {
+    runId: state.runId,
+    score: state.score,
+    distM: liveDistM,
+    ts: Date.now(),
+    date: todayStamp(),
+    won: false,
+    current: true,
+  };
+}
+
 function renderLeaderboard() {
   const list = document.getElementById('lbList');
   if (!list) return;
-  const all = loadRunHistory();
+  let all = loadRunHistory();
+  const liveEntry = buildLiveLeaderboardEntry();
+  // Plocka bort ev. tidigare lagrad entry för samma runId — live-versionen är fräschare.
+  if (liveEntry) all = all.filter(r => r.runId !== liveEntry.runId);
+
   let rows;
   if (lbState.tab === 'today') {
     const today = todayStamp();
@@ -1753,22 +1913,36 @@ function renderLeaderboard() {
   } else {
     rows = all.slice().sort((a, b) => (b[lbState.sort] || 0) - (a[lbState.sort] || 0)).slice(0, 10);
   }
+
+  // Pinna live-entry överst (oavsett sort/flik) så pågående run alltid är synlig.
+  if (liveEntry) {
+    const fitsTab = lbState.tab !== 'today' || liveEntry.date === todayStamp();
+    if (fitsTab) {
+      if (rows.length >= 10) rows.pop();
+      rows.unshift(liveEntry);
+    }
+  }
+
   if (!rows.length) {
     list.innerHTML = '<div class="lb-empty">Inga rundor sparade än.<br>Spela klart en run för att hamna här!</div>';
     return;
   }
   list.innerHTML = rows.map((r, i) => {
-    const rank = i + 1;
-    const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : 'rank-other';
-    const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '#' + rank;
-    const dateStr = formatLbDate(r.ts);
+    const isLive = !!(liveEntry && r === liveEntry);
+    // Saved rows ranked 1..N. Om live-entry pinnats överst skiftar saved-rader så de börjar på rank 1.
+    const savedRank = isLive ? 0 : (liveEntry ? i : i + 1);
+    const rankClass = isLive ? 'rank-live' : (savedRank === 1 ? 'rank-1' : savedRank === 2 ? 'rank-2' : savedRank === 3 ? 'rank-3' : 'rank-other');
+    const medal = isLive ? '🎯' : (savedRank === 1 ? '🥇' : savedRank === 2 ? '🥈' : savedRank === 3 ? '🥉' : '#' + savedRank);
+    const dateStr = isLive ? 'Just nu' : formatLbDate(r.ts);
     const score = (r.score || 0).toLocaleString('sv-SE');
     const dist = (r.distM || 0).toLocaleString('sv-SE');
+    const currentClass = (r.current || isLive) ? ' lb-current' : '';
+    const liveBadge = isLive ? '<span class="lb-live">● PÅGÅR</span>' : '';
     return `
-      <div class="lb-row ${rankClass}">
+      <div class="lb-row ${rankClass}${currentClass}">
         <div class="lb-rank">${medal}</div>
         <div class="lb-meta">
-          <div class="lb-score">${score} p</div>
+          <div class="lb-score">${score} p ${liveBadge}</div>
           <div class="lb-date">${dateStr}</div>
         </div>
         <div class="lb-stat">
@@ -2296,6 +2470,7 @@ wirePowerButton('btnAirjump', () => state.airjumpCharges > 0, useAirjump);
 wirePowerButton('btnMagnet',  () => state.magnetCharges  > 0, useMagnet);
 wirePowerButton('btnBomb',    () => state.bombCharges    > 0, useBomb);
 wirePowerButton('btnShield',  () => state.shieldCharges  > 0 && state.shieldT === 0, useShield);
+wirePowerButton('btnGlider',  () => state.gliderCharges  > 0 && state.gliderT === 0, useGlider);
 
 // Keyboard as backup
 window.addEventListener('keydown', e => {
@@ -2308,6 +2483,7 @@ window.addEventListener('keydown', e => {
   if (e.code === 'KeyM' && state.phase === PHASE.FLY && state.magnetCharges > 0) useMagnet();
   if (e.code === 'KeyB' && state.phase === PHASE.FLY && state.bombCharges > 0) useBomb();
   if (e.code === 'KeyH' && state.phase === PHASE.FLY && state.shieldCharges > 0) useShield();
+  if (e.code === 'KeyG' && state.phase === PHASE.FLY && state.gliderCharges > 0) useGlider();
   if (e.code === 'KeyS' && state.phase === PHASE.FLY) {
     if (!powerBounce()) {
       if (state.tire) {
@@ -2479,6 +2655,10 @@ function update() {
   // Åskmoln + regn + blixt
   updateStorms();
   applyStormEffects();
+  // Dimma (canyon + neon)
+  updateFog();
+  // Rasstenar (canyon)
+  updateRockfalls();
   // Eldbollar + aska (vulkanen)
   updateFireballs();
   updateAshParticles();
@@ -2668,7 +2848,16 @@ function update() {
 
     // Physics — gravity varies by biome. timeScale < 1 during slow-mo keeps same FPS but stretches time.
     const TS = state.timeScale || 1;
-    const gNow = gravityAtX(t.x);
+    let gNow = gravityAtX(t.x);
+    // 🪁 Glider: 70% mindre gravity i 4s
+    if (state.gliderT > 0) {
+      gNow *= 0.3;
+      state.gliderT = Math.max(0, state.gliderT - TS);
+      if (state.gliderT === 0) {
+        flashToast('🪁 GLIDER SLUT', '#94a3b8');
+        updateGliderBadge();
+      }
+    }
     t.vy += gNow * TS;
     // Frame-drag approximated linearly so it scales with timeScale (light drag near 1.0)
     const dragFactor = 1 - (1 - AIR_DRAG) * TS;
@@ -2696,9 +2885,11 @@ function update() {
     // Global speed cap — ramps/trampolines/bounces can't push past this unless nitro or launch-window
     if (state.nitroBoostT > 0) state.nitroBoostT--;
     if (state.launchBoostT > 0) state.launchBoostT--;
-    const cap = state.nitroBoostT > 0 ? TUNING.speedCapNitro
-              : state.launchBoostT > 0 ? TUNING.speedCapLaunch
-              : TUNING.speedCapNormal;
+    let cap = state.nitroBoostT > 0 ? TUNING.speedCapNitro
+            : state.launchBoostT > 0 ? TUNING.speedCapLaunch
+            : TUNING.speedCapNormal;
+    // Star-shield: +20% max-fart medan gul sköld är aktiv.
+    if (state.shieldKind === 'star' && state.shieldT > 0) cap *= 1.2;
     const sp = Math.hypot(t.vx, t.vy);
     if (sp > cap) {
       const k = cap / sp;
@@ -2728,7 +2919,11 @@ function update() {
     }
     if (state.shieldT > 0) {
       state.shieldT--;
-      if (state.shieldT === 0) { updateShieldBadge(); flashToast('SKÖLD SLUT', '#64748b'); }
+      if (state.shieldT === 0) {
+        state.shieldKind = 'normal';
+        updateShieldBadge();
+        flashToast('SKÖLD SLUT', '#64748b');
+      }
     }
 
     // Back-wall / house — only blocks when tire is low enough to hit the house body.
@@ -3189,9 +3384,19 @@ function update() {
           }
         }
       } else if (o.type === 'water') {
-        // Water hole — instant death on contact (sköld räddar inte från drunkning).
+        // Water hole — instant death; sköld (normal eller star) räddar och studsar på ytan som mark.
         const wx1 = o.x, wx2 = o.x + o.w;
         const surfY = o.surfaceY;
+        // Sköld-räddning: studsa på vattnet som om det vore mark.
+        if (state.shieldT > 0 && t.x + TIRE_R > wx1 && t.x - TIRE_R < wx2 && t.y + TIRE_R > surfY - 4) {
+          if (t.vy > 0) {
+            t.y = surfY - TIRE_R - 1;
+            t.vy = -Math.abs(t.vy) * 0.55;
+            t.vx *= 0.94;
+            addParticles(t.x, surfY, '#38bdf8', 12, { up: 5, spread: 6, size: 3 });
+          }
+          return; // forEach-callback — hoppa till nästa obstacle
+        }
         if (t.x + TIRE_R > wx1 && t.x - TIRE_R < wx2 && t.y + TIRE_R > surfY - 4 && !o._splashed) {
           o._splashed = true;
           // Splash
@@ -3220,9 +3425,19 @@ function update() {
           return;
         }
       } else if (o.type === 'lava') {
-        // Lavaflod — instant-death; samma sjunkningsanimation som vatten men eldigt tema.
+        // Lavaflod — instant-death; sköld räddar och studsar på lavaytan som mark.
         const wx1 = o.x, wx2 = o.x + o.w;
         const surfY = o.surfaceY;
+        if (state.shieldT > 0 && t.x + TIRE_R > wx1 && t.x - TIRE_R < wx2 && t.y + TIRE_R > surfY - 4) {
+          if (t.vy > 0) {
+            t.y = surfY - TIRE_R - 1;
+            t.vy = -Math.abs(t.vy) * 0.55;
+            t.vx *= 0.94;
+            addParticles(t.x, surfY, '#fbbf24', 10, { up: 5, spread: 6, size: 3 });
+            addParticles(t.x, surfY, '#f97316', 8, { up: 4, spread: 5, size: 3 });
+          }
+          return; // forEach-callback — hoppa till nästa obstacle
+        }
         if (t.x + TIRE_R > wx1 && t.x - TIRE_R < wx2 && t.y + TIRE_R > surfY - 4 && !o._splashed) {
           o._splashed = true;
           // Lava splash — gnistor + glödande droppar
@@ -3605,34 +3820,40 @@ function update() {
       const r2 = MAGNET_RADIUS * MAGNET_RADIUS;
       const _magMinX = t.x - MAGNET_RADIUS;
       const _magMaxX = t.x + MAGNET_RADIUS;
-      PICKUPS.forEach(p => {
-        if (p.taken || p.type === 'magnet') return;
-        if (p.x < _magMinX || p.x > _magMaxX) return;
+      // PERF: starta från hint istället för att iterera hela arrayen
+      const _start = _findStartIdx(PICKUPS, _magMinX, _pickupHint);
+      for (let _i = _start; _i < PICKUPS.length; _i++) {
+        const p = PICKUPS[_i];
+        if (p.x > _magMaxX) break;
+        if (p.taken || p.type === 'magnet') continue;
         const py0 = p.type === 'balloon' ? p.baseY + Math.sin((state.time + p._i * 30) * 0.05) * 18 : p.y;
         const ddx = t.x - p.x, ddy = t.y - py0;
         const d2 = ddx*ddx + ddy*ddy;
         if (d2 < r2 && d2 > 1) {
           const d = Math.sqrt(d2);
-          const pull = TUNING.magnetPullStrength * (1 - d / MAGNET_RADIUS);  // stronger when closer
+          const pull = TUNING.magnetPullStrength * (1 - d / MAGNET_RADIUS);
           p.x += (ddx / d) * pull;
           if (p.type === 'balloon') p.baseY += (ddy / d) * pull;
           else p.y += (ddy / d) * pull;
         }
-      });
+      }
     }
 
-    // Pickups
-    // Pickups only collide close to the tire (radius ~18 + balloons float ~18). Cull by x-distance.
+    // Pickups — collision check (close band kring tire)
     const _pickMinX = t.x - 100;
     const _pickMaxX = t.x + 100;
-    PICKUPS.forEach(p => {
-      if (p.taken) return;
-      if (p.x < _pickMinX || p.x > _pickMaxX) return;
+    // PERF: hint-baserad start; uppdatera hint för cross-loop återanvändning
+    const _pStart = _findStartIdx(PICKUPS, _pickMinX, _pickupHint);
+    _pickupHint = _pStart;
+    for (let _pi = _pStart; _pi < PICKUPS.length; _pi++) {
+      const p = PICKUPS[_pi];
+      if (p.x > _pickMaxX) break;
+      if (p.taken) continue;
       // Balloons bob — use current Y for collision
       const py = p.type === 'balloon' ? p.baseY + Math.sin((state.time + p._i * 30) * 0.05) * 18 : p.y;
       const dx = t.x - p.x, dy = t.y - py;
       let r = 18;
-      if (p.type === 'star') r = 26;
+      if (p.type === 'star') r = 42;
       else if (p.type === 'balloon') r = 22;
       else if (p.type === 'nitro') r = 22;
       else if (p.type === 'airjump') r = 22;
@@ -3641,6 +3862,7 @@ function update() {
       else if (p.type === 'bomb') r = 22;
       else if (p.type === 'shield') r = 22;
       else if (p.type === 'medkit') r = 22;
+      else if (p.type === 'glider') r = 24;
       // Magnet active doubles the effective collect radius (auto-vacuum)
       if (magnetActive && p.type !== 'magnet') r += 14;
       if (dx*dx + dy*dy < (TIRE_R + r) * (TIRE_R + r)) {
@@ -3677,6 +3899,26 @@ function update() {
           addPopup(p.x, p.y - 20, '+300 STJÄRNA', '#fbbf24');
           addParticles(p.x, p.y, '#fbbf24', 24, { up: 5, spread: 8, size: 4 });
           addParticles(p.x, p.y, '#ffffff', 14, { up: 3, spread: 6, size: 2 });
+          // Stjärn-power-up: 7s gul sköld (skyddar även mot vatten/lava) + fartboost.
+          state.shieldT = Math.max(state.shieldT, 420); // 7s @ 60fps; krymp inte ev. längre aktiv sköld
+          state.shieldKind = 'star';
+          // Vid låg fart: garantera minst 15 i fart (riktning framåt+lite uppåt).
+          // Vid normal fart: +50% boost, behåll riktning.
+          {
+            const sp = Math.hypot(t.vx, t.vy);
+            const MIN = 15;
+            if (sp < MIN) {
+              const dx = sp > 0.1 ? t.vx / sp : 1;
+              const dy = sp > 0.1 ? t.vy / sp : -0.3;
+              const norm = Math.hypot(dx, dy) || 1;
+              t.vx = (dx / norm) * MIN;
+              t.vy = (dy / norm) * MIN;
+            } else {
+              t.vx *= 1.5;
+              t.vy *= 1.5;
+            }
+          }
+          flashToast('⭐ STAR SHIELD! +50% & MAX +20%', '#fde047');
           sfxStar(); shake(4);
         } else if (p.type === 'balloon') {
           bumpMult(0.4);
@@ -3752,9 +3994,18 @@ function update() {
           sfxCoin(); shake(3);
           tone(660, 0.1, 'sine', 0.16, 380);
           setTimeout(() => tone(990, 0.1, 'sine', 0.14, 420), 70);
+        } else if (p.type === 'glider') {
+          // 🪁 Glider — pickup ger en charge. Aktiveras med btnGlider/KeyG.
+          state.gliderCharges = Math.min(5, state.gliderCharges + 1);
+          state.score += 100;
+          addPopup(p.x, p.y - 20, '🪁 GLIDER!', '#a7f3d0');
+          addParticles(p.x, p.y, '#bae6fd', 22, { up: 5, spread: 7, size: 4 });
+          addParticles(p.x, p.y, '#a7f3d0', 14, { up: 4, spread: 5, size: 3 });
+          sfxCoin(); shake(3);
+          updateGliderBadge();
         }
       }
-    });
+    }
 
     // Combo timer
     if (state.combo.timer > 0) {
@@ -3931,6 +4182,23 @@ function finishRun(won) {
     saveDailyPB(dailyPB);
   }
 
+  // Leaderboard-spara/uppdatera: körs vid VARJE liv-slut (retry, game-over, won).
+  // current=true så länge run pågår (kvar liv) → markeras som "PÅGÅR" i leaderboard.
+  // current=false när run faktiskt avslutas.
+  const _runFinal = won || state.tiresLeft <= 0;
+  const _runEntryDist = Math.max(state.runMaxDistM || 0, runDistM);
+  if (state.runId && (state.score > 0 || _runEntryDist > 0)) {
+    addRunToHistory({
+      runId: state.runId,
+      score: state.score,
+      distM: _runEntryDist,
+      ts: Date.now(),
+      date: todayStamp(),
+      won: !!won,
+      current: !_runFinal,
+    });
+  }
+
   if (!won && state.tiresLeft > 0) {
     // Förbruka bought power-extras baserat på hur mycket över base 40 som användes.
     // Base 40 är gratis varje skott; allt över det kommer från powerExtra-lagret.
@@ -4020,22 +4288,6 @@ function finishRun(won) {
 
   const distM = runDistM;
   runStats.distM = distM;
-
-  // Logga rundan i leaderboard-historiken — körs både vid mål-träff (won) och game-over.
-  // Mid-life retry hoppar över via early return ovan, så enbart faktiska run-slut sparas.
-  // I won-fallet har state.score chimney-bonus inkluderad. I game-over-fallet plockar vi
-  // lastRunScore eftersom score nyss nollställts.
-  const _lbScore = won ? state.score : (state.lastRunScore || 0);
-  const _lbDistM = won ? distM : (state.lastRunDistM || distM);
-  if (_lbScore > 0 || _lbDistM > 0) {
-    addRunToHistory({
-      score: _lbScore,
-      distM: _lbDistM,
-      ts: Date.now(),
-      date: todayStamp(),
-      won: !!won,
-    });
-  }
 
   // Coins earned: 1 coin per 10 score + explicit coin count bonus.
   // Drar bort vad som redan tilldelats progression via mid-shop-flöden under rundan
@@ -4416,140 +4668,217 @@ const _aimHudLabels = aimHud ? aimHud.querySelectorAll('.label') : [];
 const _aimHudValBoxes = aimHud ? aimHud.querySelectorAll('.val') : [];
 const _aimHudPerfectZone = aimHud ? aimHud.querySelector('.zone.perfect') : null;
 
+// PERF: Cache:a alla DOM-referenser som updateHud annars skulle slå upp varje frame (60×/s).
+// getElementById är inte gratis — och vi gör ~15 lookups per frame i updateHud.
+const _hudEls = {
+  windMeter: document.getElementById('windMeter'),
+  windFill:  document.getElementById('windFill'),
+  windArrow: document.getElementById('windArrow'),
+  windVal:   document.getElementById('windVal'),
+  hs:        document.getElementById('hs'),
+  bigScore:  document.getElementById('bigScore'),
+  bigScoreLabel: document.getElementById('bigScoreLabel'),
+  bigScoreVal:   document.getElementById('bigScoreVal'),
+  bigMult:   document.getElementById('bigMult'),
+  bigPbChase: document.getElementById('bigPbChase'),
+  pbChaseBox: document.getElementById('pbChaseBox'),
+  distBox:   document.getElementById('distBox'),
+  distBoxVal: document.getElementById('distBoxVal'),
+  tireBox:   document.getElementById('tireBox'),
+  tireIcons: document.getElementById('tireIcons'),
+  rollMeter: document.getElementById('rollMeter'),
+  rollFill:  document.getElementById('rollFill'),
+  rollPct:   document.getElementById('rollPct'),
+};
+// PERF: Setup angVal-suffix som ett separat text-node-syskon i stället för att skriva
+// över hela innerHTML varje frame (innerHTML triggar HTML-parser + DOM-rebuild).
+let _angSuffixNode = null;
+if (_aimHudValBoxes[1]) {
+  // Säkerställ att .val[1] har strukturen: <span id="angVal">45</span><text-node "°">
+  _angSuffixNode = document.createTextNode('°');
+  // Behåll befintlig <span id="angVal"> men skrota allt efter den
+  const valBox = _aimHudValBoxes[1];
+  const span = valBox.querySelector('#angVal') || valBox.firstElementChild;
+  valBox.innerHTML = '';
+  if (span) valBox.appendChild(span);
+  valBox.appendChild(_angSuffixNode);
+}
+// PERF: Diff-cache — varje frame skriver vi bara om värdet faktiskt ändrats.
+// Sparar ~10-15 layout-recalcs per frame när siffrorna är konstanta.
+const _hu = {
+  rpmFillW: -1, rpmFillBg: '', rpmValTxt: '', rpmValCol: '__init__',
+  angFillW: -1, angFillBg: '', angValTxt: '', angSuffix: '',
+  perfectDisplay: '__init__',
+  label0: '', label1: '',
+  windFillLeft: '', windFillW: '', windFillBg: '',
+  windArrowTxt: '', windArrowCol: '',
+  windValTxt: '', windDisabled: null,
+  scoreTxt: '', distLiveTxt: '', starsTxt: '', tiresTxt: '', hsTxt: '',
+  bigScoreVisible: null, bigScoreLastRun: null,
+  bigScoreLabelTxt: '', bigScoreValTxt: '', bigScorePulse: null,
+  bigMultTxt: '', bigMultHidden: null, bigMultTier2: null, bigMultTier3: null, bigMultPop: null,
+  pbChaseHtml: '', pbChaseHidden: null, pbChaseNear: null, pbChaseOver: null,
+  distBoxHidden: null, distBoxValTxt: '',
+  tireBoxHidden: null, tireSlots: -1, tireActive: -1, tireIsOne: null,
+  rollMeterHidden: null, rollFlash: null, rollFillW: -1, rollPctTxt: '',
+};
+
+function _setText(el, val, key) {
+  if (!el || _hu[key] === val) return;
+  el.textContent = val;
+  _hu[key] = val;
+}
+function _setStyle(el, prop, val, key) {
+  if (!el || _hu[key] === val) return;
+  el.style[prop] = val;
+  _hu[key] = val;
+}
+function _setClass(el, cls, on, key) {
+  if (!el || _hu[key] === on) return;
+  el.classList.toggle(cls, !!on);
+  _hu[key] = on;
+}
+
 function updateHud() {
+  // PERF: Använd diff-cache (_hu) — skriv ENDAST när värdet faktiskt ändrats.
   // Mätarna byter syfte mellan AIM (RPM + VINKEL) och FLY (HÄLSA + KRAFT)
   if (state.phase === PHASE.FLY) {
-    // Hälsa
     const hp = Math.max(0, state.health || 0);
-    rpmFill.style.width = hp + '%';
-    rpmFill.style.background = hp > 60 ? '#22c55e' : hp > 30 ? '#fbbf24' : '#ef4444';
-    if (_aimHudLabels[0]) _aimHudLabels[0].textContent = 'HÄLSA';
-    rpmVal.textContent = Math.round(hp);
-    rpmVal.style.color = '';
-    if (_aimHudPerfectZone) _aimHudPerfectZone.style.display = 'none';
-    // Kraft (drag-power för relaunch)
+    const hpInt = Math.round(hp);
+    _setStyle(rpmFill, 'width', hp + '%', 'rpmFillW');
+    _setStyle(rpmFill, 'background', hp > 60 ? '#22c55e' : hp > 30 ? '#fbbf24' : '#ef4444', 'rpmFillBg');
+    if (_hu.label0 !== 'HÄLSA' && _aimHudLabels[0]) { _aimHudLabels[0].textContent = 'HÄLSA'; _hu.label0 = 'HÄLSA'; }
+    _setText(rpmVal, hpInt, 'rpmValTxt');
+    _setStyle(rpmVal, 'color', '', 'rpmValCol');
+    if (_aimHudPerfectZone && _hu.perfectDisplay !== 'none') { _aimHudPerfectZone.style.display = 'none'; _hu.perfectDisplay = 'none'; }
     const pwrMax = state.rollBudgetMax || 40;
     const pwrPct = Math.max(0, Math.min(100, ((state.rollBudget || 0) / pwrMax) * 100));
-    angFill.style.width = pwrPct + '%';
-    angFill.style.background = '#60a5fa';
-    if (_aimHudLabels[1]) _aimHudLabels[1].textContent = 'KRAFT';
-    if (_aimHudValBoxes[1]) _aimHudValBoxes[1].innerHTML = `<span id="angVal">${Math.round(pwrPct)}</span>%`;
+    _setStyle(angFill, 'width', pwrPct + '%', 'angFillW');
+    _setStyle(angFill, 'background', '#60a5fa', 'angFillBg');
+    if (_hu.label1 !== 'KRAFT' && _aimHudLabels[1]) { _aimHudLabels[1].textContent = 'KRAFT'; _hu.label1 = 'KRAFT'; }
+    const pwrTxt = String(Math.round(pwrPct));
+    if (angVal && _hu.angValTxt !== pwrTxt) { angVal.textContent = pwrTxt; _hu.angValTxt = pwrTxt; }
+    if (_angSuffixNode && _hu.angSuffix !== '%') { _angSuffixNode.nodeValue = '%'; _hu.angSuffix = '%'; }
   } else {
-    rpmFill.style.width = state.rpm + '%';
-    rpmFill.style.background = '';
-    if (_aimHudLabels[0]) _aimHudLabels[0].textContent = 'RPM';
-    rpmVal.textContent = Math.round(state.rpm);
-    if (_aimHudPerfectZone) _aimHudPerfectZone.style.display = '';
-    angFill.style.width = ((state.angle - MIN_ANGLE) / (MAX_ANGLE - MIN_ANGLE) * 100) + '%';
-    angFill.style.background = '';
-    if (_aimHudLabels[1]) _aimHudLabels[1].textContent = 'VINKEL';
-    if (_aimHudValBoxes[1]) _aimHudValBoxes[1].innerHTML = `<span id="angVal">${Math.round(state.angle)}</span>°`;
+    const rpmInt = Math.round(state.rpm);
+    _setStyle(rpmFill, 'width', state.rpm + '%', 'rpmFillW');
+    _setStyle(rpmFill, 'background', '', 'rpmFillBg');
+    if (_hu.label0 !== 'RPM' && _aimHudLabels[0]) { _aimHudLabels[0].textContent = 'RPM'; _hu.label0 = 'RPM'; }
+    _setText(rpmVal, rpmInt, 'rpmValTxt');
+    if (_aimHudPerfectZone && _hu.perfectDisplay !== '') { _aimHudPerfectZone.style.display = ''; _hu.perfectDisplay = ''; }
+    const angPct = (state.angle - MIN_ANGLE) / (MAX_ANGLE - MIN_ANGLE) * 100;
+    _setStyle(angFill, 'width', angPct + '%', 'angFillW');
+    _setStyle(angFill, 'background', '', 'angFillBg');
+    if (_hu.label1 !== 'VINKEL' && _aimHudLabels[1]) { _aimHudLabels[1].textContent = 'VINKEL'; _hu.label1 = 'VINKEL'; }
+    const angTxt = String(Math.round(state.angle));
+    if (angVal && _hu.angValTxt !== angTxt) { angVal.textContent = angTxt; _hu.angValTxt = angTxt; }
+    if (_angSuffixNode && _hu.angSuffix !== '°') { _angSuffixNode.nodeValue = '°'; _hu.angSuffix = '°'; }
   }
-  // === Vind-mätare (HTML, alla faser) ===
+  // === Vind-mätare (HTML, alla faser) === — PERF: cache:ade element + diff-skip
   {
-    const meter = document.getElementById('windMeter');
-    const fill = document.getElementById('windFill');
-    const arrow = document.getElementById('windArrow');
-    const valEl = document.getElementById('windVal');
+    const meter = _hudEls.windMeter;
+    const fill = _hudEls.windFill;
+    const arrow = _hudEls.windArrow;
+    const valEl = _hudEls.windVal;
     if (meter && fill && arrow && valEl) {
       const s = state.windDisabled ? 0 : (state.wind?.strength || 0);
       const absS = Math.abs(s);
-      // Bar-bredd: 0..50% av total bar (centrum = 50%)
       const pct = Math.min(50, absS * 100);
-      if (s >= 0) { fill.style.left = '50%'; fill.style.width = pct + '%'; }
-      else        { fill.style.left = (50 - pct) + '%'; fill.style.width = pct + '%'; }
-      // Färg
+      const newLeft = s >= 0 ? '50%' : ((50 - pct) + '%');
+      const newW = pct + '%';
+      _setStyle(fill, 'left', newLeft, 'windFillLeft');
+      _setStyle(fill, 'width', newW, 'windFillW');
       const col = state.windDisabled ? '#475569'
                 : absS < 0.15 ? '#94a3b8'
                 : absS < 0.5  ? (s > 0 ? '#10b981' : '#f97316')
                               : (s > 0 ? '#22c55e' : '#ef4444');
-      fill.style.background = `linear-gradient(${s >= 0 ? '90deg' : '270deg'}, transparent, ${col})`;
-      // Pil
-      arrow.textContent = state.windDisabled ? '∅' : (absS < 0.15 ? '·' : (s > 0 ? '→' : '←'));
-      arrow.style.color = col;
-      // Text
-      valEl.textContent = state.windDisabled ? 'AV'
-                       : (absS < 0.15 ? 'STILLA'
-                       : `${s > 0 ? 'MED' : 'MOT'} ${absS.toFixed(1)}`);
-      meter.classList.toggle('disabled', !!state.windDisabled);
+      const newBg = `linear-gradient(${s >= 0 ? '90deg' : '270deg'}, transparent, ${col})`;
+      _setStyle(fill, 'background', newBg, 'windFillBg');
+      const arrTxt = state.windDisabled ? '∅' : (absS < 0.15 ? '·' : (s > 0 ? '→' : '←'));
+      _setText(arrow, arrTxt, 'windArrowTxt');
+      _setStyle(arrow, 'color', col, 'windArrowCol');
+      const valTxt = state.windDisabled ? 'AV'
+                   : (absS < 0.15 ? 'STILLA'
+                   : `${s > 0 ? 'MED' : 'MOT'} ${absS.toFixed(1)}`);
+      _setText(valEl, valTxt, 'windValTxt');
+      _setClass(meter, 'disabled', !!state.windDisabled, 'windDisabled');
     }
   }
-  scoreEl.textContent = state.score;
+  _setText(scoreEl, state.score, 'scoreTxt');
   if (distLiveEl) {
     const liveDist = state.phase === PHASE.FLY && state.tire
       ? Math.max(runStats.distM || 0, Math.round((state.maxX - state.startLaunchX) / 5))
       : (runStats.distM || 0);
-    distLiveEl.textContent = liveDist;
+    _setText(distLiveEl, liveDist, 'distLiveTxt');
   }
-  starsEl.textContent = state.starsGot;
-  tiresEl.textContent = state.tiresLeft;
-  const hsEl = document.getElementById('hs');
-  if (hsEl) hsEl.textContent = state.highScore;
-  // Live highlight on RPM val when in PERFECT zone
-  if (state.rpm >= PERFECT_MIN && state.rpm <= PERFECT_MAX) {
-    rpmVal.style.color = '#10b981';
-  } else {
-    rpmVal.style.color = '';
-  }
+  _setText(starsEl, state.starsGot, 'starsTxt');
+  _setText(tiresEl, state.tiresLeft, 'tiresTxt');
+  if (_hudEls.hs) _setText(_hudEls.hs, state.highScore, 'hsTxt');
+  // Live highlight on RPM val when in PERFECT zone — PERF: diff-skip
+  const rpmCol = (state.rpm >= PERFECT_MIN && state.rpm <= PERFECT_MAX) ? '#10b981' : '';
+  _setStyle(rpmVal, 'color', rpmCol, 'rpmValCol');
   // Big score HUD — visar nuvarande runda under flight/roll, och senaste rundan i AIM
   // efter game-over (tills nästa skott). Mid-life AIM (score>0) visar fortfarande aktuell.
-  const bs = document.getElementById('bigScore');
+  const bs = _hudEls.bigScore;
   if (bs) {
     const isFlyOrDone = state.phase === PHASE.FLY || state.phase === PHASE.DONE;
     const isAimWithScore = state.phase === PHASE.AIM && state.score > 0;
     const isAimAfterDeath = state.phase === PHASE.AIM && state.score === 0 && (state.lastRunScore > 0 || state.lastRunDistM > 0);
     const showLastRun = isAimAfterDeath;
     const showBig = isFlyOrDone || isAimWithScore || isAimAfterDeath;
-    bs.classList.toggle('visible', showBig);
-    bs.classList.toggle('last-run', showLastRun);
-    const bsLabel = document.getElementById('bigScoreLabel');
-    if (bsLabel) bsLabel.textContent = showLastRun ? 'FÖRRA RUNDAN' : 'POÄNG';
-    const bsv = document.getElementById('bigScoreVal');
+    _setClass(bs, 'visible', showBig, 'bigScoreVisible');
+    _setClass(bs, 'last-run', showLastRun, 'bigScoreLastRun');
+    const bsLabel = _hudEls.bigScoreLabel;
+    if (bsLabel) _setText(bsLabel, showLastRun ? 'FÖRRA RUNDAN' : 'POÄNG', 'bigScoreLabelTxt');
+    const bsv = _hudEls.bigScoreVal;
     if (bsv) {
       const displayScore = showLastRun ? state.lastRunScore : state.score;
-      bsv.textContent = displayScore.toLocaleString('sv-SE');
-      bsv.classList.toggle('pulse', state.scorePulseT > 0);
+      const txt = displayScore.toLocaleString('sv-SE');
+      _setText(bsv, txt, 'bigScoreValTxt');
+      _setClass(bsv, 'pulse', state.scorePulseT > 0, 'bigScorePulse');
     }
-    // Distansboxen ligger på vänster sida (bredvid PB-chase) — separat från bigScore.
-    const bm = document.getElementById('bigMult');
+    const bm = _hudEls.bigMult;
     if (bm) {
       const m = state.flightMult || 1;
       if (m > 1.01) {
-        bm.classList.remove('hidden');
-        bm.textContent = 'x' + m.toFixed(1);
-        bm.classList.toggle('tier3', m >= 5);
-        bm.classList.toggle('tier2', m >= 3 && m < 5);
-        bm.classList.toggle('pop', state.scorePulseT > 8);
+        _setClass(bm, 'hidden', false, 'bigMultHidden');
+        const txt = 'x' + m.toFixed(1);
+        _setText(bm, txt, 'bigMultTxt');
+        _setClass(bm, 'tier3', m >= 5, 'bigMultTier3');
+        _setClass(bm, 'tier2', m >= 3 && m < 5, 'bigMultTier2');
+        _setClass(bm, 'pop', state.scorePulseT > 8, 'bigMultPop');
       } else {
-        bm.classList.add('hidden');
-        bm.classList.remove('tier2', 'tier3', 'pop');
+        _setClass(bm, 'hidden', true, 'bigMultHidden');
+        _setClass(bm, 'tier2', false, 'bigMultTier2');
+        _setClass(bm, 'tier3', false, 'bigMultTier3');
+        _setClass(bm, 'pop', false, 'bigMultPop');
       }
     }
-    // Daily PB chase indicator — använder ABSOLUTA världsmeter så biome-respawn inte ger fel jämförelse.
-    // Visibility/state-klasser sätts på .pb-chase-box (yttre rutan); innerHTML på #bigPbChase (texten).
-    const pbChase = document.getElementById('bigPbChase');
-    const pbBox = document.getElementById('pbChaseBox');
+    const pbChase = _hudEls.bigPbChase;
+    const pbBox = _hudEls.pbChaseBox;
     if (pbChase && pbBox) {
       if (dailyPB && dailyPB.date === todayStamp() && dailyPB.distM > 0 && showBig) {
         const curWorldM = Math.max(0, Math.round((state.tire ? state.tire.x : (LEVEL && LEVEL.launchX) || 0) / 5));
         const remaining = dailyPB.distM - curWorldM;
         if (remaining > 0) {
-          pbBox.classList.remove('hidden', 'over');
-          pbChase.innerHTML = `🚩 <b>${remaining}m</b> till dagsrekord`;
-          pbBox.classList.toggle('near', remaining <= 50);
+          _setClass(pbBox, 'hidden', false, 'pbChaseHidden');
+          _setClass(pbBox, 'over', false, 'pbChaseOver');
+          const html = `🚩 <b>${remaining}m</b> till dagsrekord`;
+          if (_hu.pbChaseHtml !== html) { pbChase.innerHTML = html; _hu.pbChaseHtml = html; }
+          _setClass(pbBox, 'near', remaining <= 50, 'pbChaseNear');
         } else {
-          pbBox.classList.remove('hidden', 'near');
-          pbBox.classList.add('over');
-          pbChase.innerHTML = `🔥 <b>+${-remaining}m</b> över dagsrekord!`;
+          _setClass(pbBox, 'hidden', false, 'pbChaseHidden');
+          _setClass(pbBox, 'near', false, 'pbChaseNear');
+          _setClass(pbBox, 'over', true, 'pbChaseOver');
+          const html = `🔥 <b>+${-remaining}m</b> över dagsrekord!`;
+          if (_hu.pbChaseHtml !== html) { pbChase.innerHTML = html; _hu.pbChaseHtml = html; }
         }
       } else {
-        pbBox.classList.add('hidden');
+        _setClass(pbBox, 'hidden', true, 'pbChaseHidden');
       }
     }
-    // Distans-box på vänster sida (under PB-chase). Samma synlighetsregler som bigScore:
-    // FLY/DONE eller AIM-with-score visar nuvarande max; AIM-after-death visar förra rundans.
-    const distBox = document.getElementById('distBox');
-    const distBoxVal = document.getElementById('distBoxVal');
+    const distBox = _hudEls.distBox;
+    const distBoxVal = _hudEls.distBoxVal;
     if (distBox && distBoxVal) {
       if (showBig) {
         let distM;
@@ -4557,35 +4886,75 @@ function updateHud() {
         if (showLastRun) {
           distM = state.lastRunDistM || 0;
         } else if (state.phase === PHASE.FLY) {
-          // Live-distans under flygning — börjar om från 0 vid varje skott.
           distM = liveM;
         } else {
-          // AIM mellan liv: visa förra livets max-distans tills nästa skott.
           distM = state.runMaxDistM || 0;
         }
-        distBox.classList.remove('hidden');
-        distBoxVal.textContent = distM + ' m';
+        _setClass(distBox, 'hidden', false, 'distBoxHidden');
+        _setText(distBoxVal, distM + ' m', 'distBoxValTxt');
       } else {
-        distBox.classList.add('hidden');
+        _setClass(distBox, 'hidden', true, 'distBoxHidden');
       }
     }
+    const tireBox = _hudEls.tireBox;
+    const tireIcons = _hudEls.tireIcons;
+    if (tireBox && tireIcons) {
+      if (state.phase === PHASE.AIM) {
+        if (state.tiresLeft > _tireMaxSlots) _tireMaxSlots = state.tiresLeft;
+        const totalSlots = Math.max(1, _tireMaxSlots);
+        if (tireIcons.childElementCount !== totalSlots) {
+          tireIcons.innerHTML = '';
+          for (let i = 0; i < totalSlots; i++) {
+            const span = document.createElement('span');
+            span.className = 'tire-icon';
+            span.textContent = '🛞';
+            tireIcons.appendChild(span);
+          }
+          _hu.tireSlots = totalSlots;
+          _hu.tireActive = -1; // force re-toggle
+        }
+        // Diff-skip endast om både slot-antal och tiresLeft är samma som förra frame
+        const isOne = state.tiresLeft === 1;
+        if (_hu.tireActive !== state.tiresLeft || _hu.tireIsOne !== isOne) {
+          for (let i = 0; i < totalSlots; i++) {
+            const icon = tireIcons.children[i];
+            const active = i < state.tiresLeft;
+            icon.classList.toggle('spent', !active);
+            icon.classList.toggle('last', active && isOne && i === 0);
+          }
+          _hu.tireActive = state.tiresLeft;
+          _hu.tireIsOne = isOne;
+        }
+        if (state.tiresLeft < _prevTires) {
+          const lostIcon = tireIcons.children[state.tiresLeft];
+          if (lostIcon) {
+            lostIcon.classList.add('lost');
+            setTimeout(() => lostIcon.classList.remove('lost'), 460);
+          }
+        }
+        _setClass(tireBox, 'hidden', false, 'tireBoxHidden');
+      } else {
+        _setClass(tireBox, 'hidden', true, 'tireBoxHidden');
+      }
+    }
+    _prevTires = state.tiresLeft;
   }
-  // Roll-meter (drag-to-relaunch power budget, ONLY visible once drag passes the launch threshold — same as the arrow)
-  const rm = document.getElementById('rollMeter');
+  const rm = _hudEls.rollMeter;
   if (rm) {
     const d = state.relaunchDrag;
     const dragLen = d.active ? Math.hypot(d.curX - d.startX, d.curY - d.startY) : 0;
     const show = state.phase === PHASE.FLY && state.rollBudget > 0 && d.active && dragLen >= RELAUNCH_DRAG_MIN;
-    rm.classList.toggle('hidden', !show);
-    rm.classList.toggle('flash', state.rollTapFlash > 0);
+    _setClass(rm, 'hidden', !show, 'rollMeterHidden');
+    _setClass(rm, 'flash', state.rollTapFlash > 0, 'rollFlash');
     if (show) {
-      // rollBudget is already measured in percent units (50 = 50%, 200 = 200%). The fill bar
-      // is sized against the absolute 200 ceiling so a fully-upgraded player sees a full bar.
       const pct = state.rollBudget;
-      const fill = document.getElementById('rollFill');
-      if (fill) fill.style.width = Math.min(100, pct / 2) + '%';
-      const pctEl = document.getElementById('rollPct');
-      if (pctEl) pctEl.textContent = Math.round(pct);
+      const fill = _hudEls.rollFill;
+      if (fill) {
+        const w = Math.min(100, pct / 2);
+        if (_hu.rollFillW !== w) { fill.style.width = w + '%'; _hu.rollFillW = w; }
+      }
+      const pctEl = _hudEls.rollPct;
+      if (pctEl) _setText(pctEl, Math.round(pct), 'rollPctTxt');
     }
   }
 }
@@ -5307,14 +5676,17 @@ function drawObstacles() {
         const tipYReach = (gy - o.h) - (o.h * FLIP_LIFT_SCALE + FLIP_LIFT_BASE);
         inRange = dxw < 180 && t.y > tipYReach - 200 && t.y < gy + 10;
       }
-      // Neon outer glow when in range
+      // Neon outer glow when in range — PERF: shadowBlur skippas på mobil (för dyrt på GPU).
+      // Desktop får full glow; mobil får tjockare/dubbla strokes som approximation.
       if (inRange) {
         const pulse = 0.5 + Math.sin(state.time * 0.25) * 0.3;
         ctx.save();
-        ctx.shadowColor = '#60a5fa';
-        ctx.shadowBlur = 18 + pulse * 10;
+        if (!_isMobile) {
+          ctx.shadowColor = '#60a5fa';
+          ctx.shadowBlur = 18 + pulse * 10;
+        }
         ctx.strokeStyle = `rgba(96,165,250,${0.65 + pulse * 0.25})`;
-        ctx.lineWidth = 3.5;
+        ctx.lineWidth = _isMobile ? (5.5 + pulse * 1.5) : 3.5;
         ctx.beginPath();
         ctx.moveTo(x1, y1);
         ctx.lineTo(x2, y2);
@@ -6298,37 +6670,68 @@ function drawOneLadderMan(i) {
   }
 }
 
+// PERF: Pre-byggda gradients för pickups. Skapas EN gång vid startup istället för
+// 20-45 createRadialGradient/frame. Värden som varierar per frame (pulse-alpha)
+// drivs via ctx.globalAlpha istället för att rebygga gradienten.
+const _PG = (() => {
+  const mk = (x0, y0, r0, x1, y1, r1, stops) => {
+    const g = ctx.createRadialGradient(x0, y0, r0, x1, y1, r1);
+    for (const [pos, col] of stops) g.addColorStop(pos, col);
+    return g;
+  };
+  const mkL = (x0, y0, x1, y1, stops) => {
+    const g = ctx.createLinearGradient(x0, y0, x1, y1);
+    for (const [pos, col] of stops) g.addColorStop(pos, col);
+    return g;
+  };
+  return {
+    coinGlow:    mk(0, 0, 2, 0, 0, 28, [[0, 'rgba(251,191,36,0.55)'], [1, 'rgba(251,191,36,0)']]),
+    coinBody:    mk(-3, -3, 1, 0, 0, 11, [[0, '#fef3c7'], [0.5, '#fbbf24'], [1, '#b45309']]),
+    starGlow:    mk(0, 0, 6, 0, 0, 70, [[0, 'rgba(253,224,71,0.6)'], [0.6, 'rgba(251,146,60,0.2)'], [1, 'rgba(251,146,60,0)']]),
+    starBody:    mk(-5, -8, 3, 0, 0, 26, [[0, '#fef3c7'], [0.5, '#fde047'], [1, '#fbbf24']]),
+    nitroGlow:   mk(0, 0, 4, 0, 0, 26, [[0, 'rgba(239,68,68,0.6)'], [1, 'rgba(239,68,68,0)']]),
+    airjumpGlow: mk(0, 0, 4, 0, 0, 28, [[0, 'rgba(96,165,250,0.55)'], [1, 'rgba(96,165,250,0)']]),
+    powerGlow:   mk(0, 0, 4, 0, 0, 28, [[0, 'rgba(251,191,36,0.65)'], [1, 'rgba(251,191,36,0)']]),
+    powerBody:   mkL(0, -16, 0, 16, [[0, '#fde047'], [0.5, '#fbbf24'], [1, '#b45309']]),
+    bombGlow:    mk(0, 0, 4, 0, 0, 28, [[0, 'rgba(239,68,68,0.55)'], [1, 'rgba(239,68,68,0)']]),
+    bombBody:    mk(-4, -4, 2, 0, 0, 14, [[0, '#475569'], [1, '#0f172a']]),
+    magnetGlow:  mk(0, 0, 4, 0, 0, 28, [[0, 'rgba(168,85,247,0.6)'], [1, 'rgba(168,85,247,0)']]),
+    shieldGlow:  mk(0, 0, 4, 0, 0, 30, [[0, 'rgba(34,211,238,0.6)'], [1, 'rgba(34,211,238,0)']]),
+    shieldBody:  mkL(0, -14, 0, 14, [[0, '#67e8f9'], [1, '#0891b2']]),
+    medkitGlow:  mk(0, 0, 4, 0, 0, 28, [[0, 'rgba(34,197,94,0.55)'], [1, 'rgba(34,197,94,0)']]),
+    medkitBody:  mkL(0, -14, 0, 14, [[0, '#ffffff'], [1, '#e5e7eb']]),
+    gliderGlow:  mk(0, 0, 4, 0, 0, 32, [[0, 'rgba(186,230,253,0.7)'], [0.55, 'rgba(167,243,208,0.35)'], [1, 'rgba(167,243,208,0)']]),
+  };
+})();
+
 function drawPickups() {
   const vw = viewWidth();
-  // Fast x-cull: skip pickups outside the viewport before computing bob/worldToScreen.
+  // Fast x-cull: hint-baserad start; bryt direkt när vi passerat högerkant.
   const _pkMinX = state.cam.x - 80;
   const _pkMaxX = state.cam.x + vw + 80;
-  PICKUPS.forEach(p => {
-    if (p.taken) return;
-    if (p.x < _pkMinX || p.x > _pkMaxX) return;
+  const _pkStart = _findStartIdx(PICKUPS, _pkMinX, _pickupHint);
+  for (let _pi = _pkStart; _pi < PICKUPS.length; _pi++) {
+    const p = PICKUPS[_pi];
+    if (p.x > _pkMaxX) break;
+    if (p.taken) continue;
     // Balloons float more prominently
     const bobY = p.type === 'balloon'
       ? p.baseY + Math.sin((state.time + p._i * 30) * 0.05) * 18
       : p.y + Math.sin((state.time + p.x) * 0.08) * 3;
     const [x, y] = worldToScreen(p.x, bobY);
-    if (x < -60 || x > vw + 60) return;
+    if (x < -60 || x > vw + 60) continue;
     if (p.type === 'coin') {
-      // Glow halo (pulsing)
+      // Glow halo (pulsing) — PERF: cached gradient + globalAlpha för pulse
       const pulse = 0.7 + 0.3 * Math.sin(state.time * 0.15 + p.x);
-      const glow = ctx.createRadialGradient(x, y, 2, x, y, 28);
-      glow.addColorStop(0, `rgba(251,191,36,${0.55 * pulse})`);
-      glow.addColorStop(1, 'rgba(251,191,36,0)');
-      ctx.fillStyle = glow;
-      ctx.beginPath(); ctx.arc(x, y, 28, 0, Math.PI * 2); ctx.fill();
       ctx.save();
       ctx.translate(x, y);
+      ctx.globalAlpha = pulse;
+      ctx.fillStyle = _PG.coinGlow;
+      ctx.beginPath(); ctx.arc(0, 0, 28, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1;
       const stretch = Math.abs(Math.cos(state.time * 0.1 + p.x));
       ctx.scale(stretch, 1);
-      const cg = ctx.createRadialGradient(-3, -3, 1, 0, 0, 11);
-      cg.addColorStop(0, '#fef3c7');
-      cg.addColorStop(0.5, '#fbbf24');
-      cg.addColorStop(1, '#b45309');
-      ctx.fillStyle = cg;
+      ctx.fillStyle = _PG.coinBody;
       ctx.beginPath(); ctx.arc(0, 0, 10, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = '#78350f'; ctx.lineWidth = 1.5; ctx.stroke();
       ctx.fillStyle = '#fef3c7';
@@ -6337,23 +6740,17 @@ function drawPickups() {
       ctx.fillText('$', 0, 1);
       ctx.restore();
     } else if (p.type === 'star') {
-      // Large pulsing glow
+      // Large pulsing glow — PERF: cached gradient + globalAlpha
       const pulse = 0.75 + 0.25 * Math.sin(state.time * 0.1 + p.x);
-      const glow = ctx.createRadialGradient(x, y, 4, x, y, 44);
-      glow.addColorStop(0, `rgba(253,224,71,${0.6 * pulse})`);
-      glow.addColorStop(0.6, 'rgba(251,146,60,0.2)');
-      glow.addColorStop(1, 'rgba(251,146,60,0)');
-      ctx.fillStyle = glow;
-      ctx.beginPath(); ctx.arc(x, y, 44, 0, Math.PI * 2); ctx.fill();
       ctx.save();
       ctx.translate(x, y);
+      ctx.globalAlpha = pulse;
+      ctx.fillStyle = _PG.starGlow;
+      ctx.beginPath(); ctx.arc(0, 0, 70, 0, Math.PI * 2); ctx.fill();
+      ctx.globalAlpha = 1;
       ctx.rotate(Math.sin(state.time * 0.05 + p.x) * 0.2);
-      const R = 16, r = 7;
-      const sg = ctx.createRadialGradient(-3, -5, 2, 0, 0, 16);
-      sg.addColorStop(0, '#fef3c7');
-      sg.addColorStop(0.5, '#fde047');
-      sg.addColorStop(1, '#fbbf24');
-      ctx.fillStyle = sg;
+      const R = 26, r = 11;
+      ctx.fillStyle = _PG.starBody;
       ctx.beginPath();
       for (let i = 0; i < 10; i++) {
         const ang = -Math.PI / 2 + i * Math.PI / 5;
@@ -6363,9 +6760,9 @@ function drawPickups() {
       }
       ctx.closePath();
       ctx.fill();
-      ctx.strokeStyle = '#78350f'; ctx.lineWidth = 2; ctx.stroke();
+      ctx.strokeStyle = '#78350f'; ctx.lineWidth = 2.5; ctx.stroke();
       ctx.fillStyle = 'rgba(255,255,255,0.85)';
-      ctx.beginPath(); ctx.arc(-4, -5, 3, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(-7, -8, 5, 0, Math.PI * 2); ctx.fill();
       ctx.restore();
     } else if (p.type === 'balloon') {
       // Balloon (pink/magenta) with string
@@ -6398,11 +6795,7 @@ function drawPickups() {
       ctx.translate(x, y);
       const pulse = 1 + Math.sin(state.time * 0.2 + p._i) * 0.08;
       ctx.scale(pulse, pulse);
-      // Glow
-      const glow = ctx.createRadialGradient(0, 0, 4, 0, 0, 26);
-      glow.addColorStop(0, 'rgba(239,68,68,0.6)');
-      glow.addColorStop(1, 'rgba(239,68,68,0)');
-      ctx.fillStyle = glow;
+      ctx.fillStyle = _PG.nitroGlow;
       ctx.beginPath(); ctx.arc(0, 0, 26, 0, Math.PI * 2); ctx.fill();
       // Canister body (rounded rect)
       ctx.fillStyle = '#ef4444';
@@ -6435,11 +6828,7 @@ function drawPickups() {
       const bob = Math.sin(state.time * 0.08 + p._i * 0.5) * 3;
       ctx.translate(0, bob);
       ctx.scale(pulse, pulse);
-      // Glow
-      const glow = ctx.createRadialGradient(0, 0, 4, 0, 0, 28);
-      glow.addColorStop(0, 'rgba(96,165,250,0.55)');
-      glow.addColorStop(1, 'rgba(96,165,250,0)');
-      ctx.fillStyle = glow;
+      ctx.fillStyle = _PG.airjumpGlow;
       ctx.beginPath(); ctx.arc(0, 0, 28, 0, Math.PI * 2); ctx.fill();
       // Parachute dome (half-circle)
       ctx.fillStyle = '#60a5fa';
@@ -6484,18 +6873,10 @@ function drawPickups() {
       const bob = Math.sin(state.time * 0.09 + p._i * 0.6) * 3;
       ctx.translate(0, bob);
       ctx.scale(pulse, pulse);
-      // Glow
-      const glow = ctx.createRadialGradient(0, 0, 4, 0, 0, 28);
-      glow.addColorStop(0, 'rgba(251,191,36,0.65)');
-      glow.addColorStop(1, 'rgba(251,191,36,0)');
-      ctx.fillStyle = glow;
+      ctx.fillStyle = _PG.powerGlow;
       ctx.beginPath(); ctx.arc(0, 0, 28, 0, Math.PI * 2); ctx.fill();
-      // Battery body
-      const bg = ctx.createLinearGradient(0, -16, 0, 16);
-      bg.addColorStop(0, '#fde047');
-      bg.addColorStop(0.5, '#fbbf24');
-      bg.addColorStop(1, '#b45309');
-      ctx.fillStyle = bg;
+      // Battery body — cached linear gradient
+      ctx.fillStyle = _PG.powerBody;
       ctx.beginPath(); ctx.roundRect(-11, -14, 22, 26, 4); ctx.fill();
       ctx.strokeStyle = '#78350f'; ctx.lineWidth = 2; ctx.stroke();
       // Battery nub
@@ -6524,17 +6905,10 @@ function drawPickups() {
       const bob = Math.sin(state.time * 0.09 + p._i * 0.6) * 3;
       ctx.translate(0, bob);
       ctx.scale(pulse, pulse);
-      // Glow
-      const glow = ctx.createRadialGradient(0, 0, 4, 0, 0, 28);
-      glow.addColorStop(0, 'rgba(239,68,68,0.55)');
-      glow.addColorStop(1, 'rgba(239,68,68,0)');
-      ctx.fillStyle = glow;
+      ctx.fillStyle = _PG.bombGlow;
       ctx.beginPath(); ctx.arc(0, 0, 28, 0, Math.PI * 2); ctx.fill();
       // Body
-      const bg = ctx.createRadialGradient(-4, -4, 2, 0, 0, 14);
-      bg.addColorStop(0, '#475569');
-      bg.addColorStop(1, '#0f172a');
-      ctx.fillStyle = bg;
+      ctx.fillStyle = _PG.bombBody;
       ctx.beginPath(); ctx.arc(0, 2, 12, 0, Math.PI * 2); ctx.fill();
       ctx.strokeStyle = '#020617'; ctx.lineWidth = 1.5; ctx.stroke();
       // Highlight
@@ -6565,11 +6939,7 @@ function drawPickups() {
       const bob = Math.sin(state.time * 0.09 + p._i * 0.5) * 3;
       ctx.translate(0, bob);
       ctx.scale(pulse, pulse);
-      // Glow
-      const glow = ctx.createRadialGradient(0, 0, 4, 0, 0, 28);
-      glow.addColorStop(0, 'rgba(168,85,247,0.6)');
-      glow.addColorStop(1, 'rgba(168,85,247,0)');
-      ctx.fillStyle = glow;
+      ctx.fillStyle = _PG.magnetGlow;
       ctx.beginPath(); ctx.arc(0, 0, 28, 0, Math.PI * 2); ctx.fill();
       // Horseshoe body (U-shape)
       ctx.strokeStyle = '#a855f7';
@@ -6627,17 +6997,10 @@ function drawPickups() {
       const bob = Math.sin(state.time * 0.09 + p._i * 0.5) * 3;
       ctx.translate(0, bob);
       ctx.scale(pulse, pulse);
-      // Glow
-      const glow = ctx.createRadialGradient(0, 0, 4, 0, 0, 30);
-      glow.addColorStop(0, 'rgba(34,211,238,0.6)');
-      glow.addColorStop(1, 'rgba(34,211,238,0)');
-      ctx.fillStyle = glow;
+      ctx.fillStyle = _PG.shieldGlow;
       ctx.beginPath(); ctx.arc(0, 0, 30, 0, Math.PI * 2); ctx.fill();
-      // Shield body
-      const sg = ctx.createLinearGradient(0, -14, 0, 14);
-      sg.addColorStop(0, '#67e8f9');
-      sg.addColorStop(1, '#0891b2');
-      ctx.fillStyle = sg;
+      // Shield body — cached
+      ctx.fillStyle = _PG.shieldBody;
       ctx.beginPath();
       ctx.moveTo(0, -14);
       ctx.lineTo(13, -9);
@@ -6666,17 +7029,10 @@ function drawPickups() {
       const bob = Math.sin(state.time * 0.09 + p._i * 0.5) * 3;
       ctx.translate(0, bob);
       ctx.scale(pulse, pulse);
-      // Glow
-      const glow = ctx.createRadialGradient(0, 0, 4, 0, 0, 28);
-      glow.addColorStop(0, 'rgba(34,197,94,0.55)');
-      glow.addColorStop(1, 'rgba(34,197,94,0)');
-      ctx.fillStyle = glow;
+      ctx.fillStyle = _PG.medkitGlow;
       ctx.beginPath(); ctx.arc(0, 0, 28, 0, Math.PI * 2); ctx.fill();
-      // Box body
-      const bg = ctx.createLinearGradient(0, -14, 0, 14);
-      bg.addColorStop(0, '#ffffff');
-      bg.addColorStop(1, '#e5e7eb');
-      ctx.fillStyle = bg;
+      // Box body — cached
+      ctx.fillStyle = _PG.medkitBody;
       ctx.fillRect(-14, -12, 28, 24);
       ctx.strokeStyle = '#9ca3af';
       ctx.lineWidth = 1.5;
@@ -6693,8 +7049,48 @@ function drawPickups() {
       ctx.fillStyle = 'rgba(255,255,255,0.5)';
       ctx.fillRect(-12, -10, 4, 3);
       ctx.restore();
+    } else if (p.type === 'glider') {
+      // 🪁 Glider — vit vinge med cyan glow, svag rotation
+      ctx.save();
+      ctx.translate(x, y);
+      const pulse = 1 + Math.sin(state.time * 0.18 + p._i) * 0.08;
+      const sway = Math.sin(state.time * 0.06 + p._i) * 0.18;
+      ctx.scale(pulse, pulse);
+      ctx.fillStyle = _PG.gliderGlow;
+      ctx.beginPath(); ctx.arc(0, 0, 32, 0, Math.PI * 2); ctx.fill();
+      ctx.rotate(sway);
+      // Diamond/kite-form (4 trianglar)
+      const W2 = 18, H2 = 14;
+      const wg = ctx.createLinearGradient(-W2, 0, W2, 0);
+      wg.addColorStop(0, '#bae6fd');
+      wg.addColorStop(0.5, '#ffffff');
+      wg.addColorStop(1, '#a7f3d0');
+      ctx.fillStyle = wg;
+      ctx.beginPath();
+      ctx.moveTo(0, -H2);
+      ctx.lineTo(W2, 0);
+      ctx.lineTo(0, H2);
+      ctx.lineTo(-W2, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 1.8;
+      ctx.stroke();
+      // Cross-rib
+      ctx.strokeStyle = 'rgba(15,23,42,0.55)';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(-W2, 0); ctx.lineTo(W2, 0); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, -H2); ctx.lineTo(0, H2); ctx.stroke();
+      // Tail (kort streck nedåt)
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(0, H2);
+      ctx.quadraticCurveTo(2, H2 + 7, -1, H2 + 14);
+      ctx.stroke();
+      ctx.restore();
     }
-  });
+  }
 }
 
 // ====== TORNADOS (öken-only) ======
@@ -6837,14 +7233,38 @@ function applyTornadoForces() {
     if (tn.scale < 0.3) continue; // för liten för effekt
     const cx = tn.renderX || tn.x;
     const topY = tn.y - tn.height * tn.scale;
-    // Inverkan: kontrollera om tiren är i tornadons cylinder.
     const dx = t.x - cx;
     const yFromBase = tn.y - t.y;  // hur högt tiren är över marken vid tornadon
+
+    // Approach-zon: upp till 400px ovanför trattens topp, inom (full topp-radie + 30).
+    // Däcket sugs ner i tratten + dras mot mitten → ingen mer flyga-över.
+    const fullTopR = tn.radius * tn.scale + TIRE_R + 30;
+    const aboveTop = -yFromBase + tn.height * tn.scale; // hur långt OVAN toppen tiren är
+    if (yFromBase > tn.height * tn.scale + 60 && aboveTop <= 400 && Math.abs(dx) <= fullTopR) {
+      const horizGrip = Math.max(0, 1 - Math.abs(dx) / fullTopR);
+      const vertGrip = Math.max(0, 1 - aboveTop / 400);
+      const grip = horizGrip * vertGrip;
+      t.vy += 1.0 * grip * TS;            // sug nedåt mot trattmynningen
+      t.vx += (cx - t.x) * 0.05 * grip * TS;
+      t.vrot += (Math.random() - 0.5) * 0.4 * grip;
+      const sp = Math.hypot(t.vx, t.vy);
+      if (sp > 30) { t.vx *= 30 / sp; t.vy *= 30 / sp; }
+      if (!tn.hitTire) {
+        tn.hitTire = true;
+        awardScore(500, '🌪️ TORNADO!', '#a78bfa');
+        bumpMult(0.8);
+        shake(14);
+        tone(220, 0.18, 'sawtooth', 0.16, -200);
+        addParticles(t.x, t.y, '#a78bfa', 20, { up: 5, spread: 9, size: 3 });
+      }
+      continue;
+    }
+
+    // Inom tratten: nuvarande uppåt-sug + chaos.
     if (yFromBase < -20 || yFromBase > tn.height * tn.scale + 60) continue;
     const localFrac = Math.max(0, Math.min(1, yFromBase / (tn.height * tn.scale)));
     const localR = tn.radius * tn.scale * (0.5 + localFrac * 0.5); // smalare nedtill, bredare upptill
     if (Math.abs(dx) > localR + TIRE_R + 30) continue;
-    // Inom tornadons grepp!
     const grip = Math.max(0, 1 - Math.abs(dx) / (localR + TIRE_R + 30));
     // Stark uppåt-sug
     t.vy -= (1.4 + grip * 1.6) * TS;
@@ -6855,7 +7275,6 @@ function applyTornadoForces() {
     // Cap så vi inte slänger tiren orealistiskt långt
     const sp = Math.hypot(t.vx, t.vy);
     if (sp > 30) { t.vx *= 30 / sp; t.vy *= 30 / sp; }
-    // Bonuspoäng vid första kontakt
     if (!tn.hitTire) {
       tn.hitTire = true;
       awardScore(500, '🌪️ TORNADO!', '#a78bfa');
@@ -7496,6 +7915,262 @@ function updateStorms() {
   if (state.lightningFlashT > 0) state.lightningFlashT--;
 }
 
+// ====== FOG 🌫️ (canyon + neon — sänker sikt) ======
+function updateFog() {
+  if (state.phase !== PHASE.FLY || !state.tire) return;
+  const TS = state.timeScale || 1;
+  // Tick existing fog
+  if (state.fogT > 0) {
+    state.fogT = Math.max(0, state.fogT - TS);
+    return;
+  }
+  // Bara canyon (1) eller neon (2)
+  const b = biomeAt(state.tire.x);
+  if (b !== 1 && b !== 2) return;
+  state.fogSpawnT -= TS;
+  if (state.fogSpawnT > 0) return;
+  // Roll: 65% chans att dimma faktiskt sätter igång
+  if (Math.random() < 0.65) {
+    const dur = 360 + Math.floor(Math.random() * 180); // 6-9s
+    state.fogT = dur;
+    state.fogTotal = dur;
+    flashToast('🌫️ DIMMA', '#cbd5e1');
+  }
+  state.fogSpawnT = 1080 + Math.floor(Math.random() * 720); // 18-30s till nästa roll
+}
+
+function drawFog() {
+  if (state.fogT <= 0 || state.fogTotal <= 0) return;
+  // Fade in (första 60 frames) och fade out (sista 60 frames)
+  const elapsed = state.fogTotal - state.fogT;
+  const fadeIn = Math.min(1, elapsed / 60);
+  const fadeOut = Math.min(1, state.fogT / 60);
+  const intensity = Math.min(fadeIn, fadeOut);
+  const maxA = 0.55;
+  const a = maxA * intensity;
+  // Bas-overlay
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, `rgba(200,210,225,${a})`);
+  grad.addColorStop(0.5, `rgba(180,190,205,${a})`);
+  grad.addColorStop(1, `rgba(160,170,190,${a * 0.85})`);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+  // Drivande dim-svep — två lager som rör sig olika fart
+  const t1 = (state.time * 0.5) % (W + 200);
+  const t2 = (state.time * 0.3) % (W + 200);
+  ctx.save();
+  ctx.globalAlpha = 0.18 * intensity;
+  ctx.fillStyle = '#e2e8f0';
+  for (let i = 0; i < 6; i++) {
+    const x = (i * (W / 5) - t1 + 200) % (W + 200) - 100;
+    const y = H * 0.2 + i * (H * 0.12);
+    const rx = 180, ry = 28;
+    ctx.beginPath();
+    ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 0.12 * intensity;
+  ctx.fillStyle = '#cbd5e1';
+  for (let i = 0; i < 5; i++) {
+    const x = (i * (W / 4) - t2 + 200) % (W + 200) - 100;
+    const y = H * 0.5 + i * (H * 0.10);
+    const rx = 220, ry = 32;
+    ctx.beginPath();
+    ctx.ellipse(x, y, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+// ====== ROCKFALLS 🪨 (canyon — fallande stenar med skugg-varning) ======
+function spawnRockfall(forceX) {
+  if (!state.tire) return;
+  const t = state.tire;
+  const cx = forceX != null ? forceX : t.x + 280 + Math.random() * 540;
+  if (biomeAt(cx) !== 1) return;
+  const groundY = terrainAt(cx);
+  state.rockfalls.push({
+    x: cx,
+    y: groundY - 700, // start högt upp men osynlig under warn
+    vx: (Math.random() - 0.5) * 0.4,
+    vy: 0,
+    r: 18 + Math.random() * 8,
+    rot: Math.random() * Math.PI * 2,
+    vrot: (Math.random() - 0.5) * 0.18,
+    targetGroundY: groundY,
+    phase: 'warn',
+    phaseT: 0,
+    warnDur: 60,           // 1s skugg-varning
+  });
+  tone(160, 0.12, 'sawtooth', 0.06, -250);
+}
+
+function updateRockfalls() {
+  if (state.phase !== PHASE.FLY) return;
+  const TS = state.timeScale || 1;
+  // Spawna när hjulet är i canyon (eller närmar sig den)
+  if (state.tire && (biomeAt(state.tire.x) === 1 || biomeAt(state.tire.x + 600) === 1)) {
+    state.rockfallSpawnT -= TS;
+    if (state.rockfallSpawnT <= 0) {
+      const r = Math.random();
+      const count = r < 0.55 ? 1 : r < 0.85 ? 2 : 3;
+      const baseX = state.tire.x + 280 + Math.random() * 540;
+      const spacing = 80 + Math.random() * 60;
+      for (let i = 0; i < count; i++) {
+        spawnRockfall(baseX + i * spacing);
+      }
+      state.rockfallSpawnT = 240 + Math.floor(Math.random() * 180); // 4-7s
+    }
+  }
+  const t = state.tire;
+  for (let i = state.rockfalls.length - 1; i >= 0; i--) {
+    const rk = state.rockfalls[i];
+    rk.phaseT += TS;
+    if (rk.phase === 'warn') {
+      if (rk.phaseT >= rk.warnDur) {
+        rk.phase = 'fall';
+        rk.phaseT = 0;
+        rk.vy = 4 + Math.random() * 2;
+      }
+    } else {
+      // fall
+      rk.vy += 0.32 * TS;
+      rk.x += rk.vx * TS;
+      rk.y += rk.vy * TS;
+      rk.rot += rk.vrot * TS;
+      // Kollision med hjul
+      if (t && state.phase === PHASE.FLY && !state.drowning) {
+        const dx = t.x - rk.x;
+        const dy = t.y - rk.y;
+        if (dx * dx + dy * dy < (TIRE_R + rk.r) * (TIRE_R + rk.r)) {
+          if (state.shieldT > 0) {
+            // Sköld krossar stenen
+            awardScore(180, '🛡️ STEN KROSSAD!', '#22d3ee');
+            addParticles(rk.x, rk.y, '#94a3b8', 24, { up: 6, spread: 12, size: 4 });
+            addParticles(rk.x, rk.y, '#1e293b', 16, { up: 4, spread: 9, size: 3 });
+            shake(10);
+            tone(220, 0.18, 'square', 0.18, 200);
+          } else {
+            // 50% skada + studs (samma mönster som spike-trap)
+            addParticles(t.x, t.y, '#94a3b8', 22, { up: 6, spread: 8, size: 4 });
+            addParticles(t.x, t.y, '#1e293b', 14, { up: 4, spread: 6, size: 3 });
+            shake(16); state.hitstop = 4;
+            tone(140, 0.24, 'sawtooth', 0.22, -350);
+            const wasShielded = false;
+            const died = damageTire(20, 50, '🪨 RASSTEN');
+            if (!died && !wasShielded) {
+              state.deathCause = state.deathCause || 'rockfall';
+              // Knuffa hjulet bort + nedåt
+              t.vx += dx > 0 ? 4 : -4;
+              t.vy += 3;
+            }
+          }
+          state.rockfalls.splice(i, 1);
+          continue;
+        }
+      }
+      // Mark-impakt
+      if (rk.y > rk.targetGroundY - 4) {
+        addParticles(rk.x, rk.targetGroundY - 2, '#94a3b8', 22, { up: 8, spread: 12, size: 4 });
+        addParticles(rk.x, rk.targetGroundY - 2, '#1e293b', 14, { up: 5, spread: 9, size: 3 });
+        addParticles(rk.x, rk.targetGroundY - 2, '#cbd5e1', 10, { up: 4, spread: 7, size: 2 });
+        shake(6);
+        tone(95, 0.22, 'sawtooth', 0.16, -380);
+        state.rockfalls.splice(i, 1);
+        continue;
+      }
+    }
+    // Cull
+    if (state.tire) {
+      const farX = state.cam.x + viewWidth() + 700;
+      const nearX = state.cam.x - 700;
+      if (rk.x < nearX || rk.x > farX) {
+        state.rockfalls.splice(i, 1);
+        continue;
+      }
+    }
+  }
+}
+
+function drawRockfalls() {
+  const z = state.zoom || 1;
+  for (const rk of state.rockfalls) {
+    if (rk.phase === 'warn') {
+      // Skugg-varning på marken under spawn-x
+      const groundY = rk.targetGroundY;
+      const [sx, sy] = worldToScreen(rk.x, groundY - 2);
+      const t = rk.phaseT / rk.warnDur;
+      const radius = (rk.r * 1.6 + 6) * z;
+      const pulseA = 0.55 * (0.5 + 0.5 * Math.sin(state.time * 0.45));
+      ctx.save();
+      // Mörk skugga som växer
+      ctx.fillStyle = `rgba(15,23,42,${0.45 + 0.25 * t})`;
+      ctx.beginPath();
+      ctx.ellipse(sx, sy, radius * (0.4 + t * 0.6), radius * 0.32 * (0.4 + t * 0.6), 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Pulserande röd ring
+      ctx.strokeStyle = `rgba(248,113,113,${pulseA})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(sx, sy, radius * (0.4 + t * 0.6) + 4, radius * 0.32 * (0.4 + t * 0.6) + 2, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      // ! tecken ovanför
+      ctx.fillStyle = `rgba(248,113,113,${0.85})`;
+      ctx.font = `bold ${Math.round(20 * z)}px sans-serif`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText('!', sx, sy - radius * 0.6 - 12);
+      ctx.restore();
+    } else {
+      // Fallande sten
+      const [sx, sy] = worldToScreen(rk.x, rk.y);
+      if (sx < -60 || sx > W + 60 || sy < -60 || sy > H + 60) continue;
+      const r = rk.r * z;
+      ctx.save();
+      ctx.translate(sx, sy);
+      ctx.rotate(rk.rot);
+      // Sten-kropp
+      const g = ctx.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.2, 0, 0, r);
+      g.addColorStop(0, '#94a3b8');
+      g.addColorStop(0.6, '#475569');
+      g.addColorStop(1, '#1e293b');
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      // Polygon-sten (ojämn form)
+      const pts = 7;
+      for (let p = 0; p < pts; p++) {
+        const ang = (p / pts) * Math.PI * 2;
+        const rr = r * (0.85 + Math.sin(p * 1.7) * 0.15);
+        const px = Math.cos(ang) * rr, py = Math.sin(ang) * rr;
+        if (p === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+      }
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      // Highlight
+      ctx.fillStyle = 'rgba(255,255,255,0.18)';
+      ctx.beginPath();
+      ctx.arc(-r * 0.35, -r * 0.4, r * 0.28, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      // Damm-svans bakom (lite partiklar)
+      if (state.particles.length < 380 && state.time % 3 === 0) {
+        state.particles.push({
+          x: rk.x + (Math.random() - 0.5) * 6,
+          y: rk.y - rk.r * 0.5,
+          vx: (Math.random() - 0.5) * 0.6,
+          vy: -rk.vy * 0.2 - 0.5,
+          life: 22, max: 22,
+          color: `rgba(148,163,184,${0.4 + Math.random() * 0.25})`,
+          size: 2 + Math.random() * 1.5,
+          g: 0.02, shape: 'square',
+        });
+      }
+    }
+  }
+}
+
 function applyStormEffects() {
   if (state.phase !== PHASE.FLY || !state.tire || state.storms.length === 0) return;
   const t = state.tire;
@@ -7887,22 +8562,27 @@ function drawTire() {
     return;
   }
   const speed = Math.hypot(t.vx, t.vy);
-  // Shield aura when active (cyan bubble)
+  // Shield aura when active — cyan för normal sköld, gul för star-shield.
   if (state.shieldT > 0) {
     const [tx, ty] = worldToScreen(t.x, t.y);
     const pulse = 1 + Math.sin(state.time * 0.28) * 0.08;
     const fade = state.shieldT < 30 ? (state.shieldT / 30) : 1;
+    const isStar = state.shieldKind === 'star';
+    const auraStop1 = isStar ? 'rgba(250,204,21,0.0)'  : 'rgba(34,211,238,0.0)';
+    const auraStop2 = isStar ? 'rgba(250,204,21,0.40)' : 'rgba(34,211,238,0.35)';
+    const auraStop3 = isStar ? 'rgba(250,204,21,0)'    : 'rgba(34,211,238,0)';
+    const ringColor = isStar ? '#fde047' : '#67e8f9';
     ctx.save();
     ctx.globalAlpha = 0.35 * fade + Math.sin(state.time * 0.35) * 0.06;
     const g = ctx.createRadialGradient(tx, ty, TIRE_R * 0.6, tx, ty, TIRE_R * 2.4 * pulse);
-    g.addColorStop(0, 'rgba(34,211,238,0.0)');
-    g.addColorStop(0.65, 'rgba(34,211,238,0.35)');
-    g.addColorStop(1, 'rgba(34,211,238,0)');
+    g.addColorStop(0, auraStop1);
+    g.addColorStop(0.65, auraStop2);
+    g.addColorStop(1, auraStop3);
     ctx.fillStyle = g;
     ctx.beginPath(); ctx.arc(tx, ty, TIRE_R * 2.4 * pulse, 0, Math.PI * 2); ctx.fill();
     // Ring
     ctx.globalAlpha = 0.55 * fade;
-    ctx.strokeStyle = '#67e8f9';
+    ctx.strokeStyle = ringColor;
     ctx.lineWidth = 2.5;
     ctx.beginPath(); ctx.arc(tx, ty, TIRE_R * 1.9 * pulse, 0, Math.PI * 2); ctx.stroke();
     // Highlight arc
@@ -7910,6 +8590,46 @@ function drawTire() {
     ctx.strokeStyle = 'rgba(255,255,255,0.85)';
     ctx.lineWidth = 2;
     ctx.beginPath(); ctx.arc(tx, ty, TIRE_R * 1.9 * pulse, -Math.PI * 0.8, -Math.PI * 0.3); ctx.stroke();
+    ctx.restore();
+  }
+  // 🪁 Glider aura when active — vit/cyan vinge-svans bakom hjulet
+  if (state.gliderT > 0) {
+    const [tx, ty] = worldToScreen(t.x, t.y);
+    const fade = state.gliderT < 30 ? (state.gliderT / 30) : 1;
+    const pulse = 1 + Math.sin(state.time * 0.22) * 0.06;
+    ctx.save();
+    // Soft halo
+    ctx.globalAlpha = 0.32 * fade + Math.sin(state.time * 0.3) * 0.05;
+    const g = ctx.createRadialGradient(tx, ty, TIRE_R * 0.7, tx, ty, TIRE_R * 2.2 * pulse);
+    g.addColorStop(0, 'rgba(186,230,253,0)');
+    g.addColorStop(0.55, 'rgba(186,230,253,0.35)');
+    g.addColorStop(1, 'rgba(167,243,208,0)');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(tx, ty, TIRE_R * 2.2 * pulse, 0, Math.PI * 2); ctx.fill();
+    // Vingar — två triangulära vingar på sidorna som flaxar
+    const flap = Math.sin(state.time * 0.35) * 0.4;
+    const wingLen = 38;
+    ctx.globalAlpha = 0.55 * fade;
+    ctx.strokeStyle = '#bae6fd';
+    ctx.lineWidth = 2;
+    // Vänster vinge
+    ctx.beginPath();
+    ctx.moveTo(tx - TIRE_R * 0.3, ty - 2);
+    ctx.quadraticCurveTo(tx - wingLen, ty - 18 + flap * 12, tx - wingLen - 6, ty + 2 + flap * 6);
+    ctx.lineTo(tx - TIRE_R * 0.4, ty + 4);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(186,230,253,0.35)';
+    ctx.fill();
+    ctx.stroke();
+    // Höger vinge
+    ctx.beginPath();
+    ctx.moveTo(tx + TIRE_R * 0.3, ty - 2);
+    ctx.quadraticCurveTo(tx + wingLen, ty - 18 + flap * 12, tx + wingLen + 6, ty + 2 + flap * 6);
+    ctx.lineTo(tx + TIRE_R * 0.4, ty + 4);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(167,243,208,0.35)';
+    ctx.fill();
+    ctx.stroke();
     ctx.restore();
   }
   // Magnet aura when active
@@ -8045,24 +8765,31 @@ function drawTireShape(R) {
 }
 
 function drawParticles() {
+  // PERF: indexerad for-loop (snabbare än forEach), cache:ad fillStyle/globalAlpha
+  // — sparar fillStyle-write när färg är samma som föregående partikel.
   const vw = viewWidth();
   const vh = viewHeight();
-  const minX = state.cam.x - 20;
-  const maxX = state.cam.x + vw + 20;
-  const minY = state.cam.y - 20;
-  const maxY = state.cam.y + vh + 20;
-  state.particles.forEach(pt => {
-    if (pt.x < minX || pt.x > maxX || pt.y < minY || pt.y > maxY) return;
-    const x = pt.x - state.cam.x;
-    const y = pt.y - state.cam.y;
-    ctx.globalAlpha = Math.min(1, pt.life / 40);
-    ctx.fillStyle = pt.color;
+  const camX = state.cam.x, camY = state.cam.y;
+  const minX = camX - 20, maxX = camX + vw + 20;
+  const minY = camY - 20, maxY = camY + vh + 20;
+  const ps = state.particles;
+  let lastColor = '';
+  let lastAlpha = -1;
+  for (let i = 0; i < ps.length; i++) {
+    const pt = ps[i];
+    if (pt.x < minX || pt.x > maxX || pt.y < minY || pt.y > maxY) continue;
+    const a = pt.life >= 40 ? 1 : pt.life / 40;
+    if (a !== lastAlpha) { ctx.globalAlpha = a; lastAlpha = a; }
+    if (pt.color !== lastColor) { ctx.fillStyle = pt.color; lastColor = pt.color; }
+    const x = pt.x - camX;
+    const y = pt.y - camY;
     if (pt.shape === 'circle') {
       ctx.beginPath(); ctx.arc(x, y, pt.size, 0, Math.PI * 2); ctx.fill();
     } else {
-      ctx.fillRect(x - pt.size / 2, y - pt.size / 2, pt.size, pt.size);
+      const s = pt.size;
+      ctx.fillRect(x - s * 0.5, y - s * 0.5, s, s);
     }
-  });
+  }
   ctx.globalAlpha = 1;
 }
 
@@ -8189,12 +8916,15 @@ function render() {
   drawPenguins();
   drawTornados();
   drawStorms();
+  drawRockfalls();
   drawFireballs();
   drawTireShadow();
   drawTire();
   drawParticles();
   drawPopups();
   ctx.restore();
+  // Dimma-overlay (screen-space, dimmer hela världen)
+  drawFog();
   // Blixt-overlay (screen-space, efter zoom-restore)
   drawLightningFlash();
   // Frysande vind-overlay (screen-space)
@@ -8486,9 +9216,12 @@ state.bombCharges = 0;
 state.shieldCharges = 0;
 state.shieldT = 0;
 state.magnetT = 0;
+state.gliderCharges = 0;
+state.gliderT = 0;
 updateHud();
 updateNitroBadge();
 updateAirjumpBadge();
 updateMagnetBadge();
+updateGliderBadge();
 updateFireButton();
 loop();

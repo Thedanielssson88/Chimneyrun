@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
-<link rel="stylesheet" href="style.css?v=174">
+<link rel="stylesheet" href="style.css?v=194">
 </head>
 <body>
 
@@ -40,6 +40,10 @@
   <div id="stage">
     <canvas id="game"></canvas>
     <div class="left-hud-stack">
+      <div id="tireBox" class="tire-box hidden">
+        <span class="tire-label">🛞 DÄCK KVAR</span>
+        <div id="tireIcons" class="tire-icons"></div>
+      </div>
       <div id="aimHud" class="aim-hud">
         <div class="meter">
           <div class="label">RPM</div>
@@ -118,6 +122,12 @@
       <span class="boost-icon">🛡️</span>
       <span class="boost-label">SKÖLD</span>
       <span class="boost-count" id="btnShieldCount">0</span>
+    </button>
+
+    <button id="btnGlider" class="glider-btn hidden" type="button" aria-label="Glider">
+      <span class="boost-icon">🪁</span>
+      <span class="boost-label">GLIDER</span>
+      <span class="boost-count" id="btnGliderCount">0</span>
     </button>
 
     <div id="overlay" class="overlay hidden" onclick="if(event.target===this)restart()">
@@ -312,7 +322,7 @@
 
 </div>
 
-<script src="game.js?v=174"></script>
+<script src="game.js?v=194"></script>
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
