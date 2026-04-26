@@ -94,6 +94,26 @@ const PHASE = { AIM: 'AIM', FLY: 'FLY', DONE: 'DONE' };
 const HS_KEY   = 'chimney_rush_highscore_v2';
 const PROG_KEY = 'chimney_rush_progression_v1';
 const DAILY_PB_KEY = 'chimney_rush_daily_pb_v1';
+const RUN_HISTORY_KEY = 'chimney_rush_run_history_v1';
+const RUN_HISTORY_MAX = 100; // ringbuffert — räcker för Topp 10 + Idag + Senaste 10
+
+function loadRunHistory() {
+  try {
+    const raw = localStorage.getItem(RUN_HISTORY_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch { return []; }
+}
+function saveRunHistory(arr) {
+  try { localStorage.setItem(RUN_HISTORY_KEY, JSON.stringify(arr)); } catch {}
+}
+function addRunToHistory(entry) {
+  const hist = loadRunHistory();
+  hist.push(entry);
+  while (hist.length > RUN_HISTORY_MAX) hist.shift();
+  saveRunHistory(hist);
+}
 
 function todayStamp() {
   const d = new Date();
@@ -858,6 +878,10 @@ const state = {
   highScore: parseInt(localStorage.getItem(HS_KEY) || '0', 10) || 0,
   newRecord: false,
   ladders: [],               // populated per-run; each { x, slotMin, slotMax, grabbed, cooldown, walking }
+  lastRunScore: 0,           // poäng från senaste game-over (visas i HUD tills nästa skott)
+  lastRunDistM: 0,           // distans från senaste game-over
+  runMaxDistM: 0,            // max distans den här rundan (inkl. mellan liv)
+  paused: false,             // sätts av leaderboard-popup; gör att update() skippar fysik
 };
 
 // Ladder config (bound to TUNING)
@@ -929,6 +953,9 @@ function fire() {
     anglAtShot: state.angle,
   };
   state.phase = PHASE.FLY;
+  // Vi har skjutit iväg — släng senaste rundans HUD-värden så bigScore visar nuvarande runda.
+  state.lastRunScore = 0;
+  state.lastRunDistM = 0;
   state.startLaunchX = lx;
   state.maxX = lx;
   state.rpm = 0;
@@ -1206,7 +1233,7 @@ function flipperTap() {
 // Drag-to-relaunch: replaces tap-to-roll when ball is stuck. Drag vector = launch direction,
 // drag length = power fraction. Short drags preserve budget; full drag dumps all remaining power.
 const RELAUNCH_DRAG_MAX = 140;   // px of drag = 100% power
-const RELAUNCH_DRAG_MIN = 18;    // below this = tap, no launch, budget preserved
+const RELAUNCH_DRAG_MIN = 38;    // below this = tap/avbryt, no launch, budget preserved
 function executeRelaunch(dxScreen, dyScreen) {
   if (!state.tire || state.phase !== PHASE.FLY) return false;
   if (state.rollBudget <= 0) return false;
@@ -1504,6 +1531,9 @@ function restart() {
   state.rollBudgetMax = 40;
   state.rollBudget = 0;
   state.maxX = 0;
+  state.runMaxDistM = 0;
+  state.lastRunScore = 0;
+  state.lastRunDistM = 0;
   state.tire = null;
   state.particles = [];
   state.popups = [];
@@ -1695,6 +1725,87 @@ window.midShopContinue = function () {
   retry();
 };
 
+// ====== LEADERBOARD ======
+const lbState = { tab: 'alltime', sort: 'score' };
+
+window.openLeaderboard = function () {
+  state.paused = true;
+  const ov = document.getElementById('leaderboardOverlay');
+  if (ov) ov.classList.remove('hidden');
+  renderLeaderboard();
+};
+window.closeLeaderboard = function () {
+  const ov = document.getElementById('leaderboardOverlay');
+  if (ov) ov.classList.add('hidden');
+  state.paused = false;
+};
+
+function renderLeaderboard() {
+  const list = document.getElementById('lbList');
+  if (!list) return;
+  const all = loadRunHistory();
+  let rows;
+  if (lbState.tab === 'today') {
+    const today = todayStamp();
+    rows = all.filter(r => r.date === today).slice().sort((a, b) => (b[lbState.sort] || 0) - (a[lbState.sort] || 0)).slice(0, 10);
+  } else if (lbState.tab === 'recent') {
+    rows = all.slice().sort((a, b) => (b.ts || 0) - (a.ts || 0)).slice(0, 10);
+  } else {
+    rows = all.slice().sort((a, b) => (b[lbState.sort] || 0) - (a[lbState.sort] || 0)).slice(0, 10);
+  }
+  if (!rows.length) {
+    list.innerHTML = '<div class="lb-empty">Inga rundor sparade än.<br>Spela klart en run för att hamna här!</div>';
+    return;
+  }
+  list.innerHTML = rows.map((r, i) => {
+    const rank = i + 1;
+    const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : 'rank-other';
+    const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '#' + rank;
+    const dateStr = formatLbDate(r.ts);
+    const score = (r.score || 0).toLocaleString('sv-SE');
+    const dist = (r.distM || 0).toLocaleString('sv-SE');
+    return `
+      <div class="lb-row ${rankClass}">
+        <div class="lb-rank">${medal}</div>
+        <div class="lb-meta">
+          <div class="lb-score">${score} p</div>
+          <div class="lb-date">${dateStr}</div>
+        </div>
+        <div class="lb-stat">
+          <div class="lb-stat-val">${dist} m</div>
+          <div class="lb-stat-label">Distans</div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function formatLbDate(ts) {
+  if (!ts) return '';
+  const d = new Date(ts);
+  const today = new Date();
+  const sameDay = d.toDateString() === today.toDateString();
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  if (sameDay) return `Idag ${hh}:${mm}`;
+  return `${d.getDate()}/${d.getMonth() + 1} ${hh}:${mm}`;
+}
+
+document.addEventListener('click', (e) => {
+  const tabBtn = e.target.closest('.lb-tab');
+  if (tabBtn && tabBtn.dataset.lbtab) {
+    lbState.tab = tabBtn.dataset.lbtab;
+    document.querySelectorAll('.lb-tab').forEach(b => b.classList.toggle('active', b === tabBtn));
+    renderLeaderboard();
+    return;
+  }
+  const sortBtn = e.target.closest('.lb-sort-btn');
+  if (sortBtn && sortBtn.dataset.lbsort) {
+    lbState.sort = sortBtn.dataset.lbsort;
+    document.querySelectorAll('.lb-sort-btn').forEach(b => b.classList.toggle('active', b === sortBtn));
+    renderLeaderboard();
+  }
+});
+
 // Vindfaser — alternerar lugnt och vindstöt så det oftast är stilla men ibland blåser ordentligt.
 //   ~55% av tiden: STILLA (target ≈ 0, varar 6-12s)
 //   45% av tiden:  STÖT — viktad fördelning, varar max 10s, sen tillbaka till lugnt
@@ -1838,6 +1949,8 @@ function pointerHitLadder(clientX, clientY, lenient) {
 
 stage.addEventListener('pointerdown', e => {
   if (e.target.closest('button')) return;
+  // POÄNG-rutan öppnar leaderboard via onclick — släpp inte vidare till aim/fire.
+  if (e.target.closest('#bigScore')) return;
   e.preventDefault();
   hideTouchHint();
 
@@ -1908,6 +2021,8 @@ stage.addEventListener('pointerdown', e => {
       state.relaunchDrag.startY = e.clientY;
       state.relaunchDrag.curX = e.clientX;
       state.relaunchDrag.curY = e.clientY;
+      state.relaunchDrag.startedAt = Date.now();
+      state.relaunchDrag.ringsArmed = false;
       return;
     }
     // No relaunch budget: if a ladder is pending, wait for pointerup to decide
@@ -2281,8 +2396,12 @@ function setCombo(text) {
 
 // ====== UPDATE ======
 function update() {
+  if (state.paused) return; // Leaderboard-popup öppen → frys allt (inga frames, inga timers)
   state.time++;
   if (state.damageFlashT > 0) state.damageFlashT--;
+  // Score-pulse decrement måste ske oavsett fas — annars fastnar pulse-scalan på 1.18 efter FLY,
+  // vilket fick AIM-poängen att se större ut än under spel.
+  if (state.scorePulseT > 0) state.scorePulseT--;
 
   // Hitstop — freeze physics for a few frames on big impacts
   if (state.hitstop > 0) {
@@ -2294,6 +2413,8 @@ function update() {
   // Slow-mo: ladder grip. A quick tap (no drag, no hold) = no slow-mo.
   // - Drag (finger moves) → slow-mo after ~20ms so you can reposition the man mid-flight
   // - Pure hold still → slow-mo after 300ms, then deepens the longer you hold (50% → 33% → 25%)
+  // - Pending ladder (tap-and-hold på gubbe innan drag-commit) → slow-mo efter ~100ms.
+  //   Filtrerar bort snabbtap-stomps men kickar in tidigt nog att "håller och drar" känns rätt.
   if (state.slowMoCooldown > 0) state.slowMoCooldown--;
   if (state.phase === PHASE.FLY && ladderDrag.active) {
     if (ladderDrag.moveCooldown > 0) ladderDrag.moveCooldown--;
@@ -2301,15 +2422,20 @@ function update() {
   } else {
     ladderDrag.holdFrames = 0;
   }
+  if (state.phase === PHASE.FLY && pendingLadder) {
+    pendingLadder.holdT = (pendingLadder.holdT || 0) + 1;
+  }
   const h = ladderDrag.holdFrames;
   const threshold = ladderDrag.hasMoved ? 1 : 18;  // drag: immediate; hold: ~300ms
-  const ladderSlow = state.phase === PHASE.FLY && ladderDrag.active && h >= threshold;
+  // Pre-commit hold-slow kräver tydligt håll (~330ms) — snabb-tap ska aldrig trigga slow-mo.
+  const pendingHoldSlow = state.phase === PHASE.FLY && pendingLadder && (pendingLadder.holdT || 0) >= 20;
+  const ladderSlow = (state.phase === PHASE.FLY && ladderDrag.active && h >= threshold) || pendingHoldSlow;
   // Smooth slow-mo: scale physics per-frame (same FPS, smaller deltas) instead of frame-skipping.
   // Previously we skipped frames, which looked like lag. Now the wheel moves slowly but renders every frame.
   if (ladderSlow) {
     state.slowMoT = Math.max(state.slowMoT, 20);
-    if (ladderDrag.hasMoved) state.timeScale = 0.5;
-    else state.timeScale = h < 36 ? 0.5 : h < 54 ? 0.33 : 0.25;
+    if (ladderDrag.hasMoved) state.timeScale = 0.25;
+    else state.timeScale = h < 36 ? 0.22 : h < 54 ? 0.15 : 0.10;
   } else if (state.slowMoT > 0) {
     state.slowMoT--;
     state.timeScale = 0.5;
@@ -2735,7 +2861,6 @@ function update() {
     }
     if (state.rollTapFlash > 0) state.rollTapFlash--;
     if (state.rollAssistT > 0) state.rollAssistT--;
-    if (state.scorePulseT > 0) state.scorePulseT--;
     if (state.recordCelebT > 0) state.recordCelebT--;
 
     // Combo decay — continuous pressure: ticks down 0.45 per 60 frames (~1s) when no bump lands.
@@ -3639,7 +3764,9 @@ function update() {
 
     // Track max distance + runStats distance
     if (t.x > state.maxX) state.maxX = t.x;
-    runStats.distM = Math.max(runStats.distM, Math.round((state.maxX - state.startLaunchX) / 5));
+    const _liveDistM = Math.max(0, Math.round((state.maxX - state.startLaunchX) / 5));
+    runStats.distM = Math.max(runStats.distM, _liveDistM);
+    state.runMaxDistM = Math.max(state.runMaxDistM || 0, _liveDistM);
 
     // Slow-mo: triggered when approaching finish fast (once per run-approach)
     const distToFinish = LEVEL.finishX - t.x;
@@ -3879,16 +4006,36 @@ function finishRun(won) {
     if (state.score > 0 || state.coinsRun > 0 || _unspent > 0) {
       flashToast('💀 ALLT FÖRLORAT', '#ef4444');
     }
+    // Spara senaste rundans resultat innan reset så HUD kan visa det tills nästa skott.
+    state.lastRunScore = state.score;
+    state.lastRunDistM = Math.max(state.runMaxDistM || 0, runDistM);
     state.score = 0;
     state.coinsRun = 0;
     state.runCoinsAwarded = 0;
     state.runCoinsSpent = 0;
+    state.runMaxDistM = 0;
     state.scorePulseT = 14;
     updateHud();
   }
 
   const distM = runDistM;
   runStats.distM = distM;
+
+  // Logga rundan i leaderboard-historiken — körs både vid mål-träff (won) och game-over.
+  // Mid-life retry hoppar över via early return ovan, så enbart faktiska run-slut sparas.
+  // I won-fallet har state.score chimney-bonus inkluderad. I game-over-fallet plockar vi
+  // lastRunScore eftersom score nyss nollställts.
+  const _lbScore = won ? state.score : (state.lastRunScore || 0);
+  const _lbDistM = won ? distM : (state.lastRunDistM || distM);
+  if (_lbScore > 0 || _lbDistM > 0) {
+    addRunToHistory({
+      score: _lbScore,
+      distM: _lbDistM,
+      ts: Date.now(),
+      date: todayStamp(),
+      won: !!won,
+    });
+  }
 
   // Coins earned: 1 coin per 10 score + explicit coin count bonus.
   // Drar bort vad som redan tilldelats progression via mid-shop-flöden under rundan
@@ -4344,16 +4491,26 @@ function updateHud() {
   } else {
     rpmVal.style.color = '';
   }
-  // Big score HUD (visible during flight/roll)
+  // Big score HUD — visar nuvarande runda under flight/roll, och senaste rundan i AIM
+  // efter game-over (tills nästa skott). Mid-life AIM (score>0) visar fortfarande aktuell.
   const bs = document.getElementById('bigScore');
   if (bs) {
-    const showBig = state.phase === PHASE.FLY || state.phase === PHASE.DONE;
+    const isFlyOrDone = state.phase === PHASE.FLY || state.phase === PHASE.DONE;
+    const isAimWithScore = state.phase === PHASE.AIM && state.score > 0;
+    const isAimAfterDeath = state.phase === PHASE.AIM && state.score === 0 && (state.lastRunScore > 0 || state.lastRunDistM > 0);
+    const showLastRun = isAimAfterDeath;
+    const showBig = isFlyOrDone || isAimWithScore || isAimAfterDeath;
     bs.classList.toggle('visible', showBig);
+    bs.classList.toggle('last-run', showLastRun);
+    const bsLabel = document.getElementById('bigScoreLabel');
+    if (bsLabel) bsLabel.textContent = showLastRun ? 'FÖRRA RUNDAN' : 'POÄNG';
     const bsv = document.getElementById('bigScoreVal');
     if (bsv) {
-      bsv.textContent = state.score.toLocaleString('sv-SE');
+      const displayScore = showLastRun ? state.lastRunScore : state.score;
+      bsv.textContent = displayScore.toLocaleString('sv-SE');
       bsv.classList.toggle('pulse', state.scorePulseT > 0);
     }
+    // Distansboxen ligger på vänster sida (bredvid PB-chase) — separat från bigScore.
     const bm = document.getElementById('bigMult');
     if (bm) {
       const m = state.flightMult || 1;
@@ -4387,6 +4544,29 @@ function updateHud() {
         }
       } else {
         pbBox.classList.add('hidden');
+      }
+    }
+    // Distans-box på vänster sida (under PB-chase). Samma synlighetsregler som bigScore:
+    // FLY/DONE eller AIM-with-score visar nuvarande max; AIM-after-death visar förra rundans.
+    const distBox = document.getElementById('distBox');
+    const distBoxVal = document.getElementById('distBoxVal');
+    if (distBox && distBoxVal) {
+      if (showBig) {
+        let distM;
+        const liveM = Math.max(0, Math.round(((state.maxX || 0) - (state.startLaunchX || LEVEL.launchX)) / 5));
+        if (showLastRun) {
+          distM = state.lastRunDistM || 0;
+        } else if (state.phase === PHASE.FLY) {
+          // Live-distans under flygning — börjar om från 0 vid varje skott.
+          distM = liveM;
+        } else {
+          // AIM mellan liv: visa förra livets max-distans tills nästa skott.
+          distM = state.runMaxDistM || 0;
+        }
+        distBox.classList.remove('hidden');
+        distBoxVal.textContent = distM + ' m';
+      } else {
+        distBox.classList.add('hidden');
       }
     }
   }
@@ -8020,14 +8200,46 @@ function render() {
   // Frysande vind-overlay (screen-space)
   drawFreezeWind();
 
-  // Slow-mo vignette
+  // Slow-mo vignette — pulsing radial gradient so user clearly sees slow-mo is active
   if (state.slowMoT > 0) {
-    const a = Math.min(0.45, state.slowMoT / 40 * 0.45);
-    const grad = ctx.createRadialGradient(W/2, H/2, Math.min(W, H) * 0.15, W/2, H/2, Math.max(W, H) * 0.7);
-    grad.addColorStop(0, 'rgba(0,0,0,0)');
-    grad.addColorStop(1, `rgba(96, 165, 250, ${a})`);
+    // Drive pulse from real time (Date.now) so it doesn't slow down with timeScale
+    const pulse = 0.5 + 0.5 * Math.sin(Date.now() * 0.005);   // 0..1, ~1.25s period
+    const fadeIn = Math.min(1, state.slowMoT / 12);            // ramp in over first 12 frames
+    const baseA = 0.28 + 0.32 * pulse;                          // 0.28 → 0.60
+    const a = baseA * fadeIn;
+    // Outer rim — strong blue glow
+    const grad = ctx.createRadialGradient(W/2, H/2, Math.min(W, H) * 0.12, W/2, H/2, Math.max(W, H) * 0.75);
+    grad.addColorStop(0, 'rgba(96, 165, 250, 0)');
+    grad.addColorStop(0.55, `rgba(96, 165, 250, ${a * 0.35})`);
+    grad.addColorStop(1, `rgba(59, 130, 246, ${a})`);
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
+
+    // Pulsing inner ring that sweeps inward — clear "time has slowed" cue
+    const ringR = Math.min(W, H) * (0.42 + 0.10 * pulse);
+    const ringW = 12 + 8 * pulse;
+    const ringA = 0.18 * fadeIn * (0.4 + 0.6 * pulse);
+    ctx.save();
+    ctx.strokeStyle = `rgba(191, 219, 254, ${ringA})`;
+    ctx.lineWidth = ringW;
+    ctx.beginPath();
+    ctx.arc(W/2, H/2, ringR, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+
+    // Edge bands — top and bottom blue strips that breathe with the pulse
+    const bandH = 60 + 30 * pulse;
+    const bandA = 0.22 * fadeIn * (0.5 + 0.5 * pulse);
+    const topG = ctx.createLinearGradient(0, 0, 0, bandH);
+    topG.addColorStop(0, `rgba(59, 130, 246, ${bandA})`);
+    topG.addColorStop(1, 'rgba(59, 130, 246, 0)');
+    ctx.fillStyle = topG;
+    ctx.fillRect(0, 0, W, bandH);
+    const botG = ctx.createLinearGradient(0, H - bandH, 0, H);
+    botG.addColorStop(0, 'rgba(59, 130, 246, 0)');
+    botG.addColorStop(1, `rgba(59, 130, 246, ${bandA})`);
+    ctx.fillStyle = botG;
+    ctx.fillRect(0, H - bandH, W, bandH);
   }
 
   // Cinematic vignette (always)
@@ -8051,55 +8263,147 @@ function drawRelaunchDrag() {
   const dx = sx1 - sx0;
   const dy = sy1 - sy0;
   const len = Math.hypot(dx, dy);
-  if (len < 2) return;
+  // Aktivera ringarna först när användaren har dragit utanför avbryt-zonen.
+  // När de väl aktiverats stannar de tills pointer släpps (även om man drar tillbaka in).
+  if (len >= RELAUNCH_DRAG_MIN) d.ringsArmed = true;
+  if (!d.ringsArmed) return;
   const p = Math.min(1, len / RELAUNCH_DRAG_MAX);
-  // Anchor arrow at the tire (convert world to screen)
+  const inCancelZone = len < RELAUNCH_DRAG_MIN;
+  // Color stops: cancel(grå) → orange → gul → röd(MAX)
+  const powerColor = p >= 0.95 ? '#ef4444' : p >= 0.7 ? '#f59e0b' : p >= 0.4 ? '#fbbf24' : p >= 0.15 ? '#fb923c' : '#94a3b8';
+  // Anchor arrow at tire (world → screen)
   const [wx, wy] = worldToScreen(state.tire.x, state.tire.y);
   const z = state.cam.zoom || 1;
   const tsx = wx * z;
   const tsy = wy * z;
-  // Arrow length scaled to power
-  const armLen = 30 + p * 120;
-  const ax = tsx + (dx / len) * armLen;
-  const ay = tsy + (dy / len) * armLen;
-  // Color by power
-  const col = p >= 0.95 ? '#22c55e' : p >= 0.6 ? '#fbbf24' : p >= 0.3 ? '#fb923c' : '#94a3b8';
-  // Ring around tire
+
   ctx.save();
-  ctx.strokeStyle = col;
-  ctx.lineWidth = 4;
-  ctx.globalAlpha = 0.85;
-  ctx.beginPath();
-  ctx.arc(tsx, tsy, 28, 0, Math.PI * 2);
-  ctx.stroke();
-  // Shaft
-  ctx.lineCap = 'round';
-  ctx.lineWidth = 7;
-  ctx.beginPath();
-  ctx.moveTo(tsx, tsy);
-  ctx.lineTo(ax, ay);
-  ctx.stroke();
-  // Arrowhead
-  const ang = Math.atan2(dy, dx);
-  const hl = 18;
-  ctx.fillStyle = col;
-  ctx.beginPath();
-  ctx.moveTo(ax, ay);
-  ctx.lineTo(ax - Math.cos(ang - 0.5) * hl, ay - Math.sin(ang - 0.5) * hl);
-  ctx.lineTo(ax - Math.cos(ang + 0.5) * hl, ay - Math.sin(ang + 0.5) * hl);
-  ctx.closePath();
-  ctx.fill();
-  // Power % label near cursor
-  ctx.fillStyle = '#0f172a';
-  ctx.strokeStyle = col;
-  ctx.lineWidth = 3;
-  ctx.font = 'bold 18px "Inter", sans-serif';
+
+  // ===== KONCENTRISKA RINGAR vid startposition =====
+  const RINGS = [
+    { r: RELAUNCH_DRAG_MIN,         color: '#94a3b8', label: 'AVBRYT', fill: 'rgba(148, 163, 184, 0.10)' },
+    { r: RELAUNCH_DRAG_MAX * 0.4,   color: '#fb923c', label: null,     fill: 'rgba(251, 146, 60, 0.06)'  },
+    { r: RELAUNCH_DRAG_MAX * 0.7,   color: '#fbbf24', label: null,     fill: 'rgba(251, 191, 36, 0.08)'  },
+    { r: RELAUNCH_DRAG_MAX,         color: '#ef4444', label: 'MAX',    fill: 'rgba(239, 68, 68, 0.10)'   }
+  ];
+
+  // Fyll zoner ytterst → innerst (donut effect via even-odd är overkill, kör enkel fyllning)
+  for (let i = RINGS.length - 1; i >= 0; i--) {
+    ctx.fillStyle = RINGS[i].fill;
+    ctx.beginPath();
+    ctx.arc(sx0, sy0, RINGS[i].r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Rita ringar
+  const pulse = 0.5 + 0.5 * Math.sin(Date.now() * 0.006);
+  RINGS.forEach((ring, i) => {
+    const isMax = i === RINGS.length - 1;
+    const isCancel = i === 0;
+    ctx.strokeStyle = ring.color;
+    ctx.lineWidth = isMax ? 3 + 2 * pulse : isCancel && inCancelZone ? 4 : 2;
+    ctx.globalAlpha = isMax ? 0.7 + 0.3 * pulse : isCancel && inCancelZone ? 0.95 : 0.55;
+    if (isCancel && inCancelZone) ctx.setLineDash([]);
+    else if (isCancel) ctx.setLineDash([6, 6]);
+    else ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.arc(sx0, sy0, ring.r, 0, Math.PI * 2);
+    ctx.stroke();
+  });
+  ctx.setLineDash([]);
+  ctx.globalAlpha = 1;
+
+  // Etiketter på cancel- och max-ringen
+  ctx.font = 'bold 11px "Inter", sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  const label = Math.round(p * 100) + '%';
-  ctx.strokeText(label, sx1, sy1 - 24);
-  ctx.fillStyle = '#fef3c7';
-  ctx.fillText(label, sx1, sy1 - 24);
+  // AVBRYT-text inne i innerringen om man är där
+  if (inCancelZone) {
+    ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+    ctx.beginPath();
+    ctx.arc(sx0, sy0, RELAUNCH_DRAG_MIN - 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = '#fef3c7';
+    ctx.font = 'bold 11px "Inter", sans-serif';
+    ctx.fillText('SLÄPP FÖR', sx0, sy0 - 6);
+    ctx.fillText('ATT ÅNGRA', sx0, sy0 + 6);
+  }
+  // MAX-text på maxringen (vid topp)
+  ctx.fillStyle = '#ef4444';
+  ctx.font = 'bold 12px "Inter", sans-serif';
+  ctx.strokeStyle = 'rgba(15, 23, 42, 0.85)';
+  ctx.lineWidth = 4;
+  ctx.strokeText('MAX', sx0, sy0 - RELAUNCH_DRAG_MAX - 8);
+  ctx.fillText('MAX', sx0, sy0 - RELAUNCH_DRAG_MAX - 8);
+
+  // ===== Linje från start till finger =====
+  if (len >= 2) {
+    ctx.strokeStyle = inCancelZone ? '#94a3b8' : powerColor;
+    ctx.lineWidth = 4;
+    ctx.lineCap = 'round';
+    ctx.globalAlpha = 0.7;
+    ctx.beginPath();
+    ctx.moveTo(sx0, sy0);
+    ctx.lineTo(sx1, sy1);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  // ===== Fingerdot vid current position =====
+  ctx.fillStyle = inCancelZone ? '#cbd5e1' : powerColor;
+  ctx.strokeStyle = 'rgba(15, 23, 42, 0.7)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(sx1, sy1, 10, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  // ===== Sikt-pil vid hjulet (visar riktning + power) =====
+  if (len >= 2 && !inCancelZone) {
+    const armLen = 30 + p * 120;
+    const ax = tsx + (dx / len) * armLen;
+    const ay = tsy + (dy / len) * armLen;
+    ctx.strokeStyle = powerColor;
+    ctx.fillStyle = powerColor;
+    ctx.lineWidth = 4;
+    ctx.globalAlpha = 0.85;
+    // Ring runt hjulet
+    ctx.beginPath();
+    ctx.arc(tsx, tsy, 28, 0, Math.PI * 2);
+    ctx.stroke();
+    // Skaft
+    ctx.lineCap = 'round';
+    ctx.lineWidth = 7;
+    ctx.beginPath();
+    ctx.moveTo(tsx, tsy);
+    ctx.lineTo(ax, ay);
+    ctx.stroke();
+    // Pilhuvud
+    const ang = Math.atan2(dy, dx);
+    const hl = 18;
+    ctx.beginPath();
+    ctx.moveTo(ax, ay);
+    ctx.lineTo(ax - Math.cos(ang - 0.5) * hl, ay - Math.sin(ang - 0.5) * hl);
+    ctx.lineTo(ax - Math.cos(ang + 0.5) * hl, ay - Math.sin(ang + 0.5) * hl);
+    ctx.closePath();
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  // ===== Power% label vid finger =====
+  if (!inCancelZone && len >= 2) {
+    ctx.fillStyle = '#0f172a';
+    ctx.strokeStyle = powerColor;
+    ctx.lineWidth = 3;
+    ctx.font = 'bold 18px "Inter", sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    const label = Math.round(p * 100) + '%';
+    ctx.strokeText(label, sx1, sy1 - 28);
+    ctx.fillStyle = '#fef3c7';
+    ctx.fillText(label, sx1, sy1 - 28);
+  }
+
   ctx.restore();
 }
 
