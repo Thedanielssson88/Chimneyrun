@@ -6,11 +6,11 @@
 const TUNING_KEY = 'chimney_tuning_v3';
 const DEFAULT_TUNING = {
   // Fysik
-  gravityDesert: 0.38, gravityCanyon: 0.38, gravityNeon: 0.28, gravityIce: 0.34, gravityVolcano: 0.40,
+  gravityDesert: 0.35, gravityCanyon: 0.35, gravityNeon: 0.35, gravityIce: 0.34, gravityVolcano: 0.40,
   airDrag: 0.9995, bounceDamp: 0.90, groundFric: 0.996, windMax: 0.18,
   tireR: 24,
   // Hastighet
-  speedCapNormal: 19, speedCapLaunch: 29, speedCapNitro: 42,
+  speedCapNormal: 15, speedCapLaunch: 23, speedCapNitro: 34,
   maxRpm: 100, rpmGain: 1.4, rpmDecay: 0.9, rpmMaxHoldFrames: 12,
   perfectMin: 70, perfectMax: 85,
   minAngle: 5, maxAngle: 80,
@@ -37,6 +37,9 @@ const DEFAULT_TUNING = {
   wallFreqCanyon: 0.6, spinnerFreqCanyon: 0.45, rampFreqCanyon: 0.3,
   barrelFreqCanyon: 0.25, houseFreqCanyon: 0.15, tntFreqCanyon: 0.15, cannonFreqCanyon: 0.08,
   bumperFreqCanyon: 0.25, cactusFreqCanyon: 0.07, spikeFreqCanyon: 0.04, waterFreqCanyon: 0.35,
+  bridgeFreqCanyon: 0.18,
+  // Hinder-frekvens (hell)
+  hellMonsterFreq: 0.7,
   // Hinder-frekvens (neon)
   wallFreqNeon: 0.2, spinnerFreqNeon: 0.55, rampFreqNeon: 0.55,
   barrelFreqNeon: 0.15, houseFreqNeon: 0.12, tntFreqNeon: 0.12, cannonFreqNeon: 0.12,
@@ -51,11 +54,39 @@ const DEFAULT_TUNING = {
   barrelFreqVolcano: 0.08, houseFreqVolcano: 0, tntFreqVolcano: 0.18, cannonFreqVolcano: 0.16,
   bumperFreqVolcano: 0.20, cactusFreqVolcano: 0, spikeFreqVolcano: 0.10, waterFreqVolcano: 0,
   lavaFreqVolcano: 0.45, geyserFreqVolcano: 0.30,
+  // Hinder-frekvens (space) — månlandskap: kratrar (instant death), aliens, fallande stenar, UFO:n
+  // Inga vattenhål, kaktusar, lava eller geysers. Lägre densitet — det är RYMD.
+  gravitySpace: 0.1715,  // 30% lägre igen (0.245 × 0.7) — månlik lågflöde-känsla
+  terrainAmpSpace: 180, terrainStepSpace: 360,
+  wallFreqSpace: 0.15, spinnerFreqSpace: 0.10, rampFreqSpace: 0.30,
+  barrelFreqSpace: 0.10, houseFreqSpace: 0, tntFreqSpace: 0.05, cannonFreqSpace: 0.12,
+  bumperFreqSpace: 0.15, cactusFreqSpace: 0, spikeFreqSpace: 0,
+  waterFreqSpace: 0, lavaFreqSpace: 0, geyserFreqSpace: 0,
+  craterFreqSpace: 0.40, alienFreqSpace: 0.45,
+  // Hinder-frekvens (deep) — djuphavet: flytkraft + syrebrist. Single-world only, aldrig i mix.
+  // Hajar/maneter/tentakler kommer i v261 — v260 är grundvärlden.
+  gravityDeep: 0.10,                        // låg gravitation (motverkas av flytkraft)
+  terrainAmpDeep: 110, terrainStepDeep: 220,
+  wallFreqDeep: 0.18, spinnerFreqDeep: 0.08, rampFreqDeep: 0.20,
+  barrelFreqDeep: 0.12, houseFreqDeep: 0, tntFreqDeep: 0.04, cannonFreqDeep: 0.10,
+  bumperFreqDeep: 0.20, cactusFreqDeep: 0, spikeFreqDeep: 0.05,
+  waterFreqDeep: 0, lavaFreqDeep: 0, geyserFreqDeep: 0,
+  // Deep-only hazards: djupavgrund (crater-clone, instant death) + tentakler (cactus-clone)
+  abyssFreqDeep: 0.20, tentacleFreqDeep: 0.18,
+  // Hinder-frekvens (pinball) — Flipperland: HÖG densitet av flippers, bumpers, spinners.
+  // Single-world only. Drain-hål (crater-clone) i mitten.
+  gravityPinball: 0.32,
+  terrainAmpPinball: 80, terrainStepPinball: 200,
+  wallFreqPinball: 0.05, spinnerFreqPinball: 0.65, rampFreqPinball: 0.85,
+  barrelFreqPinball: 0.04, housePinball: 0, tntFreqPinball: 0, cannonFreqPinball: 0.08,
+  bumperFreqPinball: 0.55, cactusFreqPinball: 0, spikeFreqPinball: 0,
+  waterFreqPinball: 0, lavaFreqPinball: 0, geyserFreqPinball: 0,
+  drainFreqPinball: 0.18, slingFreqPinball: 0.30, dropTargetFreqPinball: 0.22, saucerFreqPinball: 0.12,
   // Pickups
-  coinDensityDesert: 3, coinDensityCanyon: 2.5, coinDensityNeon: 2, coinDensityIce: 2.5, coinDensityVolcano: 2,
-  starFreqDesert: 0.7, starFreqCanyon: 1.0, starFreqNeon: 1.1, starFreqIce: 1.3, starFreqVolcano: 1.5,
-  balloonFreqDesert: 0.4, balloonFreqCanyon: 0.3, balloonFreqNeon: 0.9, balloonFreqIce: 0.7, balloonFreqVolcano: 0.5,
-  nitroFreqDesert: 1.4, nitroFreqCanyon: 1.3, nitroFreqNeon: 1.7, nitroFreqIce: 1.9, nitroFreqVolcano: 2.1,
+  coinDensityDesert: 3, coinDensityCanyon: 2.5, coinDensityNeon: 2, coinDensityIce: 2.5, coinDensityVolcano: 2, coinDensitySpace: 2.2, coinDensityDeep: 2.4, coinDensityPinball: 3.5,
+  starFreqDesert: 0.7, starFreqCanyon: 1.0, starFreqNeon: 1.1, starFreqIce: 1.3, starFreqVolcano: 1.5, starFreqSpace: 1.4, starFreqDeep: 1.2, starFreqPinball: 2.0,
+  balloonFreqDesert: 0.4, balloonFreqCanyon: 0.3, balloonFreqNeon: 0.9, balloonFreqIce: 0.7, balloonFreqVolcano: 0.5, balloonFreqSpace: 0.8, balloonFreqDeep: 0.6, balloonFreqPinball: 0.4,
+  nitroFreqDesert: 1.4, nitroFreqCanyon: 1.3, nitroFreqNeon: 1.7, nitroFreqIce: 1.9, nitroFreqVolcano: 2.1, nitroFreqSpace: 1.8, nitroFreqDeep: 1.6, nitroFreqPinball: 2.5,
   // Terräng
   terrainAmpDesert: 80, terrainAmpCanyon: 140, terrainAmpNeon: 180, terrainAmpIce: 150, terrainAmpVolcano: 170,
   terrainStepDesert: 220, terrainStepCanyon: 200, terrainStepNeon: 240, terrainStepIce: 200, terrainStepVolcano: 210,
@@ -138,11 +169,12 @@ function todayStamp() {
 function loadDailyPB() {
   try {
     const raw = localStorage.getItem(DAILY_PB_KEY);
-    if (!raw) return { date: todayStamp(), distM: 0, score: 0 };
+    if (!raw) return { date: todayStamp(), distM: 0, score: 0, hellDistM: 0 };
     const parsed = JSON.parse(raw);
-    if (parsed.date !== todayStamp()) return { date: todayStamp(), distM: 0, score: 0 };
+    if (parsed.date !== todayStamp()) return { date: todayStamp(), distM: 0, score: 0, hellDistM: 0 };
+    if (typeof parsed.hellDistM !== 'number') parsed.hellDistM = 0;
     return parsed;
-  } catch { return { date: todayStamp(), distM: 0, score: 0 }; }
+  } catch { return { date: todayStamp(), distM: 0, score: 0, hellDistM: 0 }; }
 }
 function saveDailyPB(pb) {
   try { localStorage.setItem(DAILY_PB_KEY, JSON.stringify(pb)); } catch {}
@@ -151,9 +183,11 @@ let dailyPB = loadDailyPB();
 
 // ====== PROGRESSION (coins + upgrades + missions) ======
 const UPGRADES = {
-  motor: { name: 'Motor', icon: '⚙️', max: 5, cost: [80, 200, 500, 1200, 2800], desc: '+4 RPM + bredare PERFECT-zon per nivå' },
-  tire:  { name: 'Däck',  icon: '🛞', max: 5, cost: [100, 250, 600, 1400, 3200], desc: 'Studs +3% per nivå' },
-  ladder:{ name: 'Stege', icon: '🪜', max: 3, cost: [150, 400, 1000],             desc: 'Vinkelrange ±5° per nivå' },
+  motor:        { name: 'Motor', icon: '⚙️', max: 5, cost: [80, 200, 500, 1200, 2800], desc: '+4 RPM + bredare PERFECT-zon per nivå' },
+  tire:         { name: 'Däck',  icon: '🛞', max: 5, cost: [100, 250, 600, 1400, 3200], desc: 'Studs +3% per nivå' },
+  ladder:       { name: 'Stege', icon: '🪜', max: 3, cost: [150, 400, 1000],            desc: 'Vinkelrange ±5° per nivå' },
+  refillHealth: { name: 'Max Hälsa', icon: '❤️', consumable: true, cost: 100, desc: 'Fyller hälsan + extra liv (mitt i spelet)' },
+  refillPower:  { name: 'Max Kraft', icon: '⚡', consumable: true, cost: 100, desc: 'Fyller kraften till max (mitt i spelet)' },
 };
 
 const MISSION_POOL = [
@@ -169,12 +203,54 @@ const MISSION_POOL = [
   { id: 'noStomp', desc: 'Flyg 1500m utan att stompa', reward: 300, test: s => s.distM >= 1500 && s.stompsUsed === 0 },
 ];
 
+// ====== WORLDS ======
+// Mix är default & gratis. Single-world banor måste köpas och är 4×BIOME_LEN långa
+// (samma cannon-launcher i början, samma chimney-torn i slutet).
+const WORLDS = {
+  mix:     { name: 'Mix',     emoji: '🌍', cost: 0,    biomeIndex: -1, desc: 'Alla 5 biomer i följd' },
+  desert:  { name: 'Öken',    emoji: '🏜️', cost: 800,  biomeIndex: 0,  desc: 'Lång öken — mjuk start' },
+  canyon:  { name: 'Canyon',  emoji: '🏔️', cost: 1500, biomeIndex: 1,  desc: 'Branter, hängbroar, kondorer' },
+  neon:    { name: 'Neon',    emoji: '🌃', cost: 2500, biomeIndex: 2,  desc: 'Pinball-flippers & bumprar' },
+  ice:     { name: 'Is',      emoji: '❄️', cost: 4000, biomeIndex: 3,  desc: 'Halt och pingviner' },
+  space:   { name: 'Rymden',  emoji: '🌙', cost: 5000, biomeIndex: 6,  desc: 'Månen — lågt G, kratrar, aliens, UFO' },
+  volcano: { name: 'Vulkan',  emoji: '🌋', cost: 6000, biomeIndex: 4,  desc: 'Lava och geysrar' },
+  deep:    { name: 'Djuphavet',emoji: '🌊', cost: 7500, biomeIndex: 7,  desc: 'Flytkraft, dykardräkt, syrgastank' },
+  pinball: { name: 'Flipperland',emoji: '🎰', cost: 8500, biomeIndex: 8,  desc: 'Pinball-bord — flippers, bumpers, drain-hål' },
+};
+const WORLD_ORDER = ['mix', 'desert', 'canyon', 'neon', 'ice', 'space', 'volcano', 'deep', 'pinball'];
+
 function loadProgression() {
+  let p;
   try {
     const raw = localStorage.getItem(PROG_KEY);
-    if (raw) return JSON.parse(raw);
+    if (raw) p = JSON.parse(raw);
   } catch(_) {}
-  return { coins: 0, runs: 0, upgrades: { motor: 0, tire: 0, ladder: 0 }, missions: null, missionsDate: null };
+  if (!p) p = { coins: 0, runs: 0, upgrades: { motor: 0, tire: 0, ladder: 0 }, missions: null, missionsDate: null };
+  // Migration: lägg till worlds + activeWorld om saknas
+  if (!p.worlds) {
+    const oldHS = parseInt(localStorage.getItem('chimney_rush_highscore_v2') || '0', 10) || 0;
+    p.worlds = {
+      mix:     { owned: true,  hs: oldHS, distHs: 0 },
+      desert:  { owned: false, hs: 0, distHs: 0 },
+      canyon:  { owned: false, hs: 0, distHs: 0 },
+      neon:    { owned: false, hs: 0, distHs: 0 },
+      ice:     { owned: false, hs: 0, distHs: 0 },
+      space:   { owned: false, hs: 0, distHs: 0 },
+      volcano: { owned: false, hs: 0, distHs: 0 },
+      deep:    { owned: false, hs: 0, distHs: 0 },
+      pinball: { owned: false, hs: 0, distHs: 0 },
+    };
+  }
+  // Migration: lägg till space om saknas (för users som redan har worlds från v250)
+  if (!p.worlds.space) p.worlds.space = { owned: false, hs: 0, distHs: 0 };
+  // Migration: lägg till deep om saknas (för users som redan har worlds från v259)
+  if (!p.worlds.deep)  p.worlds.deep  = { owned: false, hs: 0, distHs: 0 };
+  // Migration: lägg till pinball om saknas (för users från v291)
+  if (!p.worlds.pinball) p.worlds.pinball = { owned: false, hs: 0, distHs: 0 };
+  if (!p.activeWorld) p.activeWorld = 'mix';
+  // Säkerställ owned-flagga för mix
+  if (p.worlds.mix && !p.worlds.mix.owned) p.worlds.mix.owned = true;
+  return p;
 }
 function saveProgression() {
   try { localStorage.setItem(PROG_KEY, JSON.stringify(progression)); } catch(_) {}
@@ -305,12 +381,29 @@ let LEVEL = { launchX: 0, launchY: 0, finishX: 0, totalStars: 0 };
 
 // Biome config: [desert, canyon, neon, ice, volcano]
 const BIOME_LEN = 15000;         // each biome 15000m long
-const WORLD_LEN = BIOME_LEN * 5; // 75000m total — 5 biomes (desert → canyon → neon → ice → volcano)
-const HELL_LEN = BIOME_LEN;      // 15000m hell-biome BAKOM x=0 (måste hoppa över huset)
+// WORLD_LEN sätts vid level-init beroende på vald värld:
+// Mix = 75000m (5 biomer), single-world = 60000m (4×BIOME_LEN).
+let WORLD_LEN = BIOME_LEN * 5;
+const HELL_LEN = BIOME_LEN * 4;  // 60000m hell-biome BAKOM x=0 (måste hoppa över huset)
 const HELL_INDEX = 5;            // hell-biome är index 5 i BIOMES[]
 const WORLD_MIN_X = -HELL_LEN;   // -15000
+// Returnerar längden på den aktiva världen (Mix = 5 biomer; single = 4×BIOME_LEN).
+function activeWorldLen() {
+  const w = progression && progression.activeWorld;
+  if (!w || w === 'mix') return BIOME_LEN * 5;
+  return BIOME_LEN * 4;
+}
+// Aktivt biome-index för single-world mode (-1 = mix, vanlig logik gäller).
+function activeWorldBiome() {
+  const w = progression && progression.activeWorld;
+  if (!w || w === 'mix') return -1;
+  return WORLDS[w] ? WORLDS[w].biomeIndex : -1;
+}
 function biomeAt(x) {
   if (x < 0) return HELL_INDEX;
+  // Single-world mode: hela banan är ett enda biome.
+  const sb = activeWorldBiome();
+  if (sb >= 0) return sb;
   if (x < BIOME_LEN) return 0;
   if (x < BIOME_LEN * 2) return 1;
   if (x < BIOME_LEN * 3) return 2;
@@ -322,11 +415,16 @@ const RESPAWN_LAUNCH_OFFSET = 180;
 function biomeStartX(x) {
   // Död i hell → respawn vid biome 0 start (man får INTE respawna i hell)
   if (biomeAt(x) === HELL_INDEX) return RESPAWN_LAUNCH_OFFSET;
+  // Single-world: alltid start vid launcher.
+  if (activeWorldBiome() >= 0) return RESPAWN_LAUNCH_OFFSET;
   return biomeAt(x) * BIOME_LEN + RESPAWN_LAUNCH_OFFSET;
 }
 // Smooth-blend helper för boundary-effekter (sky/gravity).
 // Returnerar t ∈ [0,1] där 0 = vid boundary mot prev biome, 1 = djupt inne i current.
 function biomeBlendT(x, blendZone) {
+  // Single-world mode: hela banan är ett enda biome, ingen blend behövs.
+  // Returnera 1 så currentBiomeSky() ger curr-färgerna unblended från start.
+  if (activeWorldBiome() >= 0) return 1;
   const b = biomeAt(x);
   let within;
   if (b === HELL_INDEX) within = -x;          // hell går baklänges från x=0
@@ -335,6 +433,9 @@ function biomeBlendT(x, blendZone) {
 }
 function prevBiomeIndex(b) {
   if (b === HELL_INDEX) return 0;             // hell's "prev" är biome 0 (där du kom från)
+  if (b === SPACE_INDEX) return SPACE_INDEX;  // space är single-world only — ingen blend
+  if (b === DEEP_INDEX) return DEEP_INDEX;    // deep är single-world only — ingen blend
+  if (b === PINBALL_INDEX) return PINBALL_INDEX; // pinball är single-world only — ingen blend
   return Math.max(0, b - 1);
 }
 
@@ -365,6 +466,7 @@ const BIOMES = [
     cactusFreq: TUNING.cactusFreqCanyon,
     spikeFreq: TUNING.spikeFreqCanyon,
     waterFreq: TUNING.waterFreqCanyon,
+    bridgeFreq: TUNING.bridgeFreqCanyon,
     coinDensity: TUNING.coinDensityCanyon, starFreq: TUNING.starFreqCanyon, balloonFreq: TUNING.balloonFreqCanyon, nitroFreq: TUNING.nitroFreqCanyon,
   },
   { // 2 — neon night
@@ -382,7 +484,8 @@ const BIOMES = [
     coinDensity: TUNING.coinDensityNeon, starFreq: TUNING.starFreqNeon, balloonFreq: TUNING.balloonFreqNeon, nitroFreq: TUNING.nitroFreqNeon,
   },
   { // 3 — ice world (biome 4) — frozen tundra, brutal density
-    sky: ['#0c4a6e', '#0ea5e9', '#e0f2fe'],
+    // Ljus is-himmel: vit-cyan → ljusblå → nästan vit för dagsljus-arktisk-feel.
+    sky: ['#7dd3fc', '#bae6fd', '#f0f9ff'],
     groundTop: '#e0f2fe', groundBot: '#1e3a8a', groundLine: '#7dd3fc',
     cacti: '#0ea5e9',                         // not rendered — cactusFreq is 0 here
     gravity: TUNING.gravityIce,
@@ -396,7 +499,8 @@ const BIOMES = [
     coinDensity: TUNING.coinDensityIce, starFreq: TUNING.starFreqIce, balloonFreq: TUNING.balloonFreqIce, nitroFreq: TUNING.nitroFreqIce,
   },
   { // 4 — volcano (biome 5) — glödande klippor, lava, eldbollar, geysers, askstorm
-    sky: ['#1a0303', '#7f1d1d', '#f97316'],
+    // Pitch-black topp + mörkt blod-röd → glödande orange för dramatisk lava-himmel.
+    sky: ['#000000', '#3f0a0a', '#b91c1c'],
     groundTop: '#1c0a0a', groundBot: '#0a0303', groundLine: '#f97316',
     cacti: '#7c2d12',                         // not rendered — cactusFreq is 0 here
     gravity: TUNING.gravityVolcano,
@@ -412,12 +516,13 @@ const BIOMES = [
     coinDensity: TUNING.coinDensityVolcano, starFreq: TUNING.starFreqVolcano, balloonFreq: TUNING.balloonFreqVolcano, nitroFreq: TUNING.nitroFreqVolcano,
   },
   { // 5 — HELL (bakom biome 0, x ∈ [-15000, 0]) — det värsta från alla biomer
-    sky: ['#000000', '#1a0303', '#7f1d1d'],
-    groundTop: '#1a0303', groundBot: '#000000', groundLine: '#dc2626',
-    cacti: '#450a0a',
-    // Brutal fysik — högre gravitation, kort terrainStep (smala plattformar), stor amp
-    gravity: 0.62,
-    terrainAmp: 240, terrainStep: 220,
+    // Mörkröd sten/lava — inte kolsvart utan blodig stenmiljö med glödande hetta.
+    sky: ['#2d0808', '#5c1010', '#991b1b'],
+    groundTop: '#451a0a', groundBot: '#1f0606', groundLine: '#ef4444',
+    cacti: '#7f1d1d',
+    // Brutal fysik — något högre gravitation, mjukare terräng så hjulet faktiskt studsar
+    gravity: 0.42,
+    terrainAmp: 140, terrainStep: 240,
     // Worst-of-all freq-värden (sätts efter applyTuning() via _seedHellBiome)
     wallFreq: 0, spinnerFreq: 0, rampFreq: 0, barrelFreq: 0,
     houseFreq: 0, tntFreq: 0, cannonFreq: 0, bumperFreq: 0,
@@ -425,7 +530,58 @@ const BIOMES = [
     // Inga belöningar i hell (0 stjärnor, få mynt — hanteras separat i pickup-loop)
     coinDensity: 0, starFreq: 0, balloonFreq: 0, nitroFreq: 0,
   },
+  { // 6 — SPACE (månen) — bara tillgänglig som single-world. Aldrig i mix.
+    // Djuprymd-himmel: svart → blå → lila gradient, stjärnor + jorden i fjärran (renderas separat).
+    sky: ['#020617', '#0c0a3e', '#1e1b4b'],
+    groundTop: '#9ca3af', groundBot: '#1f2937', groundLine: '#cbd5e1',  // grått månstoft (regolit)
+    cacti: '#6b7280',                                                   // not rendered — cactusFreq = 0
+    gravity: TUNING.gravitySpace,
+    terrainAmp: TUNING.terrainAmpSpace, terrainStep: TUNING.terrainStepSpace,
+    wallFreq: TUNING.wallFreqSpace, spinnerFreq: TUNING.spinnerFreqSpace, rampFreq: TUNING.rampFreqSpace,
+    barrelFreq: TUNING.barrelFreqSpace, houseFreq: TUNING.houseFreqSpace, tntFreq: TUNING.tntFreqSpace, cannonFreq: TUNING.cannonFreqSpace,
+    bumperFreq: TUNING.bumperFreqSpace,
+    cactusFreq: TUNING.cactusFreqSpace,
+    spikeFreq: TUNING.spikeFreqSpace,
+    waterFreq: TUNING.waterFreqSpace,
+    craterFreq: TUNING.craterFreqSpace, alienFreq: TUNING.alienFreqSpace,
+    coinDensity: TUNING.coinDensitySpace, starFreq: TUNING.starFreqSpace, balloonFreq: TUNING.balloonFreqSpace, nitroFreq: TUNING.nitroFreqSpace,
+  },
+  { // 7 — DEEP OCEAN (djuphavet) — single-world only. Aldrig i mix.
+    // Mörk djuphav-himmel: turkos → mörkblå → svart gradient. Godrays + bubblor renderas separat.
+    sky: ['#0891b2', '#082f49', '#020617'],
+    groundTop: '#0e7490', groundBot: '#082f49', groundLine: '#22d3ee',  // turkos sand → djupblå
+    cacti: '#0c4a6e',                                                    // not rendered — cactusFreq = 0
+    gravity: TUNING.gravityDeep,
+    terrainAmp: TUNING.terrainAmpDeep, terrainStep: TUNING.terrainStepDeep,
+    wallFreq: TUNING.wallFreqDeep, spinnerFreq: TUNING.spinnerFreqDeep, rampFreq: TUNING.rampFreqDeep,
+    barrelFreq: TUNING.barrelFreqDeep, houseFreq: TUNING.houseFreqDeep, tntFreq: TUNING.tntFreqDeep, cannonFreq: TUNING.cannonFreqDeep,
+    bumperFreq: TUNING.bumperFreqDeep,
+    cactusFreq: TUNING.cactusFreqDeep,
+    spikeFreq: TUNING.spikeFreqDeep,
+    waterFreq: TUNING.waterFreqDeep,
+    abyssFreq: TUNING.abyssFreqDeep, tentacleFreq: TUNING.tentacleFreqDeep,
+    coinDensity: TUNING.coinDensityDeep, starFreq: TUNING.starFreqDeep, balloonFreq: TUNING.balloonFreqDeep, nitroFreq: TUNING.nitroFreqDeep,
+  },
+  { // 8 — PINBALL (Flipperland) — single-world only. Aldrig i mix.
+    // Neon-pinball-bord-feel: mörk lila/svart sky med LED-grid. Glansigt svart mark med neon-kanter.
+    sky: ['#0a0118', '#1e0a3a', '#3b0764'],
+    groundTop: '#0f0f23', groundBot: '#020014', groundLine: '#22d3ee',
+    cacti: '#7c3aed',                                                    // not rendered
+    gravity: TUNING.gravityPinball,
+    terrainAmp: TUNING.terrainAmpPinball, terrainStep: TUNING.terrainStepPinball,
+    wallFreq: TUNING.wallFreqPinball, spinnerFreq: TUNING.spinnerFreqPinball, rampFreq: TUNING.rampFreqPinball,
+    barrelFreq: TUNING.barrelFreqPinball, houseFreq: 0, tntFreq: TUNING.tntFreqPinball, cannonFreq: TUNING.cannonFreqPinball,
+    bumperFreq: TUNING.bumperFreqPinball,
+    cactusFreq: TUNING.cactusFreqPinball,
+    spikeFreq: TUNING.spikeFreqPinball,
+    waterFreq: TUNING.waterFreqPinball,
+    drainFreq: TUNING.drainFreqPinball, slingFreq: TUNING.slingFreqPinball, dropTargetFreq: TUNING.dropTargetFreqPinball, saucerFreq: TUNING.saucerFreqPinball,
+    coinDensity: TUNING.coinDensityPinball, starFreq: TUNING.starFreqPinball, balloonFreq: TUNING.balloonFreqPinball, nitroFreq: TUNING.nitroFreqPinball,
+  },
 ];
+const SPACE_INDEX = 6;
+const DEEP_INDEX = 7;
+const PINBALL_INDEX = 8;
 
 function applyTuning() {
   // Globala fysik-konstanter
@@ -491,6 +647,43 @@ function applyTuning() {
     hb.waterFreq   = _maxFreq('waterFreq');
     hb.lavaFreq    = _maxFreq('lavaFreq');
     hb.geyserFreq  = _maxFreq('geyserFreq');
+    hb.monsterFreq = TUNING.hellMonsterFreq;
+  }
+  // Space (BIOMES[6]) — månlandskap, single-world only
+  const sb = BIOMES[SPACE_INDEX];
+  if (sb) {
+    sb.gravity = TUNING.gravitySpace;
+    sb.terrainAmp = TUNING.terrainAmpSpace; sb.terrainStep = TUNING.terrainStepSpace;
+    sb.wallFreq = TUNING.wallFreqSpace; sb.spinnerFreq = TUNING.spinnerFreqSpace; sb.rampFreq = TUNING.rampFreqSpace;
+    sb.barrelFreq = TUNING.barrelFreqSpace; sb.houseFreq = TUNING.houseFreqSpace; sb.tntFreq = TUNING.tntFreqSpace; sb.cannonFreq = TUNING.cannonFreqSpace;
+    sb.bumperFreq = TUNING.bumperFreqSpace;
+    sb.cactusFreq = TUNING.cactusFreqSpace; sb.spikeFreq = TUNING.spikeFreqSpace; sb.waterFreq = TUNING.waterFreqSpace;
+    sb.craterFreq = TUNING.craterFreqSpace; sb.alienFreq = TUNING.alienFreqSpace;
+    sb.coinDensity = TUNING.coinDensitySpace; sb.starFreq = TUNING.starFreqSpace; sb.balloonFreq = TUNING.balloonFreqSpace; sb.nitroFreq = TUNING.nitroFreqSpace;
+  }
+  // Deep ocean (BIOMES[7]) — djuphavet, single-world only
+  const db = BIOMES[DEEP_INDEX];
+  if (db) {
+    db.gravity = TUNING.gravityDeep;
+    db.terrainAmp = TUNING.terrainAmpDeep; db.terrainStep = TUNING.terrainStepDeep;
+    db.wallFreq = TUNING.wallFreqDeep; db.spinnerFreq = TUNING.spinnerFreqDeep; db.rampFreq = TUNING.rampFreqDeep;
+    db.barrelFreq = TUNING.barrelFreqDeep; db.houseFreq = TUNING.houseFreqDeep; db.tntFreq = TUNING.tntFreqDeep; db.cannonFreq = TUNING.cannonFreqDeep;
+    db.bumperFreq = TUNING.bumperFreqDeep;
+    db.cactusFreq = TUNING.cactusFreqDeep; db.spikeFreq = TUNING.spikeFreqDeep; db.waterFreq = TUNING.waterFreqDeep;
+    db.abyssFreq = TUNING.abyssFreqDeep; db.tentacleFreq = TUNING.tentacleFreqDeep;
+    db.coinDensity = TUNING.coinDensityDeep; db.starFreq = TUNING.starFreqDeep; db.balloonFreq = TUNING.balloonFreqDeep; db.nitroFreq = TUNING.nitroFreqDeep;
+  }
+  // Pinball (BIOMES[8]) — Flipperland, single-world only
+  const pb = BIOMES[PINBALL_INDEX];
+  if (pb) {
+    pb.gravity = TUNING.gravityPinball;
+    pb.terrainAmp = TUNING.terrainAmpPinball; pb.terrainStep = TUNING.terrainStepPinball;
+    pb.wallFreq = TUNING.wallFreqPinball; pb.spinnerFreq = TUNING.spinnerFreqPinball; pb.rampFreq = TUNING.rampFreqPinball;
+    pb.barrelFreq = TUNING.barrelFreqPinball; pb.tntFreq = TUNING.tntFreqPinball; pb.cannonFreq = TUNING.cannonFreqPinball;
+    pb.bumperFreq = TUNING.bumperFreqPinball;
+    pb.cactusFreq = TUNING.cactusFreqPinball; pb.spikeFreq = TUNING.spikeFreqPinball; pb.waterFreq = TUNING.waterFreqPinball;
+    pb.drainFreq = TUNING.drainFreqPinball; pb.slingFreq = TUNING.slingFreqPinball; pb.dropTargetFreq = TUNING.dropTargetFreqPinball; pb.saucerFreq = TUNING.saucerFreqPinball;
+    pb.coinDensity = TUNING.coinDensityPinball; pb.starFreq = TUNING.starFreqPinball; pb.balloonFreq = TUNING.balloonFreqPinball; pb.nitroFreq = TUNING.nitroFreqPinball;
   }
   // Refresh upgrades (påverkar vissa globals ovanpå TUNING)
   if (typeof applyUpgrades === 'function') applyUpgrades();
@@ -506,6 +699,8 @@ function gravityAtX(x) {
 }
 
 function buildLevel() {
+  // Sätt WORLD_LEN baserat på vald värld (Mix=75000, single-world=60000).
+  WORLD_LEN = activeWorldLen();
   // Ground level baseline (y grows downward)
   const BASE = 480;
   const seed = hashStr(`${progression.runs}-${todayKey()}-${Math.floor(Math.random() * 1000)}`);
@@ -575,10 +770,14 @@ function buildLevel() {
   LEVEL.launchY = terrainAt(180);
   LEVEL.finishX = WORLD_LEN;
   LEVEL.finishCY = terrainAt(WORLD_LEN) - 240;
+  LEVEL.hellFinishX = WORLD_MIN_X;
+  LEVEL.hellFinishCY = terrainAt(WORLD_MIN_X) - 240;
 
   // Helper: true if x sits inside any biome-start clear zone (no obstacles, trampolines, or pickups here)
   const BIOME_LAUNCH_CLEAR = 600;
+  const _singleWorld = activeWorldBiome() >= 0;
   const isInBiomeLaunchZone = (xx) => {
+    if (_singleWorld) return false;  // inga biome-övergångar i single-world
     for (let b = 1; b < 5; b++) {
       const s = b * BIOME_LEN;
       if (xx >= s - 50 && xx < s + BIOME_LAUNCH_CLEAR) return true;
@@ -591,10 +790,13 @@ function buildLevel() {
   // Flat zones that get applied to TERRAIN after obstacle placement so ramps / houses
   // sit on level ground rather than on sloped control points.
   const flats = [];
+  // Buffert i slutet av hell så hell-objekt aldrig sticker över i öken-banan.
+  // Hellhouse är 50 brett, ramp upp till 240 brett, så 280 räcker.
+  const HELL_END_BUFFER = 280;
   let ox = WORLD_MIN_X + 600;  // start i hell, fortsätt genom alla biomer
   while (ox < WORLD_LEN - 400) {
-    // Skip biome 0:s launch-zone (x=0..900) — spawn-området måste vara rent.
-    if (ox >= 0 && ox < 900) { ox = 900; continue; }
+    // Skip övergångszon hell→öken: ingenting från hell får sticka över x=0 in i desert.
+    if (ox >= -HELL_END_BUFFER && ox < 900) { ox = 900; continue; }
     if (isInBiomeLaunchZone(ox)) { ox += 200; continue; }
     const biome = BIOMES[biomeAt(ox)];
     const r = rng();
@@ -622,6 +824,18 @@ function buildLevel() {
       ['water',   inGraceZone ? 0 : (biome.waterFreq || 0)],
       ['lava',    inGraceZone ? 0 : (biome.lavaFreq || 0)],
       ['geyser',  biome.geyserFreq || 0],
+      ['bridge',  biome.bridgeFreq || 0],
+      ['monster', (ox < 0 ? (biome.monsterFreq || 0) : 0)],
+      // Space-only — alien (patrullerar, dör vid stomp) + crater (instant death-hål)
+      ['alien',   (biomeAt(ox) === SPACE_INDEX ? (biome.alienFreq || 0) : 0)],
+      // Crater finns i rymden + djuphavet (djupavgrund) + pinball (drain). Alla instant-death-hål.
+      ['crater',  ((biomeAt(ox) === SPACE_INDEX || biomeAt(ox) === DEEP_INDEX || biomeAt(ox) === PINBALL_INDEX) && !inGraceZone ? ((biome.craterFreq || biome.abyssFreq || biome.drainFreq) || 0) : 0)],
+      // Deep-only — bläckfisk-tentakel (växer från botten, swipear)
+      ['tentacle', (biomeAt(ox) === DEEP_INDEX && !inGraceZone ? (biome.tentacleFreq || 0) : 0)],
+      // Pinball-only — slingshot (triangulär studsmatta) + drop-target (bryt-bar pelare) + saucer (fångar däcket)
+      ['slingshot', (biomeAt(ox) === PINBALL_INDEX ? (biome.slingFreq || 0) : 0)],
+      ['droptarget', (biomeAt(ox) === PINBALL_INDEX ? (biome.dropTargetFreq || 0) : 0)],
+      ['saucer', (biomeAt(ox) === PINBALL_INDEX ? (biome.saucerFreq || 0) : 0)],
     ];
     const total = types.reduce((s, t) => s + t[1], 0);
     const pick = r * total;
@@ -641,8 +855,14 @@ function buildLevel() {
       OBSTACLES.push({ type: 'barrel', x: ox, toppled: false });
       if (chance(0.5)) OBSTACLES.push({ type: 'barrel', x: ox + 38, toppled: false });
     } else if (chosen === 'house') {
-      OBSTACLES.push({ type: 'house', x: ox });
-      flats.push({ x1: ox - 50, x2: ox + 86 + 50, y: terrainAt(ox + 43) });
+      if (ox < 0) {
+        // Hell — smalt mörkt hus med spiktak. Måste hoppa över.
+        OBSTACLES.push({ type: 'hellhouse', x: ox });
+        flats.push({ x1: ox - 30, x2: ox + 50 + 30, y: terrainAt(ox + 25) });
+      } else {
+        OBSTACLES.push({ type: 'house', x: ox });
+        flats.push({ x1: ox - 50, x2: ox + 86 + 50, y: terrainAt(ox + 43) });
+      }
     } else if (chosen === 'tnt') {
       OBSTACLES.push({ type: 'tnt', x: ox, triggered: false });
     } else if (chosen === 'cannon') {
@@ -681,6 +901,10 @@ function buildLevel() {
       const surfaceY = terrainAt(ox + w * 0.5) + depth;
       OBSTACLES.push({ type: 'lava', x: ox, w, depth, surfaceY, shimmer: rng() * Math.PI * 2, bubbleT: rng() * 60 });
       flats.push({ x1: ox - 40, x2: ox + w + 40, y: terrainAt(ox + w * 0.5) + depth });
+      // Tvinga avstånd så två lavor inte hamnar precis bredvid varandra: hoppa förbi
+      // hela poolen + minst 350 units säker mark innan nästa hinder kan placeras.
+      ox += w + 350 + rng() * 150;
+      continue;
     } else if (chosen === 'geyser') {
       // Geyser — pulserar mellan dormant/charging/erupting. Vid eruption skickas hjulet
       // skarpt uppåt om det är ovanför. Dorrmant fas är säker att rulla över.
@@ -695,6 +919,113 @@ function buildLevel() {
         boostedT: 0,                             // räknar frames sen senaste boost (cooldown per hjul)
       });
       flats.push({ x1: ox - 36, x2: ox + 36, y: terrainAt(ox) });
+    } else if (chosen === 'monster') {
+      // 👹 Hell-monster — patrullerar, dör vid stomp, gör skada vid sido-träff,
+      // sjunker ned i marken efter ~10s.
+      const patrolHalf = 70 + Math.floor(rng() * 40);
+      OBSTACLES.push({
+        type: 'monster',
+        x: ox,
+        baseX: ox,
+        w: 38, h: 56,
+        vx: (rng() < 0.5 ? -1 : 1) * (0.7 + rng() * 0.5),
+        patrolHalf,
+        lifeT: 600 + Math.floor(rng() * 180),
+        sinkT: 0,
+        dead: false,
+        crushed: false,
+        flashT: 0,
+        eyeBlink: 0,
+        wob: rng() * Math.PI * 2,
+      });
+      flats.push({ x1: ox - patrolHalf - 30, x2: ox + patrolHalf + 30, y: terrainAt(ox) });
+    } else if (chosen === 'alien') {
+      // 👽 Alien — patrullerar månytan, dör vid stomp (samma logik som hell-monster
+      // men eget utseende: grön kropp, antennspröt, två ögon). Sidoträff = skada + studs.
+      const patrolHalf = 80 + Math.floor(rng() * 50);
+      OBSTACLES.push({
+        type: 'alien',
+        x: ox,
+        baseX: ox,
+        w: 40, h: 50,
+        vx: (rng() < 0.5 ? -1 : 1) * (0.6 + rng() * 0.5),
+        patrolHalf,
+        lifeT: 99999,                 // alien stannar — sjunker inte ner som hell-monster
+        sinkT: 0,
+        dead: false,
+        crushed: false,
+        flashT: 0,
+        eyeBlink: 0,
+        wob: rng() * Math.PI * 2,
+        antPhase: rng() * Math.PI * 2,
+      });
+      flats.push({ x1: ox - patrolHalf - 30, x2: ox + patrolHalf + 30, y: terrainAt(ox) });
+    } else if (chosen === 'crater') {
+      // 🕳️ Crater — månkrater (rymden), djupavgrund (havet), eller drain (pinball) — instant death.
+      const w = 110 + Math.floor(rng() * 90);    // 110–200
+      const depth = 24 + Math.floor(rng() * 16);
+      const surfaceY = terrainAt(ox + w * 0.5) + depth;
+      const isAbyss = biomeAt(ox) === DEEP_INDEX;
+      const isDrain = biomeAt(ox) === PINBALL_INDEX;
+      OBSTACLES.push({ type: 'crater', x: ox, w, depth, surfaceY, dustPhase: rng() * Math.PI * 2, isAbyss, isDrain });
+      flats.push({ x1: ox - 40, x2: ox + w + 40, y: terrainAt(ox + w * 0.5) + depth });
+      ox += w + 360 + rng() * 160;
+      continue;
+    } else if (chosen === 'slingshot') {
+      // 🪂 Slingshot — triangulär neon-studsmatta som flingar tillbaka hjulet. +50 poäng per träff.
+      const slope = rng() < 0.5 ? -1 : 1;     // pekar vänster eller höger
+      const h = 80 + Math.floor(rng() * 40);
+      const w = 60 + Math.floor(rng() * 30);
+      OBSTACLES.push({ type: 'slingshot', x: ox, w, h, slope, flashT: 0 });
+      ox += 200 + rng() * 120;
+      continue;
+    } else if (chosen === 'droptarget') {
+      // 🎯 Drop target — vit/röd pelare som krossas vid träff = +200p, försvinner permanent.
+      OBSTACLES.push({ type: 'droptarget', x: ox, h: 70 + Math.floor(rng() * 30), broken: false });
+      ox += 130 + rng() * 90;
+      continue;
+    } else if (chosen === 'saucer') {
+      // 🪞 Saucer — bowl som fångar däcket i 90 frames, sedan ejekt med bonus.
+      const saucerY = terrainAt(ox) - 22;
+      OBSTACLES.push({
+        type: 'saucer', x: ox, y: saucerY,
+        r: 28,
+        captured: false,
+        holdT: 0,
+        flashT: 0,
+      });
+      ox += 220 + rng() * 120;
+      continue;
+    } else if (chosen === 'tentacle') {
+      // 🐙 Tentakel — växer upp från sjöbotten, swipear i sidled. Instant ouch + stuck.
+      const baseY = terrainAt(ox);
+      const len = 90 + Math.floor(rng() * 60);
+      OBSTACLES.push({
+        type: 'tentacle', x: ox, baseY, len,
+        phase: rng() * Math.PI * 2,
+        swing: 0.35 + rng() * 0.25,
+      });
+      ox += 200 + rng() * 200;
+      continue;
+    } else if (chosen === 'bridge') {
+      // Hängbro — passage med sag-kurva mellan två trästolpar. Endast canyon.
+      const w = 220 + Math.floor(rng() * 120);   // 220–340
+      const sag = 18 + Math.floor(rng() * 8);    // 18–26 px nedhäng i mitten
+      const polesH = 90 + Math.floor(rng() * 30);
+      const planks = 10 + Math.floor(rng() * 5);
+      const baseY = terrainAt(ox + w * 0.5);
+      OBSTACLES.push({
+        type: 'bridge',
+        x: ox, w, sag, polesH, planks,
+        baseY,
+        wobble: rng() * Math.PI * 2,
+        wobbleAmp: 0,
+      });
+      // Platta marken under båda stolparna så bron sitter horisontellt
+      flats.push({ x1: ox - 30, x2: ox + w + 30, y: baseY });
+      // Skippa förbi bron så inget hinder spawnas på den
+      ox += w + 80 + rng() * 80;
+      continue;
     }
     // Progressive biome difficulty: denser obstacle spacing in later biomes
     // (öken 0.8x, canyon 1.2x, neon 1.5x, ice 1.7x, volcano 1.9x).
@@ -702,19 +1033,21 @@ function buildLevel() {
     const _biomeDiff = _bi === 0 ? 0.8 : _bi === 1 ? 1.2 : _bi === 2 ? 1.5 : _bi === 3 ? 1.7 : 1.9;
     ox += (400 + rng() * 500) / _biomeDiff;
   }
-  // Mega ramp near each biome boundary for drama
-  const mega1x = BIOME_LEN - 200, mega1w = 200;
-  const mega2x = BIOME_LEN * 2 - 200, mega2w = 220;
-  const mega3x = BIOME_LEN * 3 - 200, mega3w = 240;       // neon → ice transition kicker
-  const mega4x = BIOME_LEN * 4 - 200, mega4w = 260;       // ice → volcano transition kicker
-  OBSTACLES.push({ type: 'ramp', x: mega1x, w: mega1w, h: 200 });
-  OBSTACLES.push({ type: 'ramp', x: mega2x, w: mega2w, h: 220 });
-  OBSTACLES.push({ type: 'ramp', x: mega3x, w: mega3w, h: 240 });
-  OBSTACLES.push({ type: 'ramp', x: mega4x, w: mega4w, h: 260 });
-  flats.push({ x1: mega1x - 100, x2: mega1x + mega1w + 100, y: terrainAt(mega1x + mega1w * 0.5) });
-  flats.push({ x1: mega2x - 100, x2: mega2x + mega2w + 100, y: terrainAt(mega2x + mega2w * 0.5) });
-  flats.push({ x1: mega3x - 100, x2: mega3x + mega3w + 100, y: terrainAt(mega3x + mega3w * 0.5) });
-  flats.push({ x1: mega4x - 100, x2: mega4x + mega4w + 100, y: terrainAt(mega4x + mega4w * 0.5) });
+  // Mega ramp near each biome boundary for drama (bara i Mix-mode).
+  if (!_singleWorld) {
+    const mega1x = BIOME_LEN - 200, mega1w = 200;
+    const mega2x = BIOME_LEN * 2 - 200, mega2w = 220;
+    const mega3x = BIOME_LEN * 3 - 200, mega3w = 240;       // neon → ice transition kicker
+    const mega4x = BIOME_LEN * 4 - 200, mega4w = 260;       // ice → volcano transition kicker
+    OBSTACLES.push({ type: 'ramp', x: mega1x, w: mega1w, h: 200 });
+    OBSTACLES.push({ type: 'ramp', x: mega2x, w: mega2w, h: 220 });
+    OBSTACLES.push({ type: 'ramp', x: mega3x, w: mega3w, h: 240 });
+    OBSTACLES.push({ type: 'ramp', x: mega4x, w: mega4w, h: 260 });
+    flats.push({ x1: mega1x - 100, x2: mega1x + mega1w + 100, y: terrainAt(mega1x + mega1w * 0.5) });
+    flats.push({ x1: mega2x - 100, x2: mega2x + mega2w + 100, y: terrainAt(mega2x + mega2w * 0.5) });
+    flats.push({ x1: mega3x - 100, x2: mega3x + mega3w + 100, y: terrainAt(mega3x + mega3w * 0.5) });
+    flats.push({ x1: mega4x - 100, x2: mega4x + mega4w + 100, y: terrainAt(mega4x + mega4w * 0.5) });
+  }
 
   // --- APPLY FLAT ZONES: replace TERRAIN control points inside each flat range with
   // two anchor points at the same y, so ramps and houses sit on level ground.
@@ -728,22 +1061,48 @@ function buildLevel() {
   // Biome-start launch zones: flatten terrain so the cannon always sits on level ground
   // when the player respawns into a new biome. Sample y at zone center (after mega-ramp flats
   // applied) so the platform is consistent with where the player actually lands.
-  for (let b = 1; b < 5; b++) {
-    const bStart = b * BIOME_LEN;
-    const flatY = terrainAt(bStart + 300);
-    TERRAIN = TERRAIN.filter(p => p[0] <= bStart - 50 || p[0] >= bStart + 600);
-    TERRAIN.push([bStart - 50, flatY]);
-    TERRAIN.push([bStart + 600, flatY]);
+  // Skippas i single-world mode eftersom det inte finns några biome-övergångar.
+  if (!_singleWorld) {
+    for (let b = 1; b < 5; b++) {
+      const bStart = b * BIOME_LEN;
+      const flatY = terrainAt(bStart + 300);
+      TERRAIN = TERRAIN.filter(p => p[0] <= bStart - 50 || p[0] >= bStart + 600);
+      TERRAIN.push([bStart - 50, flatY]);
+      TERRAIN.push([bStart + 600, flatY]);
+    }
+    TERRAIN.sort((a, b) => a[0] - b[0]);
   }
-  TERRAIN.sort((a, b) => a[0] - b[0]);
 
   // --- TRAMPOLINES: three tiers scattered through the world ---
   // Pass through again to place bounce pads on flat terrain, roughly one per 600-900m
+  // Hjälpfunktion: hur brett ett befintligt hinder är från sin x-koord (för conflict-check).
+  const obstacleHalfFootprint = (o) => {
+    if (o.type === 'house') return 90;       // hw=86, marginal
+    if (o.type === 'hellhouse') return 60;   // hw=50, marginal
+    if (o.type === 'ramp') return (o.w || 100) + 40;
+    if (o.type === 'wall') return 30;
+    if (o.type === 'water' || o.type === 'lava') return (o.w || 100) + 30;
+    if (o.type === 'cannon') return 50;
+    if (o.type === 'bumper') return 40;
+    if (o.type === 'cactus') return 30;
+    if (o.type === 'spike') return 30;
+    if (o.type === 'tnt') return 30;
+    if (o.type === 'barrel') return 30;
+    if (o.type === 'spinner') return 40;
+    if (o.type === 'geyser') return 40;
+    if (o.type === 'bridge') return (o.w || 280) + 60;
+    if (o.type === 'monster') return (o.patrolHalf || 90) + 40;
+    if (o.type === 'alien') return (o.patrolHalf || 90) + 40;
+    if (o.type === 'crater') return (o.w || 140) + 30;
+    return 60;
+  };
   let tx = 900;
   while (tx < WORLD_LEN - 400) {
     if (isInBiomeLaunchZone(tx)) { tx += 200; continue; }
-    // Avoid placing directly on top of existing obstacles
-    const conflict = OBSTACLES.some(o => Math.abs((o.x || 0) - tx) < 90 && o.type !== 'finish');
+    // Avoid placing directly on top of existing obstacles — använd faktisk bredd, inte fast 90.
+    const TRAMP_HALF = 50;  // mega-pad är 92 → 46 + marginal
+    const conflict = OBSTACLES.some(o => o.type !== 'finish' &&
+      Math.abs((o.x || 0) - tx) < (obstacleHalfFootprint(o) + TRAMP_HALF));
     if (!conflict) {
       const roll = rng();
       let tier, power, score, w, h;
@@ -754,8 +1113,10 @@ function buildLevel() {
     }
     tx += 580 + rng() * 420;
   }
+  // (Inga trampoliner i hell — hell ska vara läskigt, inte hjälpsamt.)
 
   OBSTACLES.push({ type: 'finish', x: WORLD_LEN, cy: 0 });
+  OBSTACLES.push({ type: 'finishHell', x: WORLD_MIN_X, cy: 0 });
 
   // --- LADDER-MEN: scatter along the track, each draggable within its slot ---
   state.ladders = [];
@@ -789,14 +1150,47 @@ function buildLevel() {
 
   // --- PICKUPS: procedural clusters ---
   PICKUPS = [];
-  // HELL-pickups: bara enstaka mynt (inga stjärnor, inga power-ups, inga balloons).
-  // ~6-10 mynt utspritt över hela hell-zonen som tröstpremie.
+  // HELL-pickups: belöningen växer ju längre vänster (deeper) man kommer.
+  // Vid hell-entrén: gleshet / få mynt. Djupt in: tjocka coin-arcs + power-ups som lockbete.
   {
-    const hellCoins = 6 + Math.floor(rng() * 5);
-    for (let i = 0; i < hellCoins; i++) {
-      const cx = WORLD_MIN_X + 600 + rng() * (HELL_LEN - 1000);
-      const cy = terrainAt(cx) - 60 - rng() * 100;
-      PICKUPS.push({ type: 'coin', x: cx, y: cy, taken: false });
+    const hellMin = WORLD_MIN_X + 400;
+    const hellMax = -260;
+    let hcx = hellMax;
+    while (hcx > hellMin) {
+      const depth = (hellMax - hcx) / (hellMax - hellMin);   // 0 = grunt, 1 = djupt
+      // Coin-arc: nu mycket vanligare och längre — hell är galen, måste löna sig.
+      if (rng() < 0.65 + depth * 0.35) {
+        const arcLen = 4 + Math.floor(rng() * (4 + depth * 8));
+        const peak = 50 + rng() * 100 + depth * 80;
+        for (let i = 0; i < arcLen; i++) {
+          const cx = hcx - i * 50;
+          const tt = i / Math.max(1, arcLen - 1);
+          const cy = terrainAt(cx) - 60 - Math.sin(tt * Math.PI) * peak;
+          PICKUPS.push({ type: 'coin', x: cx, y: cy, taken: false });
+        }
+      }
+      // Power-ups mycket vanligare. Inga shields, inga stars i hell-mixen — stars hardcappas
+      // separat till max 2 per run efter loopen.
+      if (rng() < 0.22 + depth * 0.35) {
+        const cy = terrainAt(hcx) - 80 - rng() * 120;
+        const rPick = rng();
+        let ptype;
+        if (rPick < 0.25)      ptype = 'airjump';  // 25% (mobilitet)
+        else if (rPick < 0.46) ptype = 'bomb';     // 21% (offensivt)
+        else if (rPick < 0.67) ptype = 'medkit';   // 21% hälsa
+        else if (rPick < 0.80) ptype = 'nitro';    // 13%
+        else if (rPick < 0.92) ptype = 'balloon';  // 12%
+        else                   ptype = 'power';    // 8%
+        PICKUPS.push({ type: ptype, x: hcx, y: cy, taken: false });
+      }
+      hcx -= 100 + rng() * 140;   // tätare steg → mer pickups totalt
+    }
+    // Hell-stars: max 2 totalt, slumpmässigt placerade.
+    const hellStarCount = 1 + Math.floor(rng() * 2);
+    for (let i = 0; i < hellStarCount; i++) {
+      const sx = WORLD_MIN_X + 800 + rng() * (HELL_LEN - 1600);
+      const sy = terrainAt(sx) - 120 - rng() * 200;
+      PICKUPS.push({ type: 'star', x: sx, y: sy, taken: false });
     }
   }
   let px = 700;
@@ -833,8 +1227,10 @@ function buildLevel() {
     // Power-up slot: airjump common, nitro + bomb slightly rarer, shield rare, medkit & power equally uncommon
     if (chance(biome.nitroFreq * 0.7)) {
       const r = rng();
+      const _isDeep = biomeAt(px) === DEEP_INDEX;
       let powerType;
-      if (r < 0.22)      powerType = 'airjump';
+      if (_isDeep && r < 0.45)      powerType = 'bubble';   // Djuphavet: 45% chans bubbel
+      else if (r < 0.22) powerType = 'airjump';
       else if (r < 0.37) powerType = 'nitro';
       else if (r < 0.50) powerType = 'bomb';
       else if (r < 0.61) powerType = 'magnet';
@@ -868,6 +1264,19 @@ function buildLevel() {
   LEVEL.totalStars = PICKUPS.filter(p => p.type === 'star').length;
   starsMaxEl.textContent = LEVEL.totalStars;
   PICKUPS.forEach((p, i) => { if (p.type === 'balloon') p.baseY = p.y; p._i = i; });
+
+  // 🚩 Checkpoint — bara i single-world (Mix har redan biome-respawn vid 5 punkter).
+  // 1 flagga exakt i mitten av banan. Touch → reached. Vid död respawnar du där.
+  state.checkpoints = [];
+  state.checkpointBest = -1;
+  if (activeWorldBiome() >= 0) {
+    state.checkpoints.push({
+      x: Math.floor(WORLD_LEN * 0.5),
+      reached: false,
+      idx: 0,
+      flashT: 0,
+    });
+  }
 }
 
 // PERF: Mobil-detektion — shadowBlur på canvas är extremt dyrt på mobil GPU
@@ -950,8 +1359,13 @@ const state = {
   maxX: 0,
   particles: [],
   popups: [],                // floating +N text particles
-  tornados: [],              // 🌪️ aktiva tornadoer (bara öken-biome)
+  tornados: [],              // 🌪️ aktiva tornadoer (öken + hell)
   tornadoSpawnT: 0,          // frames kvar till nästa möjliga spawn-roll
+  tornadoRocks: [],          // stenar som hell-tornados slungar mot hjulet
+  bats: [],                  // 🦇 hell-variant av birds
+  batSpawnT: 90,             // frames till nästa fladdermus-flock
+  ufos: [],                  // 🛸 rymden-variant av birds (anfaller hjulet)
+  ufoSpawnT: 120,            // frames till nästa UFO-svärm
   birds: [],                 // 🐦 fågelflockar
   birdSpawnT: 60,            // frames till nästa flock
   penguins: [],              // 🐧 marklevande pingvinflockar (isbiomen)
@@ -966,6 +1380,18 @@ const state = {
   ashParticles: [],           // 💨 ask som driver i bakgrunden (vulkanen)
   storms: [],                // ⛈️ åskmoln (sällsynta)
   stormSpawnT: 1500,         // frames till nästa stormroll (~25s)
+  blackHoles: [],            // 🌑 svarta hål (rymden) — drar in spelaren
+  blackHoleSpawnT: 600,      // frames till nästa svart hål-spawn-försök
+  oxygen: 100,               // 💨 syre kvar (djuphavet) — räknas ner per sek
+  oxygenMax: 100,            // 💨 max syre
+  checkpoints: [],           // 🚩 single-world checkpoints (Mario-style)
+  checkpointBest: -1,        // index av högsta nådda checkpoint (-1 = ingen)
+  jellyfish: [],             // 🪼 maneter (djuphavet)
+  jellyfishSpawnT: 240,      // frames till nästa manet-spawn
+  mines: [],                 // 💣 sjöminor (djuphavet)
+  mineSpawnT: 540,           // frames till nästa min-spawn
+  octopuses: [],             // 🦑 bläckfisk-miniboss (djuphavet, 1 per run)
+  octopusSpawned: false,     // har bossens spawnats redan?
   wetGrounds: [],            // {x1,x2,until} marker som är blöta efter regn
   lightningFlashT: 0,        // visuell blixt-overlay frames
   fogT: 0,                   // 🌫️ aktiv dimma (frames kvar)
@@ -973,6 +1399,8 @@ const state = {
   fogSpawnT: 1500,           // frames till nästa fog-roll (canyon/neon)
   rockfalls: [],             // 🪨 fallande stenar (canyon)
   rockfallSpawnT: 300,       // frames till nästa rasstens-spawn
+  condors: [],               // 🦅 dykbombande kondorer (canyon)
+  condorSpawnT: 300,         // frames till nästa kondor-spawn
   gliderCharges: 0,          // 🪁 glider-pickup charges, max 5
   gliderT: 0,                // 🪁 glider-effekt frames kvar (4s = 240)
   inHell: false,             // 💀 spelaren är just nu i hell-biomet (x < 0) — för toast-trigger
@@ -1001,8 +1429,11 @@ const state = {
   nitroBoostT: 0,            // frames where tire can exceed the normal speed cap (nitro burst)
   launchBoostT: 0,           // brief window right after firing where cap is raised so initial shot feels punchy
   rollBudget: 0,             // drag-to-relaunch pool; depletes across all slow-downs in one shot
-  rollBudgetMax: 40,         // pool ceiling in percent units (40 base, +powerExtra up to 210, total cap 250)
+  rollBudgetMax: 80,         // pool ceiling in percent units (80 base = 2×40, +powerExtra). v256+ — sänkt från 120.
   powerExtra: 0,             // bought extra units (30 per shop purchase, max 210). Consumable — drains on use.
+  healthMax: 200,            // dynamic HP cap (200 = 2×100 globalt v252+); fördubblas i hell, återställs vid utgång
+  lastBiomeWasHell: false,   // biom-transition tracker (för hell-buff in/out)
+  _hellPrevRollBudgetMax: 0, // sparad rollBudgetMax innan hell-buff (för att kunna återställa exakt)
   rollActive: false,         // meter visible + drag accepted
   rollTapFlash: 0,           // frames of visual feedback on last relaunch
   rollAssistT: 0,            // after relaunch: slope can't drag ball backward
@@ -1027,7 +1458,7 @@ const state = {
   finishStuck: false,        // freeze tire at impact point during pending
   finishStickX: 0, finishStickY: 0,
   stuckOnCactus: null,       // { pinX, pinY, side } while impaled; cleared by any escape action
-  highScore: parseInt(localStorage.getItem(HS_KEY) || '0', 10) || 0,
+  highScore: (progression.worlds && progression.worlds[progression.activeWorld] && progression.worlds[progression.activeWorld].hs) || 0,
   newRecord: false,
   ladders: [],               // populated per-run; each { x, slotMin, slotMax, grabbed, cooldown, walking }
   lastRunScore: 0,           // poäng från senaste game-over (visas i HUD tills nästa skott)
@@ -1108,6 +1539,7 @@ function fire() {
     trail: [],
     rpmAtShot: state.rpm,
     anglAtShot: state.angle,
+    flipperKickT: 0,
   };
   state.phase = PHASE.FLY;
   // Vi har skjutit iväg — släng senaste rundans HUD-värden så bigScore visar nuvarande runda.
@@ -1115,12 +1547,14 @@ function fire() {
   state.lastRunDistM = 0;
   state.startLaunchX = lx;
   state.maxX = lx;
+  state.minX = lx;
+  state.hellPeakScore = 0;
+  state.hellMaxDepthM = 0;
   state.rpm = 0;
   state.rpmMaxHoldT = 0;
   state.launchBoostT = TUNING.launchBoostFrames;
-  // Power meter (drag-to-relaunch): base 40% + consumable powerExtra (30 per shop, max 210).
-  // 0 extras → 40%, max 5 buys (150 extras) + pickups → 250% cap. Extras deplete on use — must restock.
-  state.rollBudgetMax = 40 + (state.powerExtra || 0);
+  // Power meter (drag-to-relaunch): base 80 (= 100% display) + consumable powerExtra.
+  state.rollBudgetMax = 80 + (state.powerExtra || 0);
   state.rollBudget = state.rollBudgetMax;
   state.rollActive = false;
   state.rollTapFlash = 0;
@@ -1143,8 +1577,13 @@ function fire() {
   state.antiLoop = { events: [], kickT: 0 };
   state.tornados = [];
   state.tornadoSpawnT = 60; // första rollen redan ~1s in i flykten
+  state.tornadoRocks = [];
   state.birds = [];
   state.birdSpawnT = 60;
+  state.bats = [];
+  state.batSpawnT = 120;
+  state.ufos = [];
+  state.ufoSpawnT = 150;
   state.penguins = [];
   state.penguinSpawnT = 240;
   state.freezeWind = 0;
@@ -1152,9 +1591,22 @@ function fire() {
   state.freezeWindNextT = 600 + Math.floor(Math.random() * 600);
   state.storms = [];
   state.stormSpawnT = 450 + Math.floor(Math.random() * 300); // 15-25s till första rollen
+  state.blackHoles = [];
+  state.blackHoleSpawnT = 600 + Math.floor(Math.random() * 600);
+  state.oxygenMax = 100;
+  state.oxygen = 100;
+  state.jellyfish = [];
+  state.jellyfishSpawnT = 240 + Math.floor(Math.random() * 240);
+  state.mines = [];
+  state.mineSpawnT = 480 + Math.floor(Math.random() * 360);
+  state.octopuses = [];
+  state.octopusSpawned = false;
   state.wetGrounds = [];
   state.lightningFlashT = 0;
-  state.health = 100;
+  state.health = 200;
+  state.healthMax = 200;
+  state.lastBiomeWasHell = false;
+  state._hellPrevRollBudgetMax = 0;
   state.damageFlashT = 0;
   // aim-HUD byter syfte under FLY (visar HÄLSA + KRAFT istället för RPM + VINKEL)
   updateFireButton();
@@ -1179,6 +1631,43 @@ function unstickFromCactus(vx, vy) {
   flashToast('🌵 LOSSAD!', '#84cc16');
   tone(440, 0.08, 'sine', 0.14, 300);
   state.stuckOnCactus = null;
+}
+
+// Tap-to-escape när däcket är insuget i en tornado. Varje tap ger en stark
+// FORCE upp + utåt och öppnar ett eskape-fönster där tornado-suget är
+// suspenderat så impulsen faktiskt bär ut däcket istället för att direkt
+// sugas tillbaka. Cooldown ~6 frames så taps räknas som separata.
+function tornadoEscapeTap() {
+  if (!state.tire || state.phase !== PHASE.FLY) return false;
+  const tn = state.tornadoStuck;
+  if (!tn) return false;
+  if ((state.tornadoTapCooldown || 0) > 0) return false;
+  const t = state.tire;
+  const cx = tn.renderX || tn.x;
+  // Riktning ut från tornado-mitten (-1 vänster, +1 höger).
+  const outSign = (t.x < cx) ? -1 : (t.x > cx ? 1 : (Math.sign(t.vx) || 1));
+  state.tornadoTapStreak = (state.tornadoTapStreak || 0) + 1;
+  const streak = state.tornadoTapStreak;
+  // FORCE upp — ersätter ev. nedåt-vy så tornadons sug inte spär ut impulsen.
+  const lift = 10 + Math.min(6, streak * 1.2);
+  t.vy = -lift;
+  // FORCE utåt — varje tap ger garanterad sidoknuff, växer med streak.
+  const sideBase = 6 + Math.min(5, streak * 0.9);
+  t.vx = outSign * sideBase + t.vx * 0.3;  // behåll lite befintlig momentum
+  // Cap total speed.
+  const sp = Math.hypot(t.vx, t.vy);
+  if (sp > 34) { t.vx *= 34 / sp; t.vy *= 34 / sp; }
+  state.tornadoTapCooldown = 6;
+  // Suspendera tornado-suget i ~22 frames så impulsen hinner bära ut tiren.
+  state.tornadoEscapeT = Math.max(state.tornadoEscapeT || 0, 22);
+  // FX
+  addParticles(t.x, t.y, '#fbbf24', 14, { up: 5, spread: 6, size: 3 });
+  addParticles(t.x, t.y, '#a78bfa', 8, { up: 4, spread: 5, size: 2 });
+  shake(5);
+  tone(700 + streak * 60, 0.07, 'triangle', 0.16, 340);
+  if (streak === 2) flashToast('💨 KÄMPA EMOT!', '#fbbf24');
+  if (streak >= 4) flashToast('🪂 UTSLUNGAD!', '#22c55e');
+  return true;
 }
 
 function useAirjump() {
@@ -1224,13 +1713,17 @@ function useGlider() {
   if (state.gliderT > 0) return;  // already active
   const t = state.tire;
   state.gliderCharges--;
-  state.gliderT = 240; // 4s @ 60fps
-  // Liten lyft direkt så man känner aktiveringen
-  if (t.vy > -2) t.vy = -2;
-  flashToast('🪁 GLIDER 4s!', '#a7f3d0');
-  addParticles(t.x, t.y, '#bae6fd', 22, { up: 5, spread: 8, size: 4 });
-  addParticles(t.x, t.y, '#a7f3d0', 14, { up: 4, spread: 6, size: 3 });
-  shake(3);
+  state.gliderT = 120; // 2s @ 60fps
+  // Tornado-likt eject: fånga riktning, kraftig uppåt-kick + framåt-impuls.
+  const _inHell = biomeAt(t.x) === HELL_INDEX;
+  const _dir = Math.abs(t.vx) > 0.5 ? Math.sign(t.vx) : (_inHell ? -1 : 1);
+  state.gliderDir = _dir;
+  if (t.vy > -16) t.vy = -16;
+  t.vx += _dir * 8;
+  flashToast('🪁 GLIDER 2s!', '#a7f3d0');
+  addParticles(t.x, t.y, '#bae6fd', 22, { up: 8, spread: 10, size: 4 });
+  addParticles(t.x, t.y, '#a7f3d0', 14, { up: 6, spread: 8, size: 3 });
+  shake(6);
   tone(620, 0.1, 'triangle', 0.14, 320);
   setTimeout(() => tone(900, 0.12, 'triangle', 0.14, 360), 70);
   updateGliderBadge();
@@ -1277,9 +1770,12 @@ function useBomb() {
   if (state.stuckOnCactus) unstickFromCactus();
   // Fixed up+right blast — mirrors the cannon/TNT feel but always launches the ball the
   // same way so the player has a reliable "get me out of here" escape tool.
+  // Hell är reversed — bomben skjuter upp+vänster istället för upp+höger.
   const BLAST = 24;
-  const ang = -Math.PI / 3;   // 60° up-right
-  t.vx = Math.cos(ang) * BLAST + 4;
+  const ang = -Math.PI / 3;   // 60° up
+  const _inHell = t.x < 0;
+  const _sign = _inHell ? -1 : 1;
+  t.vx = (Math.cos(ang) * BLAST + 4) * _sign;
   t.vy = Math.sin(ang) * BLAST - 4;
   state.nitroBoostT = Math.max(state.nitroBoostT, 30);
   state.launchBoostT = Math.max(state.launchBoostT, 70);
@@ -1416,6 +1912,7 @@ const RELAUNCH_DRAG_MAX = 140;   // px of drag = 100% power
 const RELAUNCH_DRAG_MIN = 38;    // below this = tap/avbryt, no launch, budget preserved
 function executeRelaunch(dxScreen, dyScreen) {
   if (!state.tire || state.phase !== PHASE.FLY) return false;
+  if (state.drowning) return false;  // låst — du kan inte skjuta dig fri när du är fångad
   if (state.rollBudget <= 0) return false;
   const len = Math.hypot(dxScreen, dyScreen);
   if (len < RELAUNCH_DRAG_MIN) return false;
@@ -1462,14 +1959,47 @@ function executeRelaunch(dxScreen, dyScreen) {
     const alignFactor = (alignment + 1) * 0.5;              // 0..1
     momentumBonus = alignFactor * curSpd * 0.6;
   }
-  const BASE_SPEED = 14;
-  const speed = powClamp * BASE_SPEED + 2 + momentumBonus;
+  // Vanliga världen: max 19 vid full kraft (17*1 + 2).
+  // Hell oförändrat: max 32 vid full kraft ((14*1 + 2) * 2). Momentum-bonus lämnas orörd.
+  const _inHell = biomeAt(t.x) === HELL_INDEX;
+  let speed = _inHell
+    ? (powClamp * 14 + 2) * 2 + momentumBonus
+    : (powClamp * 17 + 2) + momentumBonus;
+  // 🌑 Svart-hål-flyktboost: drar man bort från ett närliggande svart hål får man 1.3× speed + +500 score
+  if (state.blackHoles && state.blackHoles.length > 0) {
+    let nearestEscape = null;
+    for (const b of state.blackHoles) {
+      const ddx = b.x - t.x, ddy = b.y - t.y;
+      const dd = Math.hypot(ddx, ddy);
+      if (dd < b.pullR && dd > b.eventR + TIRE_R) {
+        const inv = 1 / Math.max(0.0001, dd);
+        // Pekar -dx,-dy = bort från BH; dirX,dirY ska vara mest motsatt b-riktningen
+        const align = (dirX * (-ddx * inv) + dirY * (-ddy * inv)); // 1 = perfekt bort
+        if (align > 0.5 && (!nearestEscape || dd < nearestEscape.dd)) {
+          nearestEscape = { dd, align };
+        }
+      }
+    }
+    if (nearestEscape) {
+      speed *= 1.3;
+      state.score += 500;
+      addParticles(t.x, t.y, '#a855f7', 18, { up: 6, spread: 8, size: 4 });
+      flashToast('🌑 FLYDDE +500!', '#a855f7');
+    }
+  }
   t.vx = dirX * speed;
   t.vy = dirY * speed;
   state.rollBudget = Math.max(0, state.rollBudget - consume);
   state.rollAssistT = 40;
   state.rollTapFlash = 10;
   state.launchBoostT = 70;
+  // Drag-skjut bryter tornado-greppet rent så skotsriktningen håller.
+  if (state.tornadoStuck) {
+    state.tornadoEscapeT = Math.max(state.tornadoEscapeT || 0, 30);
+    state.tornadoTapStreak = 0;
+    addParticles(t.x, t.y, '#22c55e', 12, { up: 4, spread: 6, size: 3 });
+    flashToast('🪂 UTSLUNGAD!', '#22c55e');
+  }
   addParticles(t.x, t.y, '#fbbf24', 16, { up: 4, spread: 6, size: 3 });
   addParticles(t.x, t.y, '#ef4444', 10, { up: 3, spread: 5, size: 2, shape: 'circle' });
   tone(380 + powClamp * 520, 0.08, 'square', 0.14, 260);
@@ -1657,6 +2187,10 @@ function updateFireButton() {
     const show = state.phase === PHASE.FLY && (state.shieldCharges > 0 || state.shieldT > 0);
     shBtn.classList.toggle('hidden', !show);
     shBtn.classList.toggle('active', state.shieldT > 0);
+    // Sköld funkar inte i hell — knappen blir grå/inaktiv där.
+    const _shieldInHell = !!state.tire && biomeAt(state.tire.x) === HELL_INDEX;
+    shBtn.classList.toggle('disabled', _shieldInHell);
+    shBtn.disabled = _shieldInHell;
     const cnt = document.getElementById('btnShieldCount');
     if (cnt) cnt.textContent = state.shieldT > 0 ? Math.ceil(state.shieldT / 60) + 's' : state.shieldCharges;
   }
@@ -1732,9 +2266,12 @@ function restart() {
   clearCurrentRunFlags();
   state.rangeBoost = 0;
   state.powerExtra = 0;
-  state.rollBudgetMax = 40;
+  state.rollBudgetMax = 80;
   state.rollBudget = 0;
   state.maxX = 0;
+  state.minX = 0;
+  state.hellPeakScore = 0;
+  state.hellMaxDepthM = 0;
   state.runMaxDistM = 0;
   // Behåll lastRunScore/lastRunDistM över restart så bigScore visar senaste rundan
   // tills första skottet (fire() nollställer dem då, rad ~959).
@@ -1743,8 +2280,13 @@ function restart() {
   state.popups = [];
   state.tornados = [];
   state.tornadoSpawnT = 600;
+  state.tornadoRocks = [];
   state.birds = [];
   state.birdSpawnT = 60;
+  state.bats = [];
+  state.batSpawnT = 120;
+  state.ufos = [];
+  state.ufoSpawnT = 150;
   state.penguins = [];
   state.penguinSpawnT = 240;
   state.freezeWind = 0;
@@ -1752,6 +2294,16 @@ function restart() {
   state.freezeWindNextT = 600 + Math.floor(Math.random() * 600);
   state.storms = [];
   state.stormSpawnT = 450 + Math.floor(Math.random() * 300);
+  state.blackHoles = [];
+  state.blackHoleSpawnT = 600 + Math.floor(Math.random() * 600);
+  state.oxygenMax = 100;
+  state.oxygen = 100;
+  state.jellyfish = [];
+  state.jellyfishSpawnT = 240 + Math.floor(Math.random() * 240);
+  state.mines = [];
+  state.mineSpawnT = 480 + Math.floor(Math.random() * 360);
+  state.octopuses = [];
+  state.octopusSpawned = false;
   state.wetGrounds = [];
   state.lightningFlashT = 0;
   state.fogT = 0;
@@ -1759,12 +2311,17 @@ function restart() {
   state.fogSpawnT = 900 + Math.floor(Math.random() * 600);
   state.rockfalls = [];
   state.rockfallSpawnT = 240 + Math.floor(Math.random() * 180);
+  state.condors = [];
+  state.condorSpawnT = 240 + Math.floor(Math.random() * 360);
   state.gliderCharges = 0;
   state.gliderT = 0;
   state.fireballs = [];
   state.fireballSpawnT = 120;
   state.ashParticles = [];
-  state.health = 100;
+  state.health = 200;
+  state.healthMax = 200;
+  state.lastBiomeWasHell = false;
+  state._hellPrevRollBudgetMax = 0;
   state.damageFlashT = 0;
   state.drowning = null;
   state.deathCause = null;
@@ -1808,8 +2365,13 @@ function retry() {
   state.popups = [];
   state.tornados = [];
   state.tornadoSpawnT = 600;
+  state.tornadoRocks = [];
   state.birds = [];
   state.birdSpawnT = 60;
+  state.bats = [];
+  state.batSpawnT = 120;
+  state.ufos = [];
+  state.ufoSpawnT = 150;
   state.penguins = [];
   state.penguinSpawnT = 240;
   state.freezeWind = 0;
@@ -1817,6 +2379,16 @@ function retry() {
   state.freezeWindNextT = 600 + Math.floor(Math.random() * 600);
   state.storms = [];
   state.stormSpawnT = 450 + Math.floor(Math.random() * 300);
+  state.blackHoles = [];
+  state.blackHoleSpawnT = 600 + Math.floor(Math.random() * 600);
+  state.oxygenMax = 100;
+  state.oxygen = 100;
+  state.jellyfish = [];
+  state.jellyfishSpawnT = 240 + Math.floor(Math.random() * 240);
+  state.mines = [];
+  state.mineSpawnT = 480 + Math.floor(Math.random() * 360);
+  state.octopuses = [];
+  state.octopusSpawned = false;
   state.wetGrounds = [];
   state.lightningFlashT = 0;
   state.fogT = 0;
@@ -1824,12 +2396,17 @@ function retry() {
   state.fogSpawnT = 900 + Math.floor(Math.random() * 600);
   state.rockfalls = [];
   state.rockfallSpawnT = 240 + Math.floor(Math.random() * 180);
+  state.condors = [];
+  state.condorSpawnT = 240 + Math.floor(Math.random() * 360);
   state.gliderCharges = 0;
   state.gliderT = 0;
   state.fireballs = [];
   state.fireballSpawnT = 120;
   state.ashParticles = [];
-  state.health = 100;
+  state.health = 200;
+  state.healthMax = 200;
+  state.lastBiomeWasHell = false;
+  state._hellPrevRollBudgetMax = 0;
   state.damageFlashT = 0;
   state.drowning = null;
   state.deathCause = null;
@@ -1838,6 +2415,9 @@ function retry() {
   state.perfect = false;
   state.starsGot = 0;
   state.maxX = 0;
+  state.minX = 0;
+  state.hellPeakScore = 0;
+  state.hellMaxDepthM = 0;
   state.newRecord = false;
   state.recordTriggered = false;
   state.flightMult = 1;
@@ -1875,6 +2455,24 @@ const DEATH_CAUSE_TITLES = {
   spike:    '⚙️ SPIKAD!',
   storm:    '⚡ BLIXTNEDSLAG!',
   cactus:   '🌵 KAKTUS-FÄLLA!',
+  crater:   '🕳️ FÖRSVANN I KRATERN!',
+  alien:    '👽 ALIEN-ATTACK!',
+  ufo:      '🛸 UFO-KRASCH!',
+  rock:     '☄️ STENSKUR!',
+  rockfall: '☄️ STENSKUR!',
+  condor:   '🦅 KONDOR-ATTACK!',
+  monster:  '👹 MONSTER-ATTACK!',
+  blackhole:'🌑 SLUKAD AV SVART HÅL!',
+  space:    '🌌 BORTA I RYMDEN!',
+  oxygen:   '💨 SLUT PÅ SYRE!',
+  abyss:    '⚫ DJUPAVGRUND!',
+  tentacle: '🐙 TENTAKEL-FÅNG!',
+  shark:    '🦈 HAJBETT!',
+  jellyfish:'🪼 MANET-STING!',
+  harpoon:  '🎯 HARPUNERAD!',
+  mine:     '💣 SJÖMINA!',
+  octopus:  '🦑 BLÄCKFISK-FÅNG!',
+  drain:    '🪤 DRAIN!',
   default:  '🛞 DÄCK SPRACK!',
 };
 
@@ -1944,7 +2542,7 @@ window.midShopContinue = function () {
 };
 
 // ====== LEADERBOARD ======
-const lbState = { tab: 'alltime', sort: 'score' };
+const lbState = { tab: 'alltime', sort: 'score', hellMode: false };
 
 window.openLeaderboard = function () {
   state.paused = true;
@@ -1967,6 +2565,30 @@ function persistLiveRun() {
 document.addEventListener('visibilitychange', () => { if (document.hidden) persistLiveRun(); });
 window.addEventListener('pagehide', persistLiveRun);
 
+// Spara separat hell-entry i topplistan. Anropas vid hell→öken, hell-död, hell-mål.
+// Eftersom poängen nollställs vid varje hell-transit lever varje hell-vistelse sitt eget liv
+// i topplistan (hellOnly: true). Återställer hell-tracking efter spar så samma data inte sparas dubbelt.
+function saveHellRunEntry(opts) {
+  if (!state.runId) return;
+  if (!(state.hellMaxDepthM > 0)) return;
+  state.hellRunCount = (state.hellRunCount || 0) + 1;
+  addRunToHistory({
+    runId: `${state.runId}_hell_${state.hellRunCount}`,
+    score: 0,
+    distM: 0,
+    hellMaxDepthM: state.hellMaxDepthM,
+    hellScore: state.hellPeakScore || 0,
+    ts: Date.now(),
+    date: todayStamp(),
+    won: !!(opts && opts.won),
+    current: false,
+    hellOnly: true,
+    world: progression.activeWorld || 'mix',
+  });
+  state.hellMaxDepthM = 0;
+  state.hellPeakScore = 0;
+}
+
 function buildLiveLeaderboardEntry() {
   // Skapar en "live" entry från nuvarande state om en run pågår — visas alltid överst
   // i leaderboarden så spelaren kan jämföra mot andra rundor i realtid.
@@ -1980,10 +2602,13 @@ function buildLiveLeaderboardEntry() {
     runId: state.runId,
     score: state.score,
     distM: liveDistM,
+    hellMaxDepthM: state.hellMaxDepthM || 0,
+    hellScore: state.hellPeakScore || 0,
     ts: Date.now(),
     date: todayStamp(),
     won: false,
     current: true,
+    world: progression.activeWorld || 'mix',
   };
 }
 
@@ -1995,40 +2620,85 @@ function renderLeaderboard() {
   // Plocka bort ev. tidigare lagrad entry för samma runId — live-versionen är fräschare.
   if (liveEntry) all = all.filter(r => r.runId !== liveEntry.runId);
 
+  // Hell-mode: visa BARA hell-only entries från ALLA världar (varje hell-vistelse sparas separat).
+  // Normal-mode: dölj hell-only entries och filtrera till aktiv värld.
+  const hellMode = !!lbState.hellMode;
+  const _activeW = progression.activeWorld || 'mix';
+  // Världs-badge ovanför flikarna — visar vilken värld topplistan är filtrerad för.
+  const _badge = document.getElementById('lbWorldBadge');
+  if (_badge) {
+    if (hellMode) {
+      _badge.textContent = '🔥 Hell — alla världar';
+      _badge.className = 'lb-world-badge hell';
+    } else {
+      const _w = WORLDS[_activeW] || WORLDS.mix;
+      _badge.textContent = `${_w.emoji} ${_w.name}`;
+      _badge.className = 'lb-world-badge';
+    }
+  }
+  if (hellMode) {
+    all = all.filter(r => r.hellOnly === true);
+  } else {
+    all = all.filter(r => r.hellOnly !== true && (r.world || 'mix') === _activeW);
+  }
+  const sortKey = hellMode
+    ? (lbState.sort === 'distM' ? 'hellMaxDepthM' : 'hellScore')
+    : lbState.sort;
+
   let rows;
   if (lbState.tab === 'today') {
     const today = todayStamp();
-    rows = all.filter(r => r.date === today).slice().sort((a, b) => (b[lbState.sort] || 0) - (a[lbState.sort] || 0)).slice(0, 10);
+    rows = all.filter(r => r.date === today).slice().sort((a, b) => (b[sortKey] || 0) - (a[sortKey] || 0)).slice(0, 10);
   } else if (lbState.tab === 'recent') {
     rows = all.slice().sort((a, b) => (b.ts || 0) - (a.ts || 0)).slice(0, 10);
   } else {
-    rows = all.slice().sort((a, b) => (b[lbState.sort] || 0) - (a[lbState.sort] || 0)).slice(0, 10);
+    rows = all.slice().sort((a, b) => (b[sortKey] || 0) - (a[sortKey] || 0)).slice(0, 10);
   }
 
   // Pinna live-entry överst (oavsett sort/flik) så pågående run alltid är synlig.
+  // I hell-mode visas live-entry bara om den faktiskt har varit i hell.
   if (liveEntry) {
     const fitsTab = lbState.tab !== 'today' || liveEntry.date === todayStamp();
-    if (fitsTab) {
+    const fitsHell = !hellMode || (liveEntry.hellMaxDepthM || 0) > 0;
+    if (fitsTab && fitsHell) {
       if (rows.length >= 10) rows.pop();
       rows.unshift(liveEntry);
     }
   }
 
   if (!rows.length) {
-    list.innerHTML = '<div class="lb-empty">Inga rundor sparade än.<br>Spela klart en run för att hamna här!</div>';
+    const emptyMsg = hellMode
+      ? '🔥 Inga hell-runs sparade än.<br>Skjut dig in i hell för att hamna här!'
+      : 'Inga rundor sparade än.<br>Spela klart en run för att hamna här!';
+    list.innerHTML = `<div class="lb-empty">${emptyMsg}</div>`;
     return;
   }
   list.innerHTML = rows.map((r, i) => {
     const isLive = !!(liveEntry && r === liveEntry);
-    // Saved rows ranked 1..N. Om live-entry pinnats överst skiftar saved-rader så de börjar på rank 1.
     const savedRank = isLive ? 0 : (liveEntry ? i : i + 1);
     const rankClass = isLive ? 'rank-live' : (savedRank === 1 ? 'rank-1' : savedRank === 2 ? 'rank-2' : savedRank === 3 ? 'rank-3' : 'rank-other');
     const medal = isLive ? '🎯' : (savedRank === 1 ? '🥇' : savedRank === 2 ? '🥈' : savedRank === 3 ? '🥉' : '#' + savedRank);
     const dateStr = isLive ? 'Just nu' : formatLbDate(r.ts);
-    const score = (r.score || 0).toLocaleString('sv-SE');
-    const dist = (r.distM || 0).toLocaleString('sv-SE');
     const currentClass = (r.current || isLive) ? ' lb-current' : '';
     const liveBadge = isLive ? '<span class="lb-live">● PÅGÅR</span>' : '';
+    if (hellMode) {
+      const hScore = (r.hellScore || 0).toLocaleString('sv-SE');
+      const hDepth = (r.hellMaxDepthM || 0).toLocaleString('sv-SE');
+      return `
+        <div class="lb-row ${rankClass}${currentClass} lb-hell">
+          <div class="lb-rank">${medal}</div>
+          <div class="lb-meta">
+            <div class="lb-score">🔥 ${hScore} p ${liveBadge}</div>
+            <div class="lb-date">${dateStr}</div>
+          </div>
+          <div class="lb-stat">
+            <div class="lb-stat-val">-${hDepth} m</div>
+            <div class="lb-stat-label">Hell-djup</div>
+          </div>
+        </div>`;
+    }
+    const score = (r.score || 0).toLocaleString('sv-SE');
+    const dist = (r.distM || 0).toLocaleString('sv-SE');
     return `
       <div class="lb-row ${rankClass}${currentClass}">
         <div class="lb-rank">${medal}</div>
@@ -2066,7 +2736,14 @@ document.addEventListener('click', (e) => {
   const sortBtn = e.target.closest('.lb-sort-btn');
   if (sortBtn && sortBtn.dataset.lbsort) {
     lbState.sort = sortBtn.dataset.lbsort;
-    document.querySelectorAll('.lb-sort-btn').forEach(b => b.classList.toggle('active', b === sortBtn));
+    document.querySelectorAll('.lb-sort-btn[data-lbsort]').forEach(b => b.classList.toggle('active', b === sortBtn));
+    renderLeaderboard();
+    return;
+  }
+  const hellBtn = e.target.closest('.lb-sort-btn[data-lbmode="hell"]');
+  if (hellBtn) {
+    lbState.hellMode = !lbState.hellMode;
+    hellBtn.classList.toggle('active', lbState.hellMode);
     renderLeaderboard();
   }
 });
@@ -2250,6 +2927,7 @@ stage.addEventListener('pointerdown', e => {
   //   actually drags. A plain tap still falls through to stomp / relaunch.
   // - Otherwise: arm drag tracking; short tap falls through to stomp.
   if (state.phase === PHASE.FLY) {
+    if (tornadoEscapeTap()) return;
     if (powerBounce()) return;
     // Pre-landing bounce buffer: if tire is about to land (close to ground, moving down),
     // queue the tap so it fires the instant we touch down — covers "tappade precis innan landing".
@@ -2416,14 +3094,23 @@ function finishPointer(e, fireOnRelease) {
     pinch = null;
     return;  // never fire a shot when exiting a pinch
   }
-  // End relaunch drag — drag launches, short tap falls through to stomp
+  // End relaunch drag — drag launches, short tap falls through to stomp.
+  // I djuphavet: ingen "shot på släpp" för långa drag — kraften har redan applicerats
+  // kontinuerligt via propellern. Korta tap (< RELAUNCH_DRAG_MIN) ska fortfarande
+  // trigga stomp så man kan dyka även när man har kraft kvar.
   if (state.relaunchDrag.active && e && e.pointerId === state.relaunchDrag.pid) {
     const dx = state.relaunchDrag.curX - state.relaunchDrag.startX;
     const dy = state.relaunchDrag.curY - state.relaunchDrag.startY;
+    const _wasInDeep = state.tire && biomeAt(state.tire.x) === DEEP_INDEX;
     state.relaunchDrag.active = false;
     state.relaunchDrag.pid = -1;
     if (!fireOnRelease) return;
     const len = Math.hypot(dx, dy);
+    if (_wasInDeep) {
+      // Deep: hoppa över executeRelaunch men låt korta taps stompa
+      if (len < RELAUNCH_DRAG_MIN) stomp();
+      return;
+    }
     if (len >= RELAUNCH_DRAG_MIN) {
       executeRelaunch(dx, dy);
     } else {
@@ -2500,6 +3187,11 @@ function _bindClick(id, fn) {
   const el = document.getElementById(id);
   if (el) el.addEventListener('click', fn);
 }
+// Vind är inaktiv i rymden (vakuum) eller om spelaren tryckt av rutan.
+function windOff() {
+  if (state.windDisabled) return true;
+  return !!(state.tire && biomeAt(state.tire.x) === SPACE_INDEX);
+}
 _bindClick('windMeter', () => {
   state.windDisabled = !state.windDisabled;
   try { localStorage.setItem('chimney_windDisabled', state.windDisabled ? '1' : '0'); } catch {}
@@ -2532,6 +3224,9 @@ document.getElementById('btnShop').addEventListener('click', () => {
   window.openShop();
 });
 
+const _btnWorld = document.getElementById('btnWorld');
+if (_btnWorld) _btnWorld.addEventListener('click', () => window.openWorldModal());
+
 // Shared helper: fires only on pointerdown (never on click — which would double-trigger on
 // mobile). 1-second cooldown per button so a slightly mushy tap can't drain multiple charges.
 function wirePowerButton(btnId, canFire, doFire) {
@@ -2560,7 +3255,7 @@ wirePowerButton('btnBoost',   () => state.nitroCharges   > 0, useNitro);
 wirePowerButton('btnAirjump', () => state.airjumpCharges > 0, useAirjump);
 wirePowerButton('btnMagnet',  () => state.magnetCharges  > 0, useMagnet);
 wirePowerButton('btnBomb',    () => state.bombCharges    > 0, useBomb);
-wirePowerButton('btnShield',  () => state.shieldCharges  > 0 && state.shieldT === 0, useShield);
+wirePowerButton('btnShield',  () => state.shieldCharges  > 0 && state.shieldT === 0 && !(state.tire && biomeAt(state.tire.x) === HELL_INDEX), useShield);
 wirePowerButton('btnGlider',  () => state.gliderCharges  > 0 && state.gliderT === 0, useGlider);
 
 // Keyboard as backup
@@ -2665,6 +3360,24 @@ function setCombo(text) {
 function update() {
   if (state.paused) return; // Leaderboard-popup öppen → frys allt (inga frames, inga timers)
   state.time++;
+  // Hell-biom buff: 2x HP (över max) & 7x kraft (capped at 400). Max-taket (rollBudgetMax) lämnas
+  // orört, men rollBudget multipliceras × 7 (overflow tillåts upp till 400).
+  if (state.tire && state.phase === PHASE.FLY) {
+    const _isHell = biomeAt(state.tire.x) === HELL_INDEX;
+    const _wasHell = !!state.lastBiomeWasHell;
+    const HELL_POWER_MAX = 400;
+    if (_isHell && !_wasHell) {
+      state.healthMax = (state.healthMax || 200) * 2;
+      state.health = (state.health || 0) * 2;
+      state.rollBudget = Math.min(HELL_POWER_MAX, (state.rollBudget || 0) * 7);
+      flashToast('🔥 Hell', '#ef4444');
+    } else if (!_isHell && _wasHell) {
+      state.healthMax = 200;
+      state.health = Math.min(state.health, 200);
+      state.rollBudget = Math.min(state.rollBudget, state.rollBudgetMax);
+    }
+    state.lastBiomeWasHell = _isHell;
+  }
   if (state.damageFlashT > 0) state.damageFlashT--;
   // Score-pulse decrement måste ske oavsett fas — annars fastnar pulse-scalan på 1.18 efter FLY,
   // vilket fick AIM-poängen att se större ut än under spel.
@@ -2735,10 +3448,18 @@ function update() {
   // Lerp strength toward target
   state.wind.strength += (state.wind.target - state.wind.strength) * 0.008;
 
-  // Tornado-system (öken-only)
+  // Tornado-system (öken + hell)
   updateTornados();
-  // Fågelflockar
+  updateWindRocks();
+  updateTornadoRocks();
+  // Fågelflockar (+ fladdermöss i hell)
   updateBirds();
+  updateBats();
+  updateUfos();
+  updateBlackHoles();
+  updateJellyfish();
+  updateMines();
+  updateOctopus();
   // Pingvinflockar (isbiomen)
   updatePenguins();
   // Frysande vind (isbiomen)
@@ -2750,6 +3471,8 @@ function update() {
   updateFog();
   // Rasstenar (canyon)
   updateRockfalls();
+  // Kondorer (canyon)
+  updateCondors();
   // Eldbollar + aska (vulkanen)
   updateFireballs();
   updateAshParticles();
@@ -2818,9 +3541,26 @@ function update() {
       const f = Math.min(1, d.t / d.max);
       // Ease-in: snabbt först, sen långsammare ner
       const ease = 1 - Math.pow(1 - f, 2);
-      t.y = d.startY + (d.sinkTo - d.startY) * ease;
-      t.vx = 0; t.vy = 0;
-      t.rot += 0.04;  // sakta rotation under sjunkningen
+      if (d.isBlackHole) {
+        // Spiral mot mitten: 4 varv, radien krymper till 0
+        const spiralAng = d.bhStartAngle + f * Math.PI * 8;
+        const spiralR = d.bhStartDist * (1 - f);
+        t.x = d.bhX + Math.cos(spiralAng) * spiralR;
+        t.y = d.bhY + Math.sin(spiralAng) * spiralR;
+        t.rot += 0.18;
+        t.vx = 0; t.vy = 0;
+      } else if (d.isSpaceDrift) {
+        // Driftar ut i rymden: accelererar uppåt + lite sidoflöde
+        t.vy -= 0.55;
+        t.x += t.vx;
+        t.y += t.vy;
+        t.rot += 0.06;
+      } else {
+        t.y = d.startY + (d.sinkTo - d.startY) * ease;
+        t.rot += 0.04;
+        t.vx = 0; t.vy = 0;
+      }
+      // Behåll original-beteendet för water/lava/dust: ingen extra fysik nedanför.
       // Bubblor / gnistor under hjulet
       if (state.time % 3 === 0) {
         if (d.isLava) {
@@ -2845,6 +3585,70 @@ function update() {
               color: `rgba(31,41,55,${0.45 + Math.random() * 0.3})`,
               size: 3 + Math.random() * 3,
               g: 0, shape: 'circle',
+            });
+          }
+        } else if (d.isBlackHole) {
+          // Svart hål: violetta/rosa partiklar som dras mot mitten
+          const cx = d.bhX, cy = d.bhY;
+          const dxp = cx - t.x, dyp = cy - t.y;
+          const ddist = Math.max(0.5, Math.hypot(dxp, dyp));
+          const inv = 1 / ddist;
+          state.particles.push({
+            x: t.x + (Math.random() - 0.5) * 14,
+            y: t.y + (Math.random() - 0.5) * 14,
+            vx: dxp * inv * (1.6 + Math.random()),
+            vy: dyp * inv * (1.6 + Math.random()),
+            life: 30, max: 30,
+            color: `rgba(${Math.random() < 0.5 ? '147,51,234' : '236,72,153'},${0.6 + Math.random() * 0.3})`,
+            size: 2 + Math.random() * 2,
+            g: 0, shape: 'circle',
+          });
+        } else if (d.isSpaceDrift) {
+          // Rymddrift: stjärngnistor + violetta gnistor som lämnas bakom hjulet
+          state.particles.push({
+            x: t.x + (Math.random() - 0.5) * 16,
+            y: t.y + 4 + Math.random() * 6,
+            vx: (Math.random() - 0.5) * 0.4,
+            vy: 0.6 + Math.random() * 0.8,
+            life: 50, max: 50,
+            color: `rgba(${Math.random() < 0.5 ? '168,85,247' : '34,211,238'},${0.6 + Math.random() * 0.3})`,
+            size: 2 + Math.random() * 2,
+            g: 0, shape: 'circle',
+          });
+          if (Math.random() < 0.5) {
+            state.particles.push({
+              x: t.x + (Math.random() - 0.5) * 22,
+              y: t.y + 2,
+              vx: (Math.random() - 0.5) * 0.6,
+              vy: 0.3 + Math.random() * 0.5,
+              life: 36, max: 36,
+              color: `rgba(255,255,255,${0.5 + Math.random() * 0.4})`,
+              size: 1 + Math.random() * 1.5,
+              g: 0, shape: 'square',
+            });
+          }
+        } else if (d.isDust) {
+          // Krater: damm/regolit istället för bubblor
+          state.particles.push({
+            x: t.x + (Math.random() - 0.5) * 16,
+            y: t.y - 2,
+            vx: (Math.random() - 0.5) * 0.6,
+            vy: -1.0 - Math.random() * 0.6,
+            life: 70, max: 70,
+            color: `rgba(${Math.random() < 0.5 ? '156,163,175' : '107,114,128'},${0.5 + Math.random() * 0.3})`,
+            size: 3 + Math.random() * 3,
+            g: -0.02, shape: 'circle',
+          });
+          if (Math.random() < 0.4) {
+            state.particles.push({
+              x: t.x + (Math.random() - 0.5) * 12,
+              y: t.y + 6,
+              vx: (Math.random() - 0.5) * 1.2,
+              vy: -0.5 - Math.random() * 0.6,
+              life: 36, max: 36,
+              color: `rgba(31,41,55,${0.6 + Math.random() * 0.3})`,
+              size: 2 + Math.random() * 2,
+              g: 0.05, shape: 'square',
             });
           }
         } else {
@@ -2940,9 +3744,16 @@ function update() {
     // Physics — gravity varies by biome. timeScale < 1 during slow-mo keeps same FPS but stretches time.
     const TS = state.timeScale || 1;
     let gNow = gravityAtX(t.x);
-    // 🪁 Glider: 70% mindre gravity i 4s
+    // 🪁 Glider: 70% mindre gravity + lyftkraft + framåt-acceleration i 4s
     if (state.gliderT > 0) {
       gNow *= 0.3;
+      // Lyftkraft motverkar resterande gravitation → hjulet glider plant.
+      t.vy -= 0.12 * TS;
+      // Framåt-acceleration mot fångad rörelseriktning, capped vid 14.
+      const _gdir = state.gliderDir || 1;
+      const _tgt = _gdir * 14;
+      if (_gdir > 0 && t.vx < _tgt) t.vx = Math.min(_tgt, t.vx + 0.18 * TS);
+      else if (_gdir < 0 && t.vx > _tgt) t.vx = Math.max(_tgt, t.vx - 0.18 * TS);
       state.gliderT = Math.max(0, state.gliderT - TS);
       if (state.gliderT === 0) {
         flashToast('🪁 GLIDER SLUT', '#94a3b8');
@@ -2950,6 +3761,132 @@ function update() {
       }
     }
     t.vy += gNow * TS;
+    // 🌌 Rymden: över ~500px höjd börjar gravity fada bort, över ~900 vänds den
+    // till anti-gravity (suger ut i rymden). Stomping/drag-skjut nedåt krävs för
+    // att hålla sig nära marken — annars driver hjulet ut och dör.
+    if (biomeAt(t.x) === SPACE_INDEX && !state.drowning) {
+      const _gySpace = terrainAt(t.x);
+      const _airH = Math.max(0, _gySpace - t.y);
+      if (_airH > 500) {
+        // Steg 1: ta bort den normala gravity-tillagningen gradvis (500→900)
+        const fade = Math.min(1, (_airH - 500) / 400);
+        t.vy -= gNow * TS * fade; // motverkar precis gNow*TS som lades på ovan
+        // Steg 2: ren uppåt-acceleration över 900 — växer linjärt mot 0.45 vid airH=1500
+        if (_airH > 900) {
+          const lift = Math.min(1, (_airH - 900) / 600);
+          t.vy -= 0.45 * lift * TS;
+        }
+        // Death: passerade gränsen → drift ut i rymden
+        if (_airH > 1500) {
+          addParticles(t.x, t.y, '#a855f7', 24, { up: 6, spread: 8, size: 4 });
+          addParticles(t.x, t.y, '#22d3ee', 16, { up: 5, spread: 6, size: 3 });
+          shake(12); state.hitstop = 3;
+          tone(700, 0.4, 'sine', 0.18, 600);
+          state.health = 0;
+          state.damageFlashT = 24;
+          state.deathCause = 'space';
+          state.drowning = {
+            t: 0,
+            max: 60,
+            surfaceY: t.y,
+            startY: t.y,
+            sinkTo: t.y - 600,
+            isSpaceDrift: true,
+          };
+          t.vx *= 0.4;
+          // bevara nuvarande vy som driftstart men säkerställ uppåt
+          t.vy = Math.min(t.vy, -3);
+          flashToast('🌌 BORTA I RYMDEN!', '#a855f7');
+          setTimeout(() => finishRun(false), 900);
+        }
+      }
+    }
+    // 🌊 Djuphavet: flytkraft (buoyancy) — uppåt-sug så hjulet flyter mot ytan om man inte
+    // håller hastigheten nere. Vatten-drag (extra friktion) på vx/vy. Inga death-zones uppåt
+    // (man kan inte "drunkna i ytan") — istället tar syret slut → drowning.
+    if (biomeAt(t.x) === DEEP_INDEX && !state.drowning) {
+      // Konstant uppåtkraft (flytkraft) som överstiger gravity → mild netto-flyt uppåt vid stillastående.
+      // gravityDeep = 0.10 → buoyancy 0.13 ger -0.03 netto (slow rise).
+      t.vy -= 0.13 * TS;
+      // Vatten-drag (utöver air drag) — dämpar både vx och vy
+      const wdrag = 1 - 0.012 * TS;
+      t.vx *= wdrag;
+      t.vy *= wdrag;
+      // 🌀 Drag-styrd propeller (deep biome only):
+      // Om spelaren håller drag → applicera kontinuerlig kraft i drag-riktning
+      // och dräneras rollBudget. Annars kör auto-thrust (framåt+nedåt).
+      const _drag = state.relaunchDrag;
+      const _hasBudget = state.rollBudget > 0;
+      const _dragActive = _drag && _drag.active && _hasBudget;
+      let _dragLen = 0, _ddx = 0, _ddy = 0;
+      if (_dragActive) {
+        _ddx = _drag.curX - _drag.startX;
+        _ddy = _drag.curY - _drag.startY;
+        _dragLen = Math.hypot(_ddx, _ddy);
+      }
+      if (_dragActive && _dragLen >= RELAUNCH_DRAG_MIN) {
+        // Drag-power 0..1 baserat på drag-längd (samma skala som vanlig relaunch)
+        const dragP = Math.min(1, _dragLen / RELAUNCH_DRAG_MAX);
+        const inv = 1 / _dragLen;
+        const dirX = _ddx * inv;
+        const dirY = _ddy * inv;
+        // Bas-kraft per frame — låg så draget främst STYR, inte boostar farten
+        const FORCE_PER_FRAME = 0.35;          // sänkt från 0.95 → mer steering, mindre fart
+        // Boost när drag MOT-aktuell-rörelse → broms + vänd (mildare än innan)
+        const _speed = Math.hypot(t.vx, t.vy);
+        let _boost = 1;
+        if (_speed > 0.8) {
+          const _align = (t.vx * dirX + t.vy * dirY) / _speed; // -1 = motsatt, +1 = samma
+          if (_align < 0) {
+            // Motsatt drag → upp till 1.5× kraft för bromsning/vändning (var 2×)
+            _boost = 1 + Math.abs(_align) * 0.5;
+          }
+        }
+        const accel = dragP * FORCE_PER_FRAME * _boost * TS;
+        t.vx += dirX * accel;
+        t.vy += dirY * accel;
+        // Perpendikulär dämpning — vrider velocity-vektorn mot drag-riktningen.
+        // Större dämpning (6%/frame) så styrningen känns tight även med låg accel.
+        const dot = t.vx * dirX + t.vy * dirY;
+        const perpVx = t.vx - dot * dirX;
+        const perpVy = t.vy - dot * dirY;
+        const PERP_DAMP = 0.94;
+        t.vx = dot * dirX + perpVx * PERP_DAMP;
+        t.vy = dot * dirY + perpVy * PERP_DAMP;
+        // Dränera rollBudget kontinuerligt — full drag äter ~18/sek (halverad från 36)
+        const drainRate = dragP * 0.30;
+        state.rollBudget = Math.max(0, state.rollBudget - drainRate * TS);
+      } else {
+        // Ingen aktiv drag (eller för kort) → auto-thrust som tidigare (framåt + nedåt).
+        if (Math.abs(t.vx) > 0.3) {
+          t.vx += Math.sign(t.vx) * 0.10 * TS;
+        }
+        t.vy += 0.20 * TS;
+      }
+      // 💨 Syre tickar ner ~1.5/sek (60 fps → 0.025/frame). Tomt syre → drunkning.
+      state.oxygen = Math.max(0, state.oxygen - 0.025 * TS);
+      if (state.oxygen <= 0) {
+        addParticles(t.x, t.y, '#bae6fd', 18, { up: 4, spread: 5, size: 3 });
+        addParticles(t.x, t.y, '#22d3ee', 12, { up: 3, spread: 4, size: 2 });
+        shake(8); state.hitstop = 2;
+        tone(450, 0.4, 'sine', 0.16, 320);
+        state.health = 0;
+        state.damageFlashT = 24;
+        state.deathCause = 'oxygen';
+        state.drowning = {
+          t: 0,
+          max: 90,
+          surfaceY: t.y,
+          startY: t.y,
+          sinkTo: t.y + 280,
+          isOxygenOut: true,
+        };
+        t.vx *= 0.3;
+        t.vy = Math.max(t.vy, 0.5);
+        flashToast('💨 SLUT PÅ SYRE!', '#22d3ee');
+        setTimeout(() => finishRun(false), 1100);
+      }
+    }
     // Frame-drag approximated linearly so it scales with timeScale (light drag near 1.0)
     const dragFactor = 1 - (1 - AIR_DRAG) * TS;
     t.vx *= dragFactor;
@@ -2968,7 +3905,7 @@ function update() {
     else if (_airHeight < 100) heightFactor = 0.05 + (_airHeight - 30) / 70 * 0.25;
     else if (_airHeight < 300) heightFactor = 0.30 + (_airHeight - 100) / 200 * 1.2;
     else heightFactor = Math.min(3.0, 1.5 + (_airHeight - 300) / 200 * 0.75);
-    const windAccel = state.windDisabled ? 0
+    const windAccel = windOff() ? 0
       : state.wind.strength * WIND_MAX * state.windScale * heightFactor;
     t.vx += windAccel * TS;
     // Tornadon — stark uppåtsug + chaos om tiren är inom radien.
@@ -2976,6 +3913,7 @@ function update() {
     // Global speed cap — ramps/trampolines/bounces can't push past this unless nitro or launch-window
     if (state.nitroBoostT > 0) state.nitroBoostT--;
     if (state.launchBoostT > 0) state.launchBoostT--;
+    if (t.flipperKickT > 0) t.flipperKickT--;
     let cap = state.nitroBoostT > 0 ? TUNING.speedCapNitro
             : state.launchBoostT > 0 ? TUNING.speedCapLaunch
             : TUNING.speedCapNormal;
@@ -2995,6 +3933,10 @@ function update() {
     if (state.trampTapBoostT > 0) state.trampTapBoostT--;
     if (state.stompCooldown > 0) state.stompCooldown--;
     if (state.pendingBounceT > 0) state.pendingBounceT--;
+    if (state.tornadoTapCooldown > 0) state.tornadoTapCooldown--;
+    if (state.tornadoEscapeT > 0) state.tornadoEscapeT--;
+    // Nollställ tornado-tap-streak när däcket inte längre är fångat (sätts varje frame av applyTornadoForces).
+    if (!state.tornadoStuck && state.tornadoTapStreak) state.tornadoTapStreak = 0;
     // Whiff penalty: if the stomp window expires without hitting a trampoline or ramp,
     // the tire loses 15% forward speed. Spam-stomping in open air now costs you distance.
     if (state.stompWhiffT > 0) {
@@ -3017,11 +3959,12 @@ function update() {
       }
     }
 
-    // Back-wall / house — blockerar däcket från att rulla in i huset från höger.
-    // Hoppar man ÖVER taket landar man i hell-biomet bakom (släpps inte tillbaka).
+    // Back-wall / house — blockerar däcket bara på husets kropp.
+    // Flyger man ÖVER taket är vägen helt fri in i hell. Är man redan i hell
+    // (t.x past houseLeftEdge) släpps man också så man kan röra sig fritt där.
     const backWallX = LEVEL.launchX - 120;
     const backWallTopY = terrainAt(backWallX) - 106; // match house roof peak in renderer
-    const houseLeftEdge = LEVEL.launchX - 206;       // husets vänsterkant (launchX - 120 - 86)
+    const houseLeftEdge = LEVEL.launchX - 206;
     if (t.x + TIRE_R > houseLeftEdge && t.x - TIRE_R < backWallX && t.y + TIRE_R > backWallTopY) {
       t.x = backWallX + TIRE_R;
       if (t.vx < 0) {
@@ -3037,13 +3980,24 @@ function update() {
       finishRun(false);
     }
     // Hell-biome övergång — toast vid in/ut. inHell speglar tire.x < 0.
+    // Vid övergång (åt båda håll) nollställs poäng + combo så hell-poäng är separat.
     {
       const nowInHell = t.x < 0;
       if (nowInHell !== state.inHell) {
-        if (nowInHell) flashToast('💀 HELL', '#dc2626');
-        else           flashToast('🏜️ ÖKNEN', '#fbbf24');
+        // Lämna hell → spara hell-vistelsen som separat topplisteentry FÖRE poäng-reset.
+        if (!nowInHell) saveHellRunEntry();
+        state.score = 0;
+        state.combo = { count: 0, timer: 0, mult: 1 };
+        if (nowInHell) flashToast('💀 HELL — POÄNG NOLLSTÄLLD', '#dc2626');
+        else           flashToast('🏜️ ÖKNEN — POÄNG NOLLSTÄLLD', '#fbbf24');
         state.inHell = nowInHell;
       }
+    }
+    // Hell-tracking: peak score + max djup för leaderboard-filter.
+    if (state.inHell) {
+      state.hellPeakScore = Math.max(state.hellPeakScore || 0, state.score || 0);
+      const _depth = Math.max(0, Math.round(-t.x / 5));
+      state.hellMaxDepthM = Math.max(state.hellMaxDepthM || 0, _depth);
     }
 
     // Terrain collision
@@ -3075,14 +4029,22 @@ function update() {
           let _damp = BOUNCE_DAMP - 0.12 * _cosTh;  // 0.78 direct, ~0.90 glance
           // Blött underlag: studsa lite längre och hala undan
           if (isWetAt(t.x)) _damp = Math.min(0.97, _damp + 0.08);
+          // Gummigolv-känsla överallt: bevarar nästan all energi i reflektionen.
+          _damp = Math.min(0.99, _damp + 0.12);
           t.vx -= 2 * dot * nx * _damp;
           t.vy -= 2 * dot * ny * _damp;
-          // Anti-reversal: only near-flat bumps (< ~17°) preserve forward direction.
-          // Steeper slopes let physics take over so walls actually bounce the tire back.
+          // Garantera ett rejält studs-floor så hjulet inte snappar till rull.
+          if (t.vy < 0) {
+            t.vy = Math.min(t.vy * 1.4, -4.5);
+          }
+          // Anti-reversal: bevarar färdriktning på backar upp till en viss lutning.
+          // I hell vill spelaren ALDRIG kastas tillbaka åt höger — höj tröskeln rejält där.
           if (Math.sign(vxBefore) !== 0 && Math.sign(t.vx) !== Math.sign(vxBefore)) {
             const slopeSteep = Math.abs(sl);
-            if (slopeSteep < 0.3) {
-              const preserveFactor = 0.70 + (1 - slopeSteep / 0.3) * 0.20;
+            const _inHell = biomeAt(t.x) === HELL_INDEX;
+            const _maxSteep = _inHell ? 1.2 : 0.5;   // hell: ~50°, övrigt: ~27°
+            if (slopeSteep < _maxSteep) {
+              const preserveFactor = 0.70 + (1 - slopeSteep / _maxSteep) * 0.20;
               t.vx = vxBefore * preserveFactor;
             }
           }
@@ -3117,7 +4079,9 @@ function update() {
       // Roll-assist grace: just tapped, don't let slope drag the ball backward
       const rollAssisting = (state.rollAssistT || 0) > 0;
       if (rollAssisting && slopeAccel < 0) slopeAccel = 0;
-      if (Math.abs(t.vy) < 1.8) {
+      // Sänkt rull-snap-tröskel så små studsar fortfarande räknas som studs, inte rull.
+      const _rollSnap = 0.8;
+      if (Math.abs(t.vy) < _rollSnap) {
         t.vy = 0;
         const wet = isWetAt(t.x);
         const fricBase = rollAssisting ? 0.999 : (wet ? 0.9988 : GROUND_FRIC);
@@ -3131,7 +4095,12 @@ function update() {
         else t.vx = 0;
         t.vx += slopeAccel;
         if (Math.abs(t.vx) > 2 && state.time % 4 === 0) {
-          addParticles(t.x - Math.sign(t.vx) * TIRE_R * 0.5, gy - 2, '#a16207', 1, { up: 1, spread: 1, size: 2, g: 0.05 });
+          // I djuphavet: cyan-bubblor (uppåt) istället för orange-damm (nedåt) — annars ser det ut som flammor.
+          if (biomeAt(t.x) === DEEP_INDEX) {
+            addParticles(t.x - Math.sign(t.vx) * TIRE_R * 0.5, gy - 2, '#bae6fd', 1, { up: -2, spread: 1, size: 2, g: -0.04 });
+          } else {
+            addParticles(t.x - Math.sign(t.vx) * TIRE_R * 0.5, gy - 2, '#a16207', 1, { up: 1, spread: 1, size: 2, g: 0.05 });
+          }
         }
       } else {
         // Even while bouncing, gently pull along slope so short hops still respect hills
@@ -3158,6 +4127,26 @@ function update() {
     if (state.rollTapFlash > 0) state.rollTapFlash--;
     if (state.rollAssistT > 0) state.rollAssistT--;
     if (state.recordCelebT > 0) state.recordCelebT--;
+
+    // 🚩 Checkpoint-kollision: när däcket passerar en flagga aktiveras checkpoint.
+    if (state.checkpoints && state.checkpoints.length) {
+      for (let cpi = 0; cpi < state.checkpoints.length; cpi++) {
+        const cp = state.checkpoints[cpi];
+        if (cp.flashT > 0) cp.flashT--;
+        if (!cp.reached && t.x >= cp.x - 30 && t.x <= cp.x + 30) {
+          cp.reached = true;
+          cp.flashT = 60;
+          state.checkpointBest = Math.max(state.checkpointBest, cpi);
+          awardScore(250, '🚩 CHECKPOINT!', '#22d3ee');
+          bumpMult(0.3);
+          addParticles(cp.x, terrainAt(cp.x) - 60, '#22d3ee', 30, { up: 8, spread: 12, size: 4 });
+          addParticles(cp.x, terrainAt(cp.x) - 60, '#fbbf24', 22, { up: 6, spread: 10, size: 4 });
+          shake(8); state.hitstop = 3;
+          tone(740, 0.16, 'square', 0.16, 320);
+          setTimeout(() => tone(990, 0.14, 'sine', 0.14, 360), 100);
+        }
+      }
+    }
 
     // Combo decay — continuous pressure: ticks down 0.45 per 60 frames (~1s) when no bump lands.
     // bumpMult() resets flightMultDecayT so keeping the combo alive requires staying in the action.
@@ -3290,6 +4279,77 @@ function update() {
             sfxBounce(); shake(6);
           }
         }
+      } else if (o.type === 'slingshot') {
+        // 🪂 Slingshot — triangulär studsmatta som flingar tillbaka hjulet starkt.
+        const sx = o.x, sy = terrainAt(sx) - o.h, sw = o.w, sh = o.h;
+        if (t.x + TIRE_R > sx && t.x - TIRE_R < sx + sw && t.y + TIRE_R > sy && t.y - TIRE_R < sy + sh) {
+          o.flashT = 12;
+          // Studsa bort i slope-riktningen + uppåt
+          t.vx = o.slope * (8 + Math.random() * 3);
+          t.vy = -8 - Math.random() * 3;
+          awardScore(50, '🪂 SLING!', '#ec4899');
+          bumpMult(0.3);
+          addParticles(sx + sw/2, sy + sh/2, '#ec4899', 18, { up: 6, spread: 8, size: 3 });
+          addParticles(sx + sw/2, sy + sh/2, '#22d3ee', 12, { up: 5, spread: 6, size: 3 });
+          sfxBounce(); shake(8); state.hitstop = 2;
+          tone(680, 0.10, 'square', 0.14, 240);
+        }
+      } else if (o.type === 'saucer') {
+        // 🪞 Saucer — fångar däcket, håller i 90 frames, ejektar med bonus.
+        if (o.flashT > 0) o.flashT--;
+        if (o.captured) {
+          // Lås däcket i saucern
+          t.x = o.x;
+          t.y = o.y - 4;
+          t.vx = 0; t.vy = 0;
+          t.vrot *= 0.92;
+          o.holdT--;
+          if (o.holdT <= 0) {
+            // Eject!
+            o.captured = false;
+            o.flashT = 30;
+            const ejectAng = -Math.PI / 2 + (Math.random() - 0.5) * 0.6;  // mest uppåt
+            const ejectV = 16 + Math.random() * 4;
+            t.vx = Math.cos(ejectAng) * ejectV;
+            t.vy = Math.sin(ejectAng) * ejectV;
+            awardScore(500, '🪞 SAUCER +500!', '#22d3ee');
+            bumpMult(0.5);
+            addParticles(o.x, o.y, '#22d3ee', 28, { up: 9, spread: 12, size: 4 });
+            addParticles(o.x, o.y, '#a855f7', 20, { up: 7, spread: 10, size: 4 });
+            addParticles(o.x, o.y, '#ffffff', 14, { up: 5, spread: 8, size: 3 });
+            shake(10); state.hitstop = 4;
+            tone(880, 0.18, 'sine', 0.18, 380);
+            setTimeout(() => tone(1320, 0.14, 'sine', 0.14, 420), 80);
+          }
+        } else {
+          // Inte fångad än — kolla om däcket faller in i saucer
+          const dx = t.x - o.x, dy = t.y - (o.y - 4);
+          const dist = Math.hypot(dx, dy);
+          if (dist < TIRE_R + o.r * 0.7 && t.vy > -2) {
+            // Fångad!
+            o.captured = true;
+            o.holdT = 90;
+            o.flashT = 18;
+            addParticles(o.x, o.y, '#22d3ee', 16, { up: 5, spread: 8, size: 3 });
+            shake(6); state.hitstop = 2;
+            tone(440, 0.12, 'sine', 0.14, -100);
+          }
+        }
+      } else if (o.type === 'droptarget' && !o.broken) {
+        // 🎯 Drop target — vit pelare, krossas vid träff = +200p, försvinner.
+        const dtw = 22, dth = o.h;
+        const dtx = o.x, dty = terrainAt(o.x) - dth;
+        if (t.x + TIRE_R > dtx && t.x - TIRE_R < dtx + dtw && t.y + TIRE_R > dty && t.y - TIRE_R < dty + dth) {
+          o.broken = true;
+          awardScore(200, '🎯 DROP TARGET!', '#fbbf24');
+          bumpMult(0.5);
+          addParticles(dtx + dtw/2, dty + dth/2, '#fbbf24', 24, { up: 7, spread: 10, size: 4 });
+          addParticles(dtx + dtw/2, dty + dth/2, '#ffffff', 18, { up: 5, spread: 8, size: 3 });
+          addParticles(dtx + dtw/2, dty + dth/2, '#ef4444', 12, { up: 4, spread: 6, size: 3 });
+          sfxBreak(); shake(10); state.hitstop = 3;
+          tone(900, 0.12, 'square', 0.16, 320);
+          t.vx *= 0.85;  // light slowdown
+        }
       } else if (o.type === 'house') {
         const hw = 86, hh = 78, roofH = 28;
         const gy = terrainAt(o.x + hw * 0.5);
@@ -3329,6 +4389,130 @@ function update() {
             sfxBounce();
           }
         }
+      } else if (o.type === 'hellhouse') {
+        const hw = 50, hh = 96, roofH = 22;
+        const gy = terrainAt(o.x + hw * 0.5);
+        const hxL = o.x;
+        const hxR = o.x + hw;
+        const bodyTop = gy - hh;
+        const roofTop = bodyTop - roofH;
+        if (t.x + TIRE_R > hxL && t.x - TIRE_R < hxR &&
+            t.y + TIRE_R > roofTop && t.y - TIRE_R < gy) {
+          if (state.shieldT > 0 && !o.crushed) {
+            o.crushed = true;
+            awardScore(180, '🛡️ KROSSAT SPIKHUS!', '#22d3ee');
+            addParticles(o.x + hw/2, bodyTop + hh/2, '#22d3ee', 30, { up: 6, spread: 12, size: 5 });
+            addParticles(o.x + hw/2, bodyTop + hh/2, '#1c1917', 24, { up: 5, spread: 10, size: 4 });
+            addParticles(o.x + hw/2, bodyTop + hh/2, '#7f1d1d', 18, { up: 4, spread: 8, size: 3 });
+            sfxBreak(); shake(14);
+          } else if (!o.crushed) {
+            const penLeft   = (t.x + TIRE_R) - hxL;
+            const penRight  = hxR - (t.x - TIRE_R);
+            const penTop    = (t.y + TIRE_R) - roofTop;
+            const minP = Math.min(penLeft, penRight, penTop);
+            if (minP === penTop && t.vy > 0) {
+              t.y = roofTop - TIRE_R;
+              t.vy = -Math.abs(t.vy) * 0.4 - 2;
+              t.vx *= 0.7;
+              damageTire(15, 30, '🔱 SPIKTAK');
+              addParticles(t.x, roofTop, '#7f1d1d', 14, { up: 4, spread: 5, size: 3 });
+            } else if (minP === penLeft && t.vx > 0) {
+              t.x = hxL - TIRE_R;
+              t.vx = -Math.abs(t.vx) * 0.7;
+              t.vy -= 1;
+              sfxBounce();
+            } else if (minP === penRight && t.vx < 0) {
+              t.x = hxR + TIRE_R;
+              t.vx = Math.abs(t.vx) * 0.7;
+              t.vy -= 1;
+              sfxBounce();
+            }
+            shake(Math.min(14, Math.abs(t.vx) * 1.2 + Math.abs(t.vy) * 0.6));
+          }
+        }
+      } else if (o.type === 'monster' || o.type === 'alien') {
+        const _isAlien = (o.type === 'alien');
+        // Patrull + lifetime + sink — uppdatera även om hjulet är långt borta så den inte
+        // står still och poppar upp som en stillbild när man närmar sig.
+        // Aliens sjunker INTE (lifeT är extremt högt) — de patrullerar tills man stompar dem.
+        if (!o.dead) {
+          o.x += o.vx;
+          if (o.x > o.baseX + o.patrolHalf) { o.x = o.baseX + o.patrolHalf; o.vx = -Math.abs(o.vx); }
+          else if (o.x < o.baseX - o.patrolHalf) { o.x = o.baseX - o.patrolHalf; o.vx = Math.abs(o.vx); }
+          o.wob = (o.wob || 0) + 0.18;
+          o.eyeBlink = (o.eyeBlink || 0) + 1;
+          if (_isAlien) o.antPhase = (o.antPhase || 0) + 0.12;
+          o.lifeT--;
+          if (o.lifeT <= 0) o.dead = true;          // börja sjunka ned naturligt
+          if (o.flashT > 0) o.flashT--;
+        } else {
+          o.sinkT = (o.sinkT || 0) + 1;
+          // När monstret/alienen sjunkit klart — markera för borttagning
+          if (o.sinkT > 40) o._gone = true;
+        }
+        // Kollision (bara om hindret syns och inte är krossat/klart)
+        if (!o.crushed && !o._gone) {
+          const mw = o.w, mh = o.h;
+          const gy = terrainAt(o.x);
+          const sinkOff = o.dead ? Math.min(mh, (o.sinkT / 40) * mh) : 0;
+          const bodyTop = gy - mh + sinkOff;
+          const xL = o.x - mw * 0.5, xR = o.x + mw * 0.5;
+          if (sinkOff < mh * 0.6 &&
+              t.x + TIRE_R > xL && t.x - TIRE_R < xR &&
+              t.y + TIRE_R > bodyTop && t.y - TIRE_R < gy) {
+            const wasShielded = state.shieldT > 0;
+            const _shieldLabel = _isAlien ? '🛡️ KROSSAD ALIEN!' : '🛡️ KROSSAT MONSTER!';
+            const _stompLabel  = _isAlien ? '👽 KROSSAD ALIEN!' : '💀 KROSSAT MONSTER!';
+            const _hitLabel    = _isAlien ? '👽 ALIEN' : '👹 MONSTER';
+            const _bodyColor   = _isAlien ? '#22c55e' : '#7f1d1d';     // grön alien, röd monster
+            const _bodyDark    = _isAlien ? '#166534' : '#1c1917';
+            const _causeKey    = _isAlien ? 'alien' : 'monster';
+            if (wasShielded) {
+              o.crushed = true;
+              o._gone = true;
+              awardScore(220, _shieldLabel, '#22d3ee');
+              addParticles(o.x, bodyTop + mh * 0.5, '#22d3ee', 26, { up: 6, spread: 12, size: 5 });
+              addParticles(o.x, bodyTop + mh * 0.5, _bodyColor, 22, { up: 5, spread: 10, size: 4 });
+              sfxBreak(); shake(14);
+            } else {
+              const penLeft  = (t.x + TIRE_R) - xL;
+              const penRight = xR - (t.x - TIRE_R);
+              const penTop   = (t.y + TIRE_R) - bodyTop;
+              const minP = Math.min(penLeft, penRight, penTop);
+              if (minP === penTop && t.vy > 0) {
+                // STOMP-KILL
+                o.crushed = true;
+                o._gone = true;
+                t.y = bodyTop - TIRE_R;
+                t.vy = -Math.max(10, Math.abs(t.vy) * 0.9);  // studs upp ordentligt
+                bumpMult(0.6);
+                awardScore(250, _stompLabel, '#fbbf24');
+                addParticles(o.x, bodyTop + mh * 0.4, _bodyColor, 30, { up: 7, spread: 12, size: 5 });
+                addParticles(o.x, bodyTop + mh * 0.4, _bodyDark,  22, { up: 6, spread: 10, size: 4 });
+                addParticles(o.x, bodyTop + mh * 0.4, '#fbbf24', 14, { up: 5, spread: 8, size: 3 });
+                shake(16); state.hitstop = 4;
+                tone(180, 0.18, 'sawtooth', 0.18, -260);
+                tone(420, 0.1, 'square', 0.12, 200);
+              } else {
+                // Sido-träff: skada + kraftig knockback
+                o.flashT = 10;
+                addParticles(t.x, t.y, '#ef4444', 18, { up: 5, spread: 8, size: 4 });
+                shake(14); state.hitstop = 3;
+                tone(160, 0.2, 'sawtooth', 0.2, -300);
+                const died = damageTire(15, 25, _hitLabel);
+                if (!died) {
+                  state.deathCause = state.deathCause || _causeKey;
+                  // Studsar bakåt — i hell rör sig hjulet vänsterut, så studs blir mot höger? Nej:
+                  // hjulet är på väg vänster (vx<0), studs ska skicka det åt höger så det inte
+                  // bara fortsätter rakt in i monstret igen. Använd inkommande riktning.
+                  const dir = t.vx >= 0 ? -1 : 1;
+                  t.vx = dir * 10;
+                  t.vy = Math.min(t.vy - 4, -4);
+                }
+              }
+            }
+          }
+        }
       } else if (o.type === 'barrel' && !o.toppled) {
         const bx = o.x, by = terrainAt(o.x) - 30, br = 16;
         const dx = t.x - bx, dy = t.y - by;
@@ -3349,9 +4533,11 @@ function update() {
         const d = Math.sqrt(dx*dx + dy*dy);
         if (d < TIRE_R + br) {
           o.triggered = true;
-          // Blast velocity in tire's travel direction (keeps momentum direction; up-biased)
+          // Blast velocity in tire's travel direction (keeps momentum direction; up-biased).
+          // Hell är reversed — tvinga blasten åt vänster oavsett inkommande riktning.
           const sp = Math.hypot(t.vx, t.vy) || 1;
-          const dirX = (t.vx / sp) || 1;
+          const _inHell = bx < 0;
+          const dirX = _inHell ? -1 : ((t.vx / sp) || 1);
           const dirY = Math.min(0, t.vy / sp);  // bias upward — never slam into ground
           const BLAST = 22;
           t.vx = dirX * BLAST + Math.sign(dirX) * 4;
@@ -3377,7 +4563,8 @@ function update() {
           });
         }
       } else if (o.type === 'cannon') {
-        // 🎯 Cannon: landing on its mouth fires the tire in the cannon's angle
+        // 🎯 Cannon: landing on its mouth fires the tire in the cannon's angle.
+        // Hell är reversed — kanonerna pekar ÅT VÄNSTER (π - angle) så man skjuts deeper in.
         if (o.cooldown > 0) { o.cooldown--; }
         else {
           const cx = o.x, cy = terrainAt(o.x) - 24;  // mouth height
@@ -3385,10 +4572,11 @@ function update() {
           const d = Math.sqrt(dx*dx + dy*dy);
           if (d < TIRE_R + 22 && t.vy >= -2) {
             const launchSpeed = Math.max(24, Math.hypot(t.vx, t.vy) * 1.05);
-            t.vx = Math.cos(o.angle) * launchSpeed;
-            t.vy = -Math.sin(o.angle) * launchSpeed;
-            t.x = cx + Math.cos(o.angle) * (TIRE_R + 26);
-            t.y = cy - Math.sin(o.angle) * (TIRE_R + 26);
+            const ang = (o.x < 0) ? (Math.PI - o.angle) : o.angle;
+            t.vx = Math.cos(ang) * launchSpeed;
+            t.vy = -Math.sin(ang) * launchSpeed;
+            t.x = cx + Math.cos(ang) * (TIRE_R + 26);
+            t.y = cy - Math.sin(ang) * (TIRE_R + 26);
             state.launchBoostT = Math.max(state.launchBoostT, 70);
             o.cooldown = 40;
             awardScore(150, '🎯 KANON!', '#fbbf24');
@@ -3498,7 +4686,7 @@ function update() {
           }
           return; // forEach-callback — hoppa till nästa obstacle
         }
-        if (t.x + TIRE_R > wx1 && t.x - TIRE_R < wx2 && t.y + TIRE_R > surfY - 4 && !o._splashed) {
+        if (t.x > wx1 + 6 && t.x < wx2 - 6 && t.y + TIRE_R > surfY - 4 && !o._splashed) {
           o._splashed = true;
           // Splash
           addParticles(t.x, surfY, '#38bdf8', 32, { up: 8, spread: 12, size: 5 });
@@ -3539,7 +4727,7 @@ function update() {
           }
           return; // forEach-callback — hoppa till nästa obstacle
         }
-        if (t.x + TIRE_R > wx1 && t.x - TIRE_R < wx2 && t.y + TIRE_R > surfY - 4 && !o._splashed) {
+        if (t.x > wx1 + 6 && t.x < wx2 - 6 && t.y + TIRE_R > surfY - 4 && !o._splashed) {
           o._splashed = true;
           // Lava splash — gnistor + glödande droppar
           addParticles(t.x, surfY, '#fbbf24', 32, { up: 10, spread: 14, size: 5 });
@@ -3567,6 +4755,91 @@ function update() {
           setTimeout(() => finishRun(false), 900);
           return;
         }
+      } else if (o.type === 'crater') {
+        // Krater — instant death; sköld räddar och studsar på kanten som mark.
+        const wx1 = o.x, wx2 = o.x + o.w;
+        const surfY = o.surfaceY;
+        if (state.shieldT > 0 && t.x + TIRE_R > wx1 && t.x - TIRE_R < wx2 && t.y + TIRE_R > surfY - 4) {
+          if (t.vy > 0) {
+            t.y = surfY - TIRE_R - 1;
+            t.vy = -Math.abs(t.vy) * 0.55;
+            t.vx *= 0.94;
+            addParticles(t.x, surfY, '#9ca3af', 10, { up: 5, spread: 6, size: 3 });
+            addParticles(t.x, surfY, '#6b7280', 8, { up: 4, spread: 5, size: 3 });
+          }
+          return;
+        }
+        if (t.x > wx1 + 8 && t.x < wx2 - 8 && t.y + TIRE_R > surfY - 4 && !o._splashed) {
+          o._splashed = true;
+          if (o.isAbyss) {
+            // 🕳️ Djupavgrund — instant-death i havsbotten. Mörka bubblor + svart slam.
+            addParticles(t.x, surfY, '#0c4a6e', 30, { up: 8, spread: 14, size: 5 });
+            addParticles(t.x, surfY, '#082f49', 22, { up: 6, spread: 12, size: 4 });
+            addParticles(t.x, surfY, '#020617', 18, { up: 4, spread: 10, size: 4 });
+            addParticles(t.x, surfY, '#bae6fd', 14, { up: 5, spread: 8, size: 3 });
+            shake(16); state.hitstop = 4;
+            tone(120, 0.34, 'sine', 0.22, -500);
+            state.deathCause = 'abyss';
+            flashToast('⚫ DJUPAVGRUND!', '#082f49');
+          } else if (o.isDrain) {
+            // 🪤 Drain — pinball-bord-hål, instant death. Neon-blixt + mörk lila explosion.
+            addParticles(t.x, surfY, '#a855f7', 28, { up: 8, spread: 14, size: 5 });
+            addParticles(t.x, surfY, '#ec4899', 22, { up: 6, spread: 12, size: 4 });
+            addParticles(t.x, surfY, '#22d3ee', 18, { up: 5, spread: 10, size: 3 });
+            addParticles(t.x, surfY, '#3b0764', 14, { up: 4, spread: 8, size: 4 });
+            shake(18); state.hitstop = 4;
+            tone(160, 0.32, 'sawtooth', 0.22, -450);
+            state.deathCause = 'drain';
+            flashToast('🪤 DRAIN!', '#a855f7');
+          } else {
+            addParticles(t.x, surfY, '#9ca3af', 32, { up: 8, spread: 14, size: 5 });
+            addParticles(t.x, surfY, '#6b7280', 24, { up: 6, spread: 12, size: 4 });
+            addParticles(t.x, surfY, '#1f2937', 18, { up: 4, spread: 10, size: 4 });
+            addParticles(t.x, surfY, '#cbd5e1', 14, { up: 5, spread: 8, size: 3 });
+            shake(16); state.hitstop = 4;
+            tone(140, 0.32, 'sawtooth', 0.22, -500);
+            setTimeout(() => tone(90, 0.3, 'sine', 0.18, -400), 80);
+            state.deathCause = 'crater';
+            flashToast('🕳️ KRATER!', '#9ca3af');
+          }
+          state.health = 0;
+          state.damageFlashT = 28;
+          state.drowning = {
+            t: 0,
+            max: 50,
+            surfaceY: surfY,
+            startY: t.y,
+            sinkTo: surfY + 80,
+            isDust: !o.isAbyss,
+          };
+          t.vx = 0;
+          t.vy = 0;
+          setTimeout(() => finishRun(false), 850);
+          return;
+        }
+      } else if (o.type === 'tentacle') {
+        // 🐙 Tentakel — växer upp från botten, sin-svängande topp. Skadar vid träff.
+        const cx = o.x + Math.sin(state.time * 0.04 + o.phase) * o.swing * 30;
+        const tipY = o.baseY - o.len;
+        const dx = t.x - cx;
+        const dy = t.y - (tipY + 20);
+        if (state.shieldT > 0 && Math.hypot(dx, dy) < TIRE_R + 20) {
+          // Sköld: slå bort tentakeln
+          o.cooldown = 60;
+          t.vx += dx > 0 ? 2 : -2; t.vy -= 1.5;
+          addParticles(cx, tipY, '#a855f7', 16, { up: 5, spread: 7, size: 3 });
+        } else if (!o.cooldown && Math.hypot(dx, dy) < TIRE_R + 18) {
+          o.cooldown = 90;
+          shake(10); state.hitstop = 3;
+          tone(220, 0.22, 'sawtooth', 0.16, -160);
+          addParticles(cx, tipY, '#a855f7', 18, { up: 5, spread: 8, size: 3 });
+          addParticles(cx, tipY, '#6b21a8', 12, { up: 4, spread: 6, size: 3 });
+          const wasShielded = state.shieldT > 0;
+          const died = damageTire(20, 38, '🐙 TENTAKEL');
+          if (!died && !wasShielded) state.deathCause = state.deathCause || 'tentacle';
+          if (!died) { t.vx += dx > 0 ? 4 : -4; t.vy -= 2; }
+        }
+        if (o.cooldown > 0) o.cooldown--;
       } else if (o.type === 'geyser') {
         // Geyser — när den eruperar (cycleT i [240, 330]) och hjulet är ovanför pelaren,
         // skickas hjulet uppåt med en kraftig impuls. Sköld behövs inte; inte dödlig.
@@ -3673,10 +4946,17 @@ function update() {
           const mult = tapMult * speedFactor;
           const boost = o.power * mult;
 
-          // Strong upward velocity + slight forward carry
+          // Strong upward velocity + slight forward carry.
+          // Hell är reversed — vi tvingar vänster-riktning oavsett inkommande vx.
           t.y = padTop - TIRE_R - 1;
           t.vy = -boost;
-          t.vx += Math.sign(t.vx || 1) * (isStomped ? 4 : 2);
+          const _inHell = o.x < 0;
+          if (_inHell) {
+            // Flippa eventuell höger-rörelse till vänster + lägg på baspush åt vänster
+            t.vx = -Math.abs(t.vx) - (isStomped ? 4 : 2);
+          } else {
+            t.vx += Math.sign(t.vx || 1) * (isStomped ? 4 : 2);
+          }
 
           // Open a bounce-timing window so tap right after can chain into super-bounce
           state.landT = state.time;
@@ -3792,9 +5072,11 @@ function update() {
             t.vx += tangX * kick;
             t.vy += tangY * kick;
             t.vy -= 8 + power * 12;
-            if (t.vx < 0) t.vx = Math.max(0, t.vx + 4);
             // Briefly allow exceeding the normal cap so strong flipper hits actually launch high
             state.launchBoostT = Math.max(state.launchBoostT, 60);
+            // Pass-through window: 5 sekunder för däcket att hinna flyga genom hus
+            // och bakvägg in i hell, även vid hög lufttid.
+            t.flipperKickT = 300;
             o._flipHit = true;
             o._flipCooldown = 30;
             state.rollAssistT = 30;
@@ -3814,6 +5096,37 @@ function update() {
           }
         }
         if (o._flipSwingT > 0) o._flipSwingT--;
+      } else if (o.type === 'bridge') {
+        // Hängbro: hjulet rullar på en parabolisk sag-kurva mellan stolparna.
+        const bx1 = o.x, bx2 = o.x + o.w;
+        if (t.x > bx1 - 4 && t.x < bx2 + 4) {
+          const u = (t.x - bx1) / o.w;          // 0..1
+          const sagY = 4 * o.sag * u * (1 - u); // parabel, max sag i mitten
+          // Liten wobble när hjulet är på bron
+          const wob = (o.wobbleAmp || 0) * Math.sin(o.wobble);
+          const surfY = o.baseY + sagY + wob;
+          if (t.y + TIRE_R > surfY && t.y < surfY + 40) {
+            t.y = surfY - TIRE_R;
+            // Lutning från parabel-derivata: 4*sag*(1-2u)/w
+            const slope = 4 * o.sag * (1 - 2 * u) / o.w;
+            const nx = -slope, ny = -1;
+            const nl = Math.sqrt(nx*nx + ny*ny);
+            const nnx = nx / nl, nny = ny / nl;
+            const dot = t.vx * nnx + t.vy * nny;
+            if (dot < 0) {
+              // Mjuk studs — bron absorberar (rep-känsla)
+              t.vx -= 2 * dot * nnx * 0.5;
+              t.vy -= 2 * dot * nny * 0.5;
+            }
+            // Bygg upp wobble vid landning, dämpa över tid
+            o.wobbleAmp = Math.min(6, (o.wobbleAmp || 0) + Math.abs(t.vy) * 0.06);
+            state.onGround = true;
+            state.landT = state.time;
+          }
+        }
+        // Wobble-svängning + dämpning
+        o.wobble = (o.wobble || 0) + 0.22;
+        o.wobbleAmp = Math.max(0, (o.wobbleAmp || 0) * 0.94);
       } else if (o.type === 'finish') {
         if (t.x > o.x && state.phase === PHASE.FLY && state.finishPending === 0) {
           const dySigned = t.y - LEVEL.finishCY;   // negativt = ovanför tavlan (högre upp)
@@ -3871,6 +5184,58 @@ function update() {
           }
           state.finishPending = isMiss ? 75 : 100;  // frames to hold before ending
           state.finishResult = true;  // always counts as a completed goal run
+        }
+      } else if (o.type === 'finishHell') {
+        // Spegelvänd hell-mål: tire kommer från höger, x minskar mot WORLD_MIN_X.
+        if (t.x < o.x && state.phase === PHASE.FLY && state.finishPending === 0) {
+          const dySigned = t.y - LEVEL.hellFinishCY;
+          const dy = Math.abs(dySigned);
+          const fmt = n => n.toFixed(1).replace(/\.0$/, '');
+          const TOWER_TOP_DY = -132;
+          const CHIMNEY_ZONE = 30;
+          let zoneMult = TUNING.multFramme, label = `🔥 HELL FRAMME! x${fmt(TUNING.multFramme)}`, col = '#dc2626';
+          let isMiss = false, isChimney = false;
+          if (dySigned < TOWER_TOP_DY - CHIMNEY_ZONE) {
+            isMiss = true; zoneMult = 1.0;
+            label = '❌ MISS! Över hell-tornet'; col = '#ef4444';
+          } else if (dySigned < TOWER_TOP_DY + CHIMNEY_ZONE) {
+            isChimney = true;
+            zoneMult = TUNING.multChimneyTop;
+            label = `🔥 HELL CHIMNEY! x${fmt(TUNING.multChimneyTop)}`;
+            col = '#fde047';
+          } else if (dy < 18)   { zoneMult = TUNING.multBullseye; label = `🎯 HELL BULLSEYE! x${fmt(TUNING.multBullseye)}`; col = '#ef4444'; }
+          else if (dy < 38)     { zoneMult = TUNING.multInring;   label = `🔥 HELL INRING! x${fmt(TUNING.multInring)}`;     col = '#f59e0b'; }
+          else if (dy < 65)     { zoneMult = TUNING.multMellan;   label = `🔥 HELL MELLAN! x${fmt(TUNING.multMellan)}`;     col = '#a855f7'; }
+          else if (dy < 100 + TIRE_R) { zoneMult = TUNING.multYttre; label = `🔥 HELL YTTRE! x${fmt(TUNING.multYttre)}`;    col = '#7c3aed'; }
+          else                  { isMiss = true; zoneMult = 1.0;  label = '❌ MISS! Under hell-tavlan'; col = '#ef4444'; }
+
+          const before = state.score;
+          state.score = Math.round(state.score * zoneMult);
+          state.goalBonus = state.score - before;
+          state.goalMult = zoneMult;
+          state.scorePulseT = 30;
+          flashToast(label, col);
+
+          if (!isMiss) {
+            state.finishStuck = true;
+            state.finishStickX = isChimney ? o.x : o.x - 2;
+            state.finishStickY = isChimney ? (LEVEL.hellFinishCY + TOWER_TOP_DY) : t.y;
+            t.vx = 0; t.vy = 0; t.vrot = 0.15;
+            t.x = state.finishStickX;
+            t.y = state.finishStickY;
+            addParticles(t.x, t.y, col, 36, { up: 7, spread: 12, size: 5 });
+            addParticles(t.x, t.y, '#ef4444', 24, { up: 5, spread: 10, size: 4 });
+            addParticles(t.x, t.y, '#0f172a', 16, { up: 4, spread: 8, size: 3 });
+            shake(isChimney ? 28 : 22);
+            state.hitstop = 6;
+            sfxFinish();
+          } else {
+            shake(8);
+            addParticles(t.x, t.y, '#ef4444', 14, { up: 4, spread: 8, size: 3 });
+            sfxBounce();
+          }
+          state.finishPending = isMiss ? 75 : 100;
+          state.finishResult = true;
         }
       }
     });
@@ -3958,6 +5323,7 @@ function update() {
       else if (p.type === 'balloon') r = 22;
       else if (p.type === 'nitro') r = 22;
       else if (p.type === 'airjump') r = 22;
+      else if (p.type === 'bubble') r = 22;
       else if (p.type === 'magnet') r = 22;
       else if (p.type === 'power') r = 22;
       else if (p.type === 'bomb') r = 22;
@@ -4057,7 +5423,7 @@ function update() {
         } else if (p.type === 'power') {
           // +50 units to powerExtra pool (capped at 210 = 250% total), refill rollBudget to new max.
           state.powerExtra = Math.min(210, (state.powerExtra || 0) + 50);
-          state.rollBudgetMax = 40 + state.powerExtra;
+          state.rollBudgetMax = 80 + state.powerExtra;
           state.rollBudget = state.rollBudgetMax;
           state.score += 250;
           addPopup(p.x, p.y - 20, '⚡ +50% KRAFT!', '#fde047');
@@ -4086,7 +5452,7 @@ function update() {
         } else if (p.type === 'medkit') {
           const heal = 25 + Math.random() * 25;
           const before = state.health || 0;
-          state.health = Math.min(100, before + heal);
+          state.health = Math.min(state.healthMax || 200, before + heal);
           const actual = Math.round(state.health - before);
           state.score += 100;
           addPopup(p.x, p.y - 20, `❤️ +${actual}% HÄLSA!`, '#22c55e');
@@ -4095,6 +5461,17 @@ function update() {
           sfxCoin(); shake(3);
           tone(660, 0.1, 'sine', 0.16, 380);
           setTimeout(() => tone(990, 0.1, 'sine', 0.14, 420), 70);
+        } else if (p.type === 'bubble') {
+          // 🫧 Bubble — fyller på syre i djuphavet
+          const before = state.oxygen || 0;
+          state.oxygen = Math.min(state.oxygenMax || 100, before + 25);
+          const actual = Math.round(state.oxygen - before);
+          state.score += 50;
+          addPopup(p.x, p.y - 20, `🫧 +${actual} SYRE!`, '#22d3ee');
+          addParticles(p.x, p.y, '#bae6fd', 24, { up: 5, spread: 7, size: 3 });
+          addParticles(p.x, p.y, '#22d3ee', 16, { up: 4, spread: 5, size: 3 });
+          sfxCoin(); shake(2);
+          tone(720, 0.10, 'sine', 0.16, 280);
         } else if (p.type === 'glider') {
           // 🪁 Glider — pickup ger en charge. Aktiveras med btnGlider/KeyG.
           state.gliderCharges = Math.min(5, state.gliderCharges + 1);
@@ -4116,6 +5493,7 @@ function update() {
 
     // Track max distance + runStats distance
     if (t.x > state.maxX) state.maxX = t.x;
+    if (t.x < (state.minX != null ? state.minX : 0)) state.minX = t.x;
     const _liveDistM = Math.max(0, Math.round((state.maxX - state.startLaunchX) / 5));
     runStats.distM = Math.max(runStats.distM, _liveDistM);
     state.runMaxDistM = Math.max(state.runMaxDistM || 0, _liveDistM);
@@ -4235,7 +5613,8 @@ function update() {
   }
   state.cam.x += (targetX - state.cam.x) * 0.11;
   state.cam.y += (targetY - state.cam.y) * 0.08;
-  state.cam.x = Math.max(-100, state.cam.x);
+  // Hell-biomet ligger vid negativa x, så kameran måste få följa hela vägen dit.
+  state.cam.x = Math.max(WORLD_MIN_X, state.cam.x);
 
   updateHud();
 }
@@ -4248,12 +5627,18 @@ function finishRun(won) {
   state.hitstop = 0;
   updateFireButton();
 
-  // Highscore — saved on every ball (goal OR fail), since each ball is its own attempt
+  // Highscore — saved on every ball (goal OR fail), since each ball is its own attempt.
+  // Per-värld HS sparas i progression.worlds[activeWorld].hs.
   if (state.score > state.highScore && !state.recordTriggered) {
     state.highScore = state.score;
     state.newRecord = true;
     state.recordTriggered = true;
     try { localStorage.setItem(HS_KEY, String(state.score)); } catch {}
+    const _aw = progression.activeWorld || 'mix';
+    if (progression.worlds && progression.worlds[_aw]) {
+      progression.worlds[_aw].hs = state.score;
+      saveProgression();
+    }
     const nr = document.getElementById('newRecordFX');
     const nrSub = document.getElementById('nrSub');
     if (nr) {
@@ -4272,16 +5657,26 @@ function finishRun(won) {
   // jämförelsen. Run-relativ distans (för "denna flykt"-display) räknas separat via runDistM.
   const runDistM = Math.max(0, Math.round((state.maxX - state.startLaunchX) / 5));
   const worldDistM = Math.max(0, Math.round(state.maxX / 5));
-  if (dailyPB.date !== todayStamp()) dailyPB = { date: todayStamp(), distM: 0, score: 0 };
+  // Hell-djup: hur långt under x=0 spelaren kommit (positivt tal i meter).
+  const hellDepthM = Math.max(0, Math.round(-(state.minX != null ? state.minX : 0) / 5));
+  if (dailyPB.date !== todayStamp()) dailyPB = { date: todayStamp(), distM: 0, score: 0, hellDistM: 0 };
+  if (typeof dailyPB.hellDistM !== 'number') dailyPB.hellDistM = 0;
+  let _pbDirty = false;
   if (worldDistM > dailyPB.distM) {
     dailyPB.distM = worldDistM;
     dailyPB.score = state.score;
-    saveDailyPB(dailyPB);
+    _pbDirty = true;
     flashToast(`🚩 NYTT DAGS-REKORD: ${worldDistM}m`, '#fde047');
   } else if (state.score > dailyPB.score) {
     dailyPB.score = state.score;
-    saveDailyPB(dailyPB);
+    _pbDirty = true;
   }
+  if (hellDepthM > (dailyPB.hellDistM || 0)) {
+    dailyPB.hellDistM = hellDepthM;
+    _pbDirty = true;
+    flashToast(`🔥 NYTT HELL-REKORD: -${hellDepthM}m`, '#ef4444');
+  }
+  if (_pbDirty) saveDailyPB(dailyPB);
 
   // Leaderboard-spara/uppdatera: körs vid VARJE liv-slut (retry, game-over, won).
   // current=true så länge run pågår (kvar liv) → markeras som "PÅGÅR" i leaderboard.
@@ -4289,33 +5684,55 @@ function finishRun(won) {
   const _runFinal = won || state.tiresLeft <= 0;
   const _runEntryDist = Math.max(state.runMaxDistM || 0, runDistM);
   if (state.runId && (state.score > 0 || _runEntryDist > 0)) {
+    // Om tire dör eller når mål medan i hell — spara hell-vistelsen som egen entry
+    // INNAN den vanliga run-entryn (så hellMaxDepthM nollställs och inte syns på vanliga raden).
+    if (state.hellMaxDepthM > 0 && (state.inHell || won)) {
+      saveHellRunEntry({ won: !!won });
+    }
     addRunToHistory({
       runId: state.runId,
       score: state.score,
       distM: _runEntryDist,
+      hellMaxDepthM: state.hellMaxDepthM || 0,
+      hellScore: state.hellPeakScore || 0,
       ts: Date.now(),
       date: todayStamp(),
       won: !!won,
       current: !_runFinal,
+      world: progression.activeWorld || 'mix',
     });
   }
 
   if (!won && state.tiresLeft > 0) {
-    // Förbruka bought power-extras baserat på hur mycket över base 40 som användes.
-    // Base 40 är gratis varje skott; allt över det kommer från powerExtra-lagret.
+    // Förbruka bought power-extras baserat på hur mycket över base 80 som användes.
+    // Base 80 är gratis varje skott; allt över det kommer från powerExtra-lagret.
     const _used = Math.max(0, state.rollBudgetMax - state.rollBudget);
-    const _extraUsed = Math.max(0, _used - 40);
+    const _extraUsed = Math.max(0, _used - 80);
     state.powerExtra = Math.max(0, (state.powerExtra || 0) - _extraUsed);
     // Biome-respawn: nästa skott avfyras från starten av det biom man dog i.
+    // I single-world: om man passerat någon checkpoint, respawna vid den högsta nådda istället.
     if (state.tire) {
       const _bi = biomeAt(state.tire.x);
-      LEVEL.launchX = biomeStartX(state.tire.x);
+      let _respawnX = biomeStartX(state.tire.x);
+      let _atCheckpoint = false;
+      if (state.checkpoints && state.checkpointBest >= 0) {
+        const _cp = state.checkpoints[state.checkpointBest];
+        if (_cp && _cp.x < state.tire.x && _cp.x > _respawnX) {
+          _respawnX = _cp.x;
+          _atCheckpoint = true;
+        }
+      }
+      LEVEL.launchX = _respawnX;
       state.cam.x = LEVEL.launchX - W * 0.25;
       state.cam.y = terrainAt(LEVEL.launchX) - H * 0.55;
-      // Vid död i hell respawnar man vid ÖKNEN. Annars vid biomet man dog i.
-      const _respawnBi = (_bi === HELL_INDEX) ? 0 : _bi;
-      const biomeName = ['ÖKNEN', 'KANJONEN', 'NEON', 'ISEN', 'VULKANEN'][_respawnBi] || 'BANAN';
-      flashToast(`🔁 RESPAWN: ${biomeName}`, '#22d3ee');
+      if (_atCheckpoint) {
+        flashToast('🚩 CHECKPOINT', '#22d3ee');
+      } else {
+        // Vid död i hell respawnar man vid ÖKNEN. Annars vid biomet man dog i.
+        const _respawnBi = (_bi === HELL_INDEX) ? 0 : _bi;
+        const biomeName = ['ÖKNEN', 'KANJONEN', 'NEON', 'ISEN', 'VULKANEN'][_respawnBi] || 'BANAN';
+        flashToast(`🔁 RESPAWN: ${biomeName}`, '#22d3ee');
+      }
       // Reset inHell-flagga så toast inte triggas spuriöst vid respawn vid x=180.
       state.inHell = false;
     }
@@ -4454,6 +5871,22 @@ function renderShop() {
   if (!el) return;
   el.innerHTML = '';
   Object.entries(UPGRADES).forEach(([key, u]) => {
+    if (u.consumable) {
+      // Återanvändbart köp — alltid tillgängligt, fast pris, inga nivåer
+      const canBuy = progression.coins >= u.cost;
+      const btn = `<button class="up-btn${canBuy ? '' : ' locked'}" data-up="${key}" ${canBuy ? '' : 'disabled'}>🪙 ${u.cost}</button>`;
+      el.insertAdjacentHTML('beforeend', `
+        <div class="up-row">
+          <div class="up-icon">${u.icon}</div>
+          <div class="up-main">
+            <div class="up-name">${u.name}</div>
+            <div class="up-desc">${u.desc}</div>
+          </div>
+          <div class="up-buy">${btn}</div>
+        </div>
+      `);
+      return;
+    }
     const lvl = progression.upgrades[key] || 0;
     const maxed = lvl >= u.max;
     const cost = maxed ? 0 : u.cost[lvl];
@@ -4482,6 +5915,26 @@ function renderShop() {
     btn.onclick = () => {
       const k = btn.dataset.up;
       const u = UPGRADES[k];
+      // Återanvändbara consumables — engångs-effekt, inga nivåer
+      if (u.consumable) {
+        if (progression.coins < u.cost) return;
+        progression.coins -= u.cost;
+        saveProgression();
+        if (k === 'refillHealth') {
+          state.tiresLeft = (state.tiresLeft || 0) + 1;
+          _tireMaxSlots = Math.max(_tireMaxSlots || 5, state.tiresLeft);
+          if (typeof state.healthMax === 'number') state.health = state.healthMax;
+          flashToast('❤️ MAX HÄLSA + EXTRA LIV!', '#ef4444');
+        } else if (k === 'refillPower') {
+          state.rollBudget = state.rollBudgetMax || 80;
+          flashToast('⚡ MAX KRAFT!', '#fbbf24');
+        }
+        sfxStar();
+        renderShop();
+        if (typeof updateHud === 'function') updateHud();
+        return;
+      }
+      // Vanlig nivå-uppgradering
       const lvl = progression.upgrades[k] || 0;
       if (lvl >= u.max) return;
       const cost = u.cost[lvl];
@@ -4501,6 +5954,83 @@ window.openShop = () => {
   renderTestlab();
 };
 window.closeShop = () => document.getElementById('shopOverlay')?.classList.add('hidden');
+
+// ====== WORLD SELECTION ======
+function renderWorldGrid() {
+  const grid = document.getElementById('worldGrid');
+  if (!grid) return;
+  const coinsEl = document.getElementById('worldCoins');
+  if (coinsEl) coinsEl.textContent = progression.coins;
+  const active = progression.activeWorld || 'mix';
+  let html = '';
+  for (const key of WORLD_ORDER) {
+    const w = WORLDS[key];
+    const data = (progression.worlds && progression.worlds[key]) || { owned: false, hs: 0 };
+    const isActive = (key === active);
+    const owned = !!data.owned;
+    const canBuy = !owned && progression.coins >= w.cost;
+    let actionHtml = '';
+    if (isActive) {
+      actionHtml = `<span class="world-btn active-tag">AKTIV</span>`;
+    } else if (owned) {
+      actionHtml = `<button class="world-btn" onclick="selectWorld('${key}')">VÄLJ</button>`;
+    } else {
+      const cls = canBuy ? '' : 'locked';
+      actionHtml = `<button class="world-btn ${cls}" onclick="buyWorld('${key}')" ${canBuy ? '' : 'disabled'}>🪙 ${w.cost}</button>`;
+    }
+    const hsText = `HS: <span class="world-hs">${data.hs || 0}</span>`;
+    const lockedCls = owned ? '' : 'locked';
+    const activeCls = isActive ? 'active' : '';
+    html += `
+      <div class="world-tile ${lockedCls} ${activeCls}">
+        <div class="world-emoji">${w.emoji}</div>
+        <div>
+          <div class="world-name">${w.name}</div>
+          <div class="world-meta">${w.desc} · ${hsText}</div>
+        </div>
+        ${actionHtml}
+      </div>`;
+  }
+  grid.innerHTML = html;
+}
+function updateHsHeader() {
+  const w = progression.activeWorld || 'mix';
+  const hs = (progression.worlds && progression.worlds[w] && progression.worlds[w].hs) || 0;
+  state.highScore = hs;
+  if (_hudEls && _hudEls.hs) _setText(_hudEls.hs, hs, 'hsTxt');
+}
+window.openWorldModal = () => {
+  document.getElementById('worldOverlay')?.classList.remove('hidden');
+  renderWorldGrid();
+};
+window.closeWorldModal = () => {
+  document.getElementById('worldOverlay')?.classList.add('hidden');
+};
+window.buyWorld = (key) => {
+  const w = WORLDS[key];
+  if (!w) return;
+  if (!progression.worlds[key]) progression.worlds[key] = { owned: false, hs: 0, distHs: 0 };
+  if (progression.worlds[key].owned) return;
+  if (progression.coins < w.cost) return;
+  progression.coins -= w.cost;
+  progression.worlds[key].owned = true;
+  saveProgression();
+  sfxStar && sfxStar();
+  renderWorldGrid();
+};
+window.selectWorld = (key) => {
+  if (!progression.worlds[key] || !progression.worlds[key].owned) return;
+  if (progression.activeWorld === key) {
+    closeWorldModal();
+    return;
+  }
+  progression.activeWorld = key;
+  saveProgression();
+  updateHsHeader();
+  closeWorldModal();
+  // Bygg om banan så den nya världens längd/biom slår igenom direkt.
+  restart();
+};
 
 // ====== TESTLAB — live-tunable parameters ======
 const TESTLAB_SECTIONS = [
@@ -4850,18 +6380,21 @@ function updateHud() {
   if (state.phase === PHASE.FLY) {
     const hp = Math.max(0, state.health || 0);
     const hpInt = Math.round(hp);
-    _setStyle(rpmFill, 'width', hp + '%', 'rpmFillW');
-    _setStyle(rpmFill, 'background', hp > 60 ? '#22c55e' : hp > 30 ? '#fbbf24' : '#ef4444', 'rpmFillBg');
+    const hpMax = Math.max(1, state.healthMax || 200);
+    const hpPct = Math.max(0, Math.min(100, (hp / hpMax) * 100));
+    _setStyle(rpmFill, 'width', hpPct + '%', 'rpmFillW');
+    _setStyle(rpmFill, 'background', hpPct > 60 ? '#22c55e' : hpPct > 30 ? '#fbbf24' : '#ef4444', 'rpmFillBg');
     if (_hu.label0 !== 'HÄLSA' && _aimHudLabels[0]) { _aimHudLabels[0].textContent = 'HÄLSA'; _hu.label0 = 'HÄLSA'; }
     _setText(rpmVal, hpInt, 'rpmValTxt');
     _setStyle(rpmVal, 'color', '', 'rpmValCol');
     if (_aimHudPerfectZone && _hu.perfectDisplay !== 'none') { _aimHudPerfectZone.style.display = 'none'; _hu.perfectDisplay = 'none'; }
-    const pwrMax = state.rollBudgetMax || 40;
-    const pwrPct = Math.max(0, Math.min(100, ((state.rollBudget || 0) / pwrMax) * 100));
-    _setStyle(angFill, 'width', pwrPct + '%', 'angFillW');
-    _setStyle(angFill, 'background', '#60a5fa', 'angFillBg');
+    const pwrMax = state.rollBudgetMax || 80;
+    const pwrPctRaw = Math.max(0, ((state.rollBudget || 0) / pwrMax) * 100);
+    const pwrPctBar = Math.min(100, pwrPctRaw);
+    _setStyle(angFill, 'width', pwrPctBar + '%', 'angFillW');
+    _setStyle(angFill, 'background', pwrPctRaw > 100 ? '#ef4444' : '#60a5fa', 'angFillBg');
     if (_hu.label1 !== 'KRAFT' && _aimHudLabels[1]) { _aimHudLabels[1].textContent = 'KRAFT'; _hu.label1 = 'KRAFT'; }
-    const pwrTxt = String(Math.round(pwrPct));
+    const pwrTxt = String(Math.round(pwrPctRaw));
     if (angVal && _hu.angValTxt !== pwrTxt) { angVal.textContent = pwrTxt; _hu.angValTxt = pwrTxt; }
     if (_angSuffixNode && _hu.angSuffix !== '%') { _angSuffixNode.nodeValue = '%'; _hu.angSuffix = '%'; }
   } else {
@@ -4886,34 +6419,40 @@ function updateHud() {
     const arrow = _hudEls.windArrow;
     const valEl = _hudEls.windVal;
     if (meter && fill && arrow && valEl) {
-      const s = state.windDisabled ? 0 : (state.wind?.strength || 0);
+      const _wOff = windOff();
+      const s = _wOff ? 0 : (state.wind?.strength || 0);
       const absS = Math.abs(s);
       const pct = Math.min(50, absS * 100);
       const newLeft = s >= 0 ? '50%' : ((50 - pct) + '%');
       const newW = pct + '%';
       _setStyle(fill, 'left', newLeft, 'windFillLeft');
       _setStyle(fill, 'width', newW, 'windFillW');
-      const col = state.windDisabled ? '#475569'
+      const col = _wOff ? '#475569'
                 : absS < 0.15 ? '#94a3b8'
                 : absS < 0.5  ? (s > 0 ? '#10b981' : '#f97316')
                               : (s > 0 ? '#22c55e' : '#ef4444');
       const newBg = `linear-gradient(${s >= 0 ? '90deg' : '270deg'}, transparent, ${col})`;
       _setStyle(fill, 'background', newBg, 'windFillBg');
-      const arrTxt = state.windDisabled ? '∅' : (absS < 0.15 ? '·' : (s > 0 ? '→' : '←'));
+      const arrTxt = _wOff ? '∅' : (absS < 0.15 ? '·' : (s > 0 ? '→' : '←'));
       _setText(arrow, arrTxt, 'windArrowTxt');
       _setStyle(arrow, 'color', col, 'windArrowCol');
-      const valTxt = state.windDisabled ? 'AV'
+      const valTxt = _wOff ? 'AV'
                    : (absS < 0.15 ? 'STILLA'
                    : `${s > 0 ? 'MED' : 'MOT'} ${absS.toFixed(1)}`);
       _setText(valEl, valTxt, 'windValTxt');
-      _setClass(meter, 'disabled', !!state.windDisabled, 'windDisabled');
+      _setClass(meter, 'disabled', _wOff, 'windDisabled');
     }
   }
   _setText(scoreEl, state.score, 'scoreTxt');
   if (distLiveEl) {
-    const liveDist = state.phase === PHASE.FLY && state.tire
-      ? Math.max(runStats.distM || 0, Math.round((state.maxX - state.startLaunchX) / 5))
-      : (runStats.distM || 0);
+    // Live: visar hjulets faktiska position (kan vara negativ i hell). Om inte i FLY,
+    // visa 0 (innan första skott) eller senaste rundans distans.
+    let liveDist;
+    if (state.phase === PHASE.FLY && state.tire) {
+      liveDist = Math.round((state.tire.x - (state.startLaunchX || LEVEL.launchX)) / 5);
+    } else {
+      liveDist = state.lastRunDistM || runStats.distM || 0;
+    }
     _setText(distLiveEl, liveDist, 'distLiveTxt');
   }
   _setText(starsEl, state.starsGot, 'starsTxt');
@@ -4962,7 +6501,30 @@ function updateHud() {
     const pbChase = _hudEls.bigPbChase;
     const pbBox = _hudEls.pbChaseBox;
     if (pbChase && pbBox) {
-      if (dailyPB && dailyPB.date === todayStamp() && dailyPB.distM > 0 && showBig) {
+      const _pbInHell = state.tire && biomeAt(state.tire.x) === HELL_INDEX;
+      if (_pbInHell && dailyPB && dailyPB.date === todayStamp() && showBig) {
+        // Hell-jakt: räkna djup från x=0 (positivt tal). Visas alltid i hell.
+        const curHellDepthM = Math.max(0, Math.round(-state.tire.x / 5));
+        const hellRec = dailyPB.hellDistM || 0;
+        const remaining = hellRec - curHellDepthM;
+        _setClass(pbBox, 'hidden', false, 'pbChaseHidden');
+        if (hellRec <= 0) {
+          _setClass(pbBox, 'over', false, 'pbChaseOver');
+          _setClass(pbBox, 'near', false, 'pbChaseNear');
+          const html = `🔥 <b>-${curHellDepthM}m</b> i hell (sätt rekord!)`;
+          if (_hu.pbChaseHtml !== html) { pbChase.innerHTML = html; _hu.pbChaseHtml = html; }
+        } else if (remaining > 0) {
+          _setClass(pbBox, 'over', false, 'pbChaseOver');
+          _setClass(pbBox, 'near', remaining <= 50, 'pbChaseNear');
+          const html = `🔥 <b>${remaining}m</b> till -rekord`;
+          if (_hu.pbChaseHtml !== html) { pbChase.innerHTML = html; _hu.pbChaseHtml = html; }
+        } else {
+          _setClass(pbBox, 'near', false, 'pbChaseNear');
+          _setClass(pbBox, 'over', true, 'pbChaseOver');
+          const html = `🔥 <b>-${-remaining}m</b> under -rekord!`;
+          if (_hu.pbChaseHtml !== html) { pbChase.innerHTML = html; _hu.pbChaseHtml = html; }
+        }
+      } else if (dailyPB && dailyPB.date === todayStamp() && dailyPB.distM > 0 && showBig) {
         const curWorldM = Math.max(0, Math.round((state.tire ? state.tire.x : (LEVEL && LEVEL.launchX) || 0) / 5));
         const remaining = dailyPB.distM - curWorldM;
         if (remaining > 0) {
@@ -4985,21 +6547,17 @@ function updateHud() {
     const distBox = _hudEls.distBox;
     const distBoxVal = _hudEls.distBoxVal;
     if (distBox && distBoxVal) {
-      if (showBig) {
-        let distM;
-        const liveM = Math.max(0, Math.round(((state.maxX || 0) - (state.startLaunchX || LEVEL.launchX)) / 5));
-        if (showLastRun) {
-          distM = state.lastRunDistM || 0;
-        } else if (state.phase === PHASE.FLY) {
-          distM = liveM;
-        } else {
-          distM = state.runMaxDistM || 0;
-        }
-        _setClass(distBox, 'hidden', false, 'distBoxHidden');
-        _setText(distBoxVal, distM + ' m', 'distBoxValTxt');
+      // Alltid synlig — live-distans visas oavsett fas. Kan vara negativ i hell.
+      let distM;
+      if (showLastRun) {
+        distM = state.lastRunDistM || 0;
+      } else if (state.phase === PHASE.FLY && state.tire) {
+        distM = Math.round((state.tire.x - (state.startLaunchX || LEVEL.launchX)) / 5);
       } else {
-        _setClass(distBox, 'hidden', true, 'distBoxHidden');
+        distM = state.runMaxDistM || 0;
       }
+      _setClass(distBox, 'hidden', false, 'distBoxHidden');
+      _setText(distBoxVal, distM + ' m', 'distBoxValTxt');
     }
     const tireBox = _hudEls.tireBox;
     const tireIcons = _hudEls.tireIcons;
@@ -5092,6 +6650,192 @@ function currentBiomeSky() {
 }
 
 function drawSky() {
+  const z = state.cam.zoom || 1;
+  const camCenterX = state.cam.x + W / (2 * z);
+  const _bi = biomeAt(camCenterX);
+
+  if (_bi === SPACE_INDEX) {
+    // Rymden — svart/lila gradient utan horisont-soldis
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0,    '#020617');
+    g.addColorStop(0.5,  '#0c0a3e');
+    g.addColorStop(1,    '#1e1b4b');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+    // Tät stjärnhimmel (parallax baserad på cam.x)
+    const px = state.cam.x * 0.05;
+    const stars = [];
+    for (let i = 0; i < 90; i++) {
+      const sx = ((i * 137.21) % 100) / 100;
+      const sy = ((i * 73.7) % 100) / 100;
+      stars.push([sx, sy * 0.78, (i % 5 === 0) ? 2.2 : 1.2]);
+    }
+    ctx.fillStyle = '#fef9c3';
+    stars.forEach(([sx, sy, sz], i) => {
+      const x = ((sx * W * 1.6) - px * (1 + (i % 3) * 0.3)) % (W + 80);
+      const xx = x < 0 ? x + W + 80 : x;
+      const yy = sy * H;
+      const tw = 0.6 + 0.4 * Math.sin(state.time * 0.08 + i);
+      ctx.globalAlpha = tw;
+      ctx.fillRect(xx, yy, sz, sz);
+    });
+    ctx.globalAlpha = 1;
+    // Jorden i fjärran (parallax ~0.1)
+    const earthX = W * 0.78 - state.cam.x * 0.08;
+    const earthY = H * 0.22;
+    const earthR = 60;
+    // Glöd
+    const halo = ctx.createRadialGradient(earthX, earthY, earthR * 0.9, earthX, earthY, earthR * 1.8);
+    halo.addColorStop(0, 'rgba(96,165,250,0.35)');
+    halo.addColorStop(1, 'rgba(96,165,250,0)');
+    ctx.fillStyle = halo;
+    ctx.fillRect(earthX - earthR * 2, earthY - earthR * 2, earthR * 4, earthR * 4);
+    // Klot
+    const eg = ctx.createRadialGradient(earthX - earthR * 0.4, earthY - earthR * 0.5, earthR * 0.3, earthX, earthY, earthR);
+    eg.addColorStop(0, '#bfdbfe');
+    eg.addColorStop(0.4, '#3b82f6');
+    eg.addColorStop(1, '#1e3a8a');
+    ctx.fillStyle = eg;
+    ctx.beginPath(); ctx.arc(earthX, earthY, earthR, 0, Math.PI * 2); ctx.fill();
+    // Kontinenter (gröna fläckar)
+    ctx.fillStyle = 'rgba(34,197,94,0.55)';
+    ctx.beginPath(); ctx.arc(earthX - 18, earthY - 6, 14, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(earthX + 12, earthY + 8, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(earthX + 22, earthY - 14, 7, 0, Math.PI * 2); ctx.fill();
+    return;
+  }
+
+  if (_bi === DEEP_INDEX) {
+    // 🌊 Djuphavet — turkos→djupblå→svart vertikal gradient
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0,    '#0891b2');
+    g.addColorStop(0.45, '#0c4a6e');
+    g.addColorStop(0.85, '#082f49');
+    g.addColorStop(1,    '#020617');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+    // Godrays — 4 koniska ljusstrålar uppifrån (parallax 0.05)
+    const px = state.cam.x * 0.05;
+    const rays = [[0.18, 0.55], [0.42, 0.7], [0.66, 0.5], [0.86, 0.65]];
+    rays.forEach(([rx, rWidth], i) => {
+      const x = ((rx * W * 1.4) - px * (1 + i * 0.2)) % (W + 200);
+      const xx = x < -100 ? x + W + 200 : x;
+      const rg = ctx.createLinearGradient(xx, 0, xx + (i % 2 === 0 ? 60 : -60), H * 0.8);
+      rg.addColorStop(0, 'rgba(186,230,253,0.22)');
+      rg.addColorStop(0.5, 'rgba(103,232,249,0.10)');
+      rg.addColorStop(1, 'rgba(8,145,178,0)');
+      ctx.fillStyle = rg;
+      ctx.beginPath();
+      ctx.moveTo(xx - 20, 0);
+      ctx.lineTo(xx + 20, 0);
+      ctx.lineTo(xx + 80 * rWidth, H * 0.85);
+      ctx.lineTo(xx - 80 * rWidth, H * 0.85);
+      ctx.closePath();
+      ctx.fill();
+    });
+    // Stigande bubblor (parallax) — bakgrund
+    const bp = state.cam.x * 0.12;
+    ctx.fillStyle = 'rgba(186,230,253,0.45)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 0.6;
+    for (let i = 0; i < 22; i++) {
+      const sx = ((i * 89.13) % 100) / 100;
+      const sy = ((i * 47.2) % 100) / 100;
+      const fall = ((sy * H * 1.6) - state.time * (0.6 + (i % 3) * 0.15)) % H;
+      const yy = fall < 0 ? fall + H : H - fall;
+      const x = ((sx * W * 1.3) - bp * (1 + (i % 3) * 0.2)) % (W + 60);
+      const xx = x < 0 ? x + W + 60 : x;
+      const r = (i % 4 === 0) ? 4 : (i % 3 === 0 ? 2.6 : 1.6);
+      ctx.beginPath(); ctx.arc(xx, yy, r, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    }
+    return;
+  }
+
+  if (_bi === PINBALL_INDEX) {
+    // 🎰 Flipperland — neon-pinball-bord-feel.
+    // Mörk lila-svart bakgrund + LED-grid + roterande "spotlights".
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0,    '#0a0118');
+    g.addColorStop(0.5,  '#1e0a3a');
+    g.addColorStop(1,    '#3b0764');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+    // LED-grid (linjer som flyttar med kameran för parallax)
+    const px = state.cam.x * 0.15;
+    ctx.strokeStyle = 'rgba(34, 211, 238, 0.15)';
+    ctx.lineWidth = 1;
+    const gridSize = 60;
+    for (let i = 0; i < W / gridSize + 4; i++) {
+      const x = ((i * gridSize - px) % (W + gridSize) + W + gridSize) % (W + gridSize);
+      ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    }
+    for (let i = 0; i < H / gridSize + 2; i++) {
+      const y = i * gridSize;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+    }
+    // Roterande "spotlight"-strålar
+    const t = state.time * 0.012;
+    for (let s = 0; s < 3; s++) {
+      const cx = W * (0.25 + s * 0.25);
+      const cy = H * 0.3;
+      const ang = t + s * 1.2;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(ang);
+      const lg = ctx.createLinearGradient(0, 0, 200, 0);
+      lg.addColorStop(0, ['rgba(168,85,247,0.18)', 'rgba(34,211,238,0.18)', 'rgba(236,72,153,0.18)'][s]);
+      lg.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = lg;
+      ctx.beginPath();
+      ctx.moveTo(0, -8);
+      ctx.lineTo(220, -45);
+      ctx.lineTo(220, 45);
+      ctx.lineTo(0, 8);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+    // Pulserande LED-stripes vid horisonten
+    const pulse = 0.5 + 0.5 * Math.sin(state.time * 0.08);
+    const stripeGrad = ctx.createLinearGradient(0, H * 0.7, 0, H);
+    stripeGrad.addColorStop(0, 'rgba(34, 211, 238, 0)');
+    stripeGrad.addColorStop(0.5, `rgba(168, 85, 247, ${0.3 * pulse})`);
+    stripeGrad.addColorStop(1, `rgba(236, 72, 153, ${0.5 * pulse})`);
+    ctx.fillStyle = stripeGrad;
+    ctx.fillRect(0, H * 0.7, W, H * 0.3);
+    return;
+  }
+  if (_bi === 4) {
+    // 🌋 Vulkan — eld-helvete-natthimmel: pitch-black topp → blod-röd → glödande röd.
+    // Ingen gul horisont, ingen sol — bara mörker och en svag glöd vid horisonten.
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0,    '#000000');
+    g.addColorStop(0.45, '#1a0303');
+    g.addColorStop(0.80, '#7f1d1d');
+    g.addColorStop(1,    '#b91c1c');
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, W, H);
+    // Glöd-flickrande "embers" (askgnistor som faller långsamt)
+    const px = state.cam.x * 0.05;
+    for (let i = 0; i < 24; i++) {
+      const sx = ((i * 137.21) % 100) / 100;
+      const sy = ((i * 73.7) % 100) / 100;
+      const fall = ((sy * H * 1.4) + state.time * (0.5 + (i % 3) * 0.2)) % H;
+      const x = ((sx * W * 1.3) - px * (1 + (i % 3) * 0.2)) % (W + 60);
+      const xx = x < 0 ? x + W + 60 : x;
+      const yy = fall;
+      const tw = 0.5 + 0.5 * Math.sin(state.time * 0.12 + i);
+      ctx.fillStyle = `rgba(${i % 2 === 0 ? '254,215,170' : '251,146,60'},${tw * 0.7})`;
+      ctx.fillRect(xx, yy, 1.5, 1.5);
+    }
+    // Diffus glöd vid horisonten (lava-skenet underifrån)
+    const glow = ctx.createRadialGradient(W * 0.5, H * 1.05, H * 0.15, W * 0.5, H * 1.05, H * 0.6);
+    glow.addColorStop(0, 'rgba(220, 38, 38, 0.55)');
+    glow.addColorStop(1, 'rgba(127, 29, 29, 0)');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, H * 0.4, W, H * 0.6);
+    return;
+  }
+
   const [c0, c1, c2] = currentBiomeSky();
   const g = ctx.createLinearGradient(0, 0, 0, H);
   g.addColorStop(0,    c0);
@@ -5132,6 +6876,11 @@ function drawSky() {
 }
 
 function drawClouds() {
+  // Inga moln i rymden, djuphavet, vulkanen, isen eller pinball (alla har egna sky-stilar).
+  const _z = state.cam.zoom || 1;
+  const _camCenterX = state.cam.x + W / (2 * _z);
+  const _cBi = biomeAt(_camCenterX);
+  if (_cBi === SPACE_INDEX || _cBi === DEEP_INDEX || _cBi === 4 || _cBi === 3 || _cBi === PINBALL_INDEX) return;
   const px = state.cam.x * 0.15;
   // Magenta-tinted clouds
   ctx.fillStyle = 'rgba(251, 113, 133, 0.4)';
@@ -5162,6 +6911,12 @@ function drawClouds() {
 }
 
 function drawMountains() {
+  // Hoppa över bergsbakgrunden i isen, vulkanen, rymden, djuphavet och pinball
+  // (alla har egen sky-stil som rosa öken-berg skulle förstöra).
+  const _z = state.cam.zoom || 1;
+  const _camCenterX = state.cam.x + W / (2 * _z);
+  const _mBi = biomeAt(_camCenterX);
+  if (_mBi === 3 || _mBi === 4 || _mBi === SPACE_INDEX || _mBi === DEEP_INDEX || _mBi === PINBALL_INDEX) return;
   // Far layer — distant pink/magenta mesas
   const px1 = state.cam.x * 0.3;
   ctx.fillStyle = '#9d174d';
@@ -5499,15 +7254,19 @@ function drawLauncher() {
   ctx.strokeRect(ex + 38, ey + 35, 34, 12);
 
   // Worker (operator) — blue overalls + blue cap + light skin (matches reference art)
+  // 🧑‍🚀 Rymden: vit rymddräkt + glashjälm med gold-visir
+  // 🤿 Djuphavet: mörkblå dykardräkt + dykarmask + syrgastank
+  const _astro = biomeAt(lx) === SPACE_INDEX;
+  const _diver = biomeAt(lx) === DEEP_INDEX;
   const wx = ex - 26, wy = ey + 4;
   const SKIN = '#fde68a';         // pale cream skin
   const SKIN_SHADE = '#fbbf24';   // shade under chin
   const OUTLINE = '#0f172a';
-  const OVERALL = '#2563eb';      // medium blue overalls
-  const OVERALL_DK = '#1e40af';   // darker blue (legs/straps)
-  const CAP = '#1d4ed8';          // blue cap
-  const CAP_BRIM = '#1e3a8a';     // darker brim
-  const SHIRT = '#0f172a';        // dark undershirt
+  const OVERALL = _astro ? '#e5e7eb' : (_diver ? '#1e3a8a' : '#2563eb');      // vit dräkt / mörkblå dykardräkt / blå overall
+  const OVERALL_DK = _astro ? '#94a3b8' : (_diver ? '#0c4a6e' : '#1e40af');   // silvergrå / djupblå / mörkblå
+  const CAP = _astro ? '#f8fafc' : '#1d4ed8';                                  // vit hjälm-sfär / blå keps
+  const CAP_BRIM = _astro ? '#cbd5e1' : '#1e3a8a';                             // silver / mörk brim
+  const SHIRT = _astro ? '#1f2937' : (_diver ? '#0c4a6e' : '#0f172a');        // dark undershirt / djupblå
 
   // Legs
   ctx.fillStyle = OVERALL_DK;
@@ -5558,27 +7317,29 @@ function drawLauncher() {
   ctx.fillStyle = SKIN;
   ctx.beginPath(); ctx.arc(wx + 1, wy - 9, 2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
 
-  // Cap (blue with visor/brim)
-  ctx.fillStyle = CAP;
-  ctx.beginPath();
-  ctx.ellipse(wx + 11, wy - 16, 12, 7, 0, Math.PI, 2 * Math.PI);
-  ctx.closePath();
-  ctx.fill(); ctx.stroke();
-  // Cap highlight
-  ctx.fillStyle = '#3b82f6';
-  ctx.beginPath();
-  ctx.ellipse(wx + 8, wy - 18, 5, 2.5, -0.2, Math.PI, 2 * Math.PI);
-  ctx.fill();
-  // Brim/visor (darker blue, protruding forward/right)
-  ctx.fillStyle = CAP_BRIM;
-  ctx.beginPath();
-  ctx.ellipse(wx + 18, wy - 12, 8, 3, 0, 0, Math.PI * 2);
-  ctx.fill(); ctx.stroke();
-  // Cap band
-  ctx.strokeStyle = CAP_BRIM; ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(wx, wy - 12); ctx.lineTo(wx + 22, wy - 12);
-  ctx.stroke();
+  if (!_astro && !_diver) {
+    // Cap (blue with visor/brim)
+    ctx.fillStyle = CAP;
+    ctx.beginPath();
+    ctx.ellipse(wx + 11, wy - 16, 12, 7, 0, Math.PI, 2 * Math.PI);
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+    // Cap highlight
+    ctx.fillStyle = '#3b82f6';
+    ctx.beginPath();
+    ctx.ellipse(wx + 8, wy - 18, 5, 2.5, -0.2, Math.PI, 2 * Math.PI);
+    ctx.fill();
+    // Brim/visor (darker blue, protruding forward/right)
+    ctx.fillStyle = CAP_BRIM;
+    ctx.beginPath();
+    ctx.ellipse(wx + 18, wy - 12, 8, 3, 0, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+    // Cap band
+    ctx.strokeStyle = CAP_BRIM; ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(wx, wy - 12); ctx.lineTo(wx + 22, wy - 12);
+    ctx.stroke();
+  }
 
   // Eyes
   ctx.fillStyle = OUTLINE;
@@ -5592,6 +7353,98 @@ function drawLauncher() {
   // Smile
   ctx.strokeStyle = OUTLINE; ctx.lineWidth = 1.5;
   ctx.beginPath(); ctx.arc(wx + 11, wy - 4, 2.5, 0.15, Math.PI - 0.15); ctx.stroke();
+
+  // 🧑‍🚀 Astronaut-hjälm: ritas OVANPÅ ansiktet (gold-visir + sfärisk hjälm)
+  if (_astro) {
+    const hcx = wx + 11, hcy = wy - 9, hr = 13;
+    // Hjälm-sfär (vit-silver glow)
+    const hg = ctx.createRadialGradient(hcx - 3, hcy - 3, 2, hcx, hcy, hr);
+    hg.addColorStop(0, '#ffffff');
+    hg.addColorStop(0.7, '#e2e8f0');
+    hg.addColorStop(1, '#94a3b8');
+    ctx.fillStyle = hg;
+    ctx.strokeStyle = OUTLINE; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(hcx, hcy, hr, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    // Gold-visir (oval täcker hela ansiktet)
+    const vg = ctx.createLinearGradient(hcx, hcy - hr * 0.6, hcx, hcy + hr * 0.6);
+    vg.addColorStop(0, '#fde047');
+    vg.addColorStop(0.55, '#ca8a04');
+    vg.addColorStop(1, '#78350f');
+    ctx.fillStyle = vg;
+    ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.ellipse(hcx, hcy + 1, hr * 0.78, hr * 0.7, 0, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+    // Vit reflektion på visir
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.beginPath();
+    ctx.ellipse(hcx - 4, hcy - 1, 3.5, 1.4, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+    // Antennlampa (röd) på toppen
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath(); ctx.arc(hcx, hcy - hr - 2, 1.8, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = OUTLINE; ctx.lineWidth = 0.8; ctx.stroke();
+    // PLSS-ryggsäck-band synligt vid axeln (silvergrå)
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillRect(wx - 4, wy + 2, 4, 26);
+    ctx.strokeStyle = OUTLINE; ctx.lineWidth = 1;
+    ctx.strokeRect(wx - 4, wy + 2, 4, 26);
+    // Slang från ryggsäck till hjälm
+    ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(wx - 2, wy + 6);
+    ctx.quadraticCurveTo(wx - 6, wy - 6, hcx - hr + 2, hcy + 4);
+    ctx.stroke();
+  }
+
+  // 🤿 Dykarhjälm: ritas OVANPÅ ansiktet (silver-dome + glasmask + syrgastank)
+  if (_diver) {
+    const hcx = wx + 11, hcy = wy - 9, hr = 13;
+    // Hjälm-dome (silver/krom)
+    const hg = ctx.createRadialGradient(hcx - 3, hcy - 4, 2, hcx, hcy, hr);
+    hg.addColorStop(0, '#f1f5f9');
+    hg.addColorStop(0.6, '#94a3b8');
+    hg.addColorStop(1, '#475569');
+    ctx.fillStyle = hg;
+    ctx.strokeStyle = OUTLINE; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(hcx, hcy, hr, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    // Glasmask (mörk-blå/turkos, oval täcker hela ansiktet)
+    const vg = ctx.createLinearGradient(hcx, hcy - hr * 0.6, hcx, hcy + hr * 0.6);
+    vg.addColorStop(0, '#67e8f9');
+    vg.addColorStop(0.55, '#0c4a6e');
+    vg.addColorStop(1, '#020617');
+    ctx.fillStyle = vg;
+    ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.ellipse(hcx, hcy + 1, hr * 0.78, hr * 0.7, 0, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+    // Vit reflektion på glaset
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.beginPath();
+    ctx.ellipse(hcx - 4, hcy - 1, 3.5, 1.4, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+    // Bultar runt masken (4 silvernypper)
+    ctx.fillStyle = '#cbd5e1';
+    ctx.strokeStyle = OUTLINE; ctx.lineWidth = 0.6;
+    [[-hr*0.78, 0], [hr*0.78, 0], [0, -hr*0.7], [0, hr*0.7]].forEach(([dx, dy]) => {
+      ctx.beginPath(); ctx.arc(hcx + dx, hcy + 1 + dy, 0.9, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    });
+    // Syrgastank (cylinder bakom ryggen)
+    ctx.fillStyle = '#e5e7eb';
+    ctx.fillRect(wx - 5, wy + 2, 5, 28);
+    ctx.strokeStyle = OUTLINE; ctx.lineWidth = 1;
+    ctx.strokeRect(wx - 5, wy + 2, 5, 28);
+    // Röd topp på tanken
+    ctx.fillStyle = '#dc2626';
+    ctx.fillRect(wx - 5, wy + 2, 5, 4);
+    ctx.strokeRect(wx - 5, wy + 2, 5, 4);
+    // Slang från tank till hjälm (gul)
+    ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.moveTo(wx - 2, wy + 8);
+    ctx.quadraticCurveTo(wx - 8, wy - 4, hcx - hr + 2, hcy + 5);
+    ctx.stroke();
+  }
 
   // Arm reaching to engine (skin colored with overall cuff)
   // Cuff (overalls sleeve end)
@@ -5647,7 +7500,7 @@ function drawLauncher() {
         pvy += GRAVITY;
         pvx *= AIR_DRAG;
         pvy *= AIR_DRAG;
-        if (!state.windDisabled) pvx += state.wind.strength * WIND_MAX;  // preview wind
+        if (!windOff()) pvx += state.wind.strength * WIND_MAX;  // preview wind
         px += pvx; py += pvy;
         if (py > terrainAt(px)) break;
         if (i % 2 === 0) {
@@ -5679,6 +7532,9 @@ function drawObstacles() {
   const _drawMaxX = state.cam.x + vw + 300;
   OBSTACLES.forEach(o => {
     if (o.x < _drawMinX || o.x > _drawMaxX) return;
+    // Hell-mörkning hanteras nu med en enda screen-space overlay efter world-render —
+    // ctx.filter per-obstacle var en perf-katastrof på iOS Safari.
+    try {
     if (o.type === 'house') {
       const houseW = 86;
       const houseH = 78;
@@ -5758,6 +7614,421 @@ function drawObstacles() {
       ctx.strokeRect(hx + houseW - 28, hy - 20, 10, 14);
       return;
     }
+    if (o.type === 'hellhouse') {
+      const houseW = 50;
+      const houseH = 96;
+      const roofH = 22;
+      const gy = terrainAt(o.x + houseW * 0.5);
+      const [sx, sy] = worldToScreen(o.x + houseW, gy);
+      if (sx < -200 || sx - houseW > vw + 200) return;
+      const hx = sx - houseW;
+      const hy = sy - houseH;
+
+      // Charred ground stain
+      ctx.fillStyle = 'rgba(15, 5, 5, 0.55)';
+      ctx.beginPath();
+      ctx.ellipse(hx + houseW * 0.5, sy + 3, houseW * 0.7, 6, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Dark stone body
+      ctx.fillStyle = '#1c1917';
+      ctx.fillRect(hx, hy, houseW, houseH);
+      ctx.strokeStyle = '#450a0a'; ctx.lineWidth = 2;
+      ctx.strokeRect(hx, hy, houseW, houseH);
+
+      // Stone seam horizontals
+      ctx.strokeStyle = 'rgba(127, 29, 29, 0.45)';
+      ctx.lineWidth = 1;
+      for (let r = 1; r < 5; r++) {
+        ctx.beginPath();
+        ctx.moveTo(hx + 2, hy + r * 18);
+        ctx.lineTo(hx + houseW - 2, hy + r * 18);
+        ctx.stroke();
+      }
+
+      // Spiked roof — multiple jagged triangles
+      const spikes = 6;
+      const sw = houseW / spikes;
+      ctx.fillStyle = '#0a0a0a';
+      ctx.strokeStyle = '#450a0a';
+      ctx.lineWidth = 1.5;
+      for (let i = 0; i < spikes; i++) {
+        const sxL = hx + i * sw;
+        const sxR = sxL + sw;
+        const sxM = sxL + sw * 0.5;
+        ctx.beginPath();
+        ctx.moveTo(sxL, hy);
+        ctx.lineTo(sxM, hy - roofH);
+        ctx.lineTo(sxR, hy);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      }
+
+      // Glowing red windows
+      const winW = 8, winH = 12;
+      [hx + 8, hx + houseW - 8 - winW].forEach(wx => {
+        const wy = hy + 28;
+        ctx.fillStyle = '#7f1d1d';
+        ctx.fillRect(wx, wy, winW, winH);
+        ctx.fillStyle = 'rgba(252, 165, 165, 0.85)';
+        ctx.fillRect(wx + 1, wy + 1, winW - 2, winH - 2);
+      });
+      // Single lower window
+      const lwy = hy + 60;
+      const lwx = hx + houseW * 0.5 - winW * 0.5;
+      ctx.fillStyle = '#7f1d1d';
+      ctx.fillRect(lwx, lwy, winW, winH);
+      ctx.fillStyle = 'rgba(252, 165, 165, 0.85)';
+      ctx.fillRect(lwx + 1, lwy + 1, winW - 2, winH - 2);
+      return;
+    }
+    if (o.type === 'monster') {
+      if (o._gone || o.crushed) return;
+      const mw = o.w, mh = o.h;
+      const gy = terrainAt(o.x);
+      const sinkOff = o.dead ? Math.min(mh, (o.sinkT / 40) * mh) : 0;
+      const [sx, sgy] = worldToScreen(o.x, gy);
+      const bodyTopScreen = sgy - mh + sinkOff;
+      // Fade när den sjunker
+      const alpha = 1 - (sinkOff / mh) * 0.85;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      // Skugga
+      ctx.fillStyle = 'rgba(0,0,0,0.45)';
+      ctx.beginPath();
+      ctx.ellipse(sx, sgy + 2, mw * 0.55, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Klipp så endast delen ovanför marken syns när den sjunker
+      ctx.beginPath();
+      ctx.rect(sx - mw, bodyTopScreen - 30, mw * 2, sgy - bodyTopScreen + 30);
+      ctx.clip();
+      // Wobble — liten gungning på kropp
+      const wobX = Math.sin(o.wob || 0) * 1.2;
+      // Huvud/kropp — droppform i mörkröd
+      const flash = (o.flashT || 0) > 0;
+      const bodyCol = flash ? '#fca5a5' : '#7f1d1d';
+      const bodyDark = flash ? '#7f1d1d' : '#450a0a';
+      // Ben/klor (under kroppen) — små vassa trianglar
+      ctx.fillStyle = '#1c1917';
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 1;
+      const legY = sgy - 4;
+      [-mw * 0.28, -mw * 0.08, mw * 0.12, mw * 0.32].forEach((dx, i) => {
+        const swing = Math.sin((o.wob || 0) + i * 1.1) * 1.6;
+        ctx.beginPath();
+        ctx.moveTo(sx + dx + wobX, legY - 8);
+        ctx.lineTo(sx + dx + wobX - 3, legY + 3 + swing);
+        ctx.lineTo(sx + dx + wobX + 3, legY + 3 - swing);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      });
+      // Kropp (rundad rektangel)
+      const bodyX = sx - mw * 0.5 + wobX;
+      const bodyY = bodyTopScreen + 14;
+      const bodyW = mw;
+      const bodyH = mh - 18;
+      ctx.fillStyle = bodyCol;
+      ctx.strokeStyle = bodyDark;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      const rr = 9;
+      ctx.moveTo(bodyX + rr, bodyY);
+      ctx.lineTo(bodyX + bodyW - rr, bodyY);
+      ctx.quadraticCurveTo(bodyX + bodyW, bodyY, bodyX + bodyW, bodyY + rr);
+      ctx.lineTo(bodyX + bodyW, bodyY + bodyH - rr);
+      ctx.quadraticCurveTo(bodyX + bodyW, bodyY + bodyH, bodyX + bodyW - rr, bodyY + bodyH);
+      ctx.lineTo(bodyX + rr, bodyY + bodyH);
+      ctx.quadraticCurveTo(bodyX, bodyY + bodyH, bodyX, bodyY + bodyH - rr);
+      ctx.lineTo(bodyX, bodyY + rr);
+      ctx.quadraticCurveTo(bodyX, bodyY, bodyX + rr, bodyY);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      // Bröstmarkering (mörkare buk)
+      ctx.fillStyle = 'rgba(0,0,0,0.25)';
+      ctx.beginPath();
+      ctx.ellipse(sx + wobX, bodyY + bodyH * 0.6, mw * 0.32, mh * 0.18, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Horn (två svarta vassa trianglar på toppen)
+      ctx.fillStyle = '#0a0a0a';
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 1.5;
+      const hornBaseY = bodyY + 2;
+      [-mw * 0.28, mw * 0.28].forEach(dx => {
+        ctx.beginPath();
+        ctx.moveTo(sx + dx + wobX - 4, hornBaseY);
+        ctx.lineTo(sx + dx + wobX, hornBaseY - 14);
+        ctx.lineTo(sx + dx + wobX + 4, hornBaseY);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+      });
+      // Glödande ögon
+      const blink = ((o.eyeBlink || 0) % 200) > 192;
+      if (!blink) {
+        const eyeY = bodyY + 14;
+        ctx.fillStyle = '#fef08a';
+        ctx.shadowColor = _isMobile ? 'transparent' : '#fbbf24';
+        ctx.shadowBlur = _isMobile ? 0 : 8;
+        [-mw * 0.18, mw * 0.18].forEach(dx => {
+          ctx.beginPath();
+          ctx.arc(sx + dx + wobX, eyeY, 3, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        ctx.shadowBlur = 0;
+        // Pupiller (riktning baserat på rörelse)
+        ctx.fillStyle = '#000';
+        const pdx = Math.sign(o.vx || 0) * 1.2;
+        [-mw * 0.18, mw * 0.18].forEach(dx => {
+          ctx.beginPath();
+          ctx.arc(sx + dx + wobX + pdx, eyeY, 1.4, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
+      // Mun — sneda tänder
+      ctx.fillStyle = '#fef9c3';
+      ctx.strokeStyle = '#1c1917';
+      ctx.lineWidth = 0.8;
+      const mouthY = bodyY + 26;
+      const mouthW = mw * 0.32;
+      ctx.fillStyle = '#0a0a0a';
+      ctx.fillRect(sx - mouthW * 0.5 + wobX, mouthY, mouthW, 4);
+      // Tänder
+      ctx.fillStyle = '#fef9c3';
+      for (let i = 0; i < 3; i++) {
+        const tx = sx - mouthW * 0.5 + wobX + i * (mouthW / 3) + 2;
+        ctx.beginPath();
+        ctx.moveTo(tx, mouthY);
+        ctx.lineTo(tx + 2, mouthY + 3);
+        ctx.lineTo(tx + 4, mouthY);
+        ctx.closePath();
+        ctx.fill();
+      }
+      ctx.restore();
+      // Damm-partiklar när den sjunker
+      if (o.dead && state.particles.length < 380 && state.time % 3 === 0) {
+        state.particles.push({
+          x: o.x + (Math.random() - 0.5) * mw,
+          y: gy - 2,
+          vx: (Math.random() - 0.5) * 1.4,
+          vy: -0.8 - Math.random() * 0.5,
+          life: 26, max: 26,
+          color: `rgba(127, 29, 29, ${0.4 + Math.random() * 0.3})`,
+          size: 2 + Math.random() * 2,
+          g: 0.04, shape: 'square',
+        });
+      }
+      return;
+    }
+    if (o.type === 'alien') {
+      if (o._gone || o.crushed) return;
+      const mw = o.w, mh = o.h;
+      const gy = terrainAt(o.x);
+      const sinkOff = o.dead ? Math.min(mh, (o.sinkT / 40) * mh) : 0;
+      const [sx, sgy] = worldToScreen(o.x, gy);
+      const bodyTopScreen = sgy - mh + sinkOff;
+      const alpha = 1 - (sinkOff / mh) * 0.85;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      // Skugga
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      ctx.beginPath();
+      ctx.ellipse(sx, sgy + 2, mw * 0.55, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Klipp så endast delen ovanför marken syns
+      ctx.beginPath();
+      ctx.rect(sx - mw, bodyTopScreen - 30, mw * 2, sgy - bodyTopScreen + 30);
+      ctx.clip();
+      const wobX = Math.sin(o.wob || 0) * 1.4;
+      const flash = (o.flashT || 0) > 0;
+      const bodyCol = flash ? '#86efac' : '#22c55e';   // grön alien
+      const bodyDark = flash ? '#22c55e' : '#166534';
+      // Tre ben — tunna gröna pinnar
+      ctx.strokeStyle = bodyDark;
+      ctx.lineWidth = 2;
+      const legY = sgy - 2;
+      [-mw * 0.22, 0, mw * 0.22].forEach((dx, i) => {
+        const swing = Math.sin((o.wob || 0) + i * 1.3) * 2;
+        ctx.beginPath();
+        ctx.moveTo(sx + dx + wobX, legY - 14);
+        ctx.lineTo(sx + dx + wobX + swing, legY);
+        ctx.stroke();
+      });
+      // Kropp — päronformad (rundad oval)
+      const bodyCx = sx + wobX;
+      const bodyCy = bodyTopScreen + mh * 0.55;
+      ctx.fillStyle = bodyCol;
+      ctx.strokeStyle = bodyDark;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.ellipse(bodyCx, bodyCy, mw * 0.5, mh * 0.4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      // Huvud — större rund överdel
+      const headCy = bodyTopScreen + mh * 0.25;
+      ctx.fillStyle = bodyCol;
+      ctx.beginPath();
+      ctx.ellipse(bodyCx, headCy, mw * 0.42, mh * 0.32, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      // Antenner — två sneda, spröt med boll på toppen
+      const antPh = o.antPhase || 0;
+      ctx.strokeStyle = bodyDark;
+      ctx.lineWidth = 1.5;
+      [[-mw * 0.18, -1], [mw * 0.18, 1]].forEach(([dx, dir]) => {
+        const tipX = bodyCx + dx + Math.sin(antPh + dir) * 3;
+        const tipY = bodyTopScreen - 4;
+        ctx.beginPath();
+        ctx.moveTo(bodyCx + dx, headCy - mh * 0.25);
+        ctx.lineTo(tipX, tipY);
+        ctx.stroke();
+        // Boll på toppen — pulserar
+        const pulse = 2.6 + Math.sin(antPh * 2 + dir) * 0.8;
+        ctx.fillStyle = '#fef08a';
+        if (!_isMobile) { ctx.shadowColor = '#fbbf24'; ctx.shadowBlur = 6; }
+        ctx.beginPath();
+        ctx.arc(tipX, tipY, pulse, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+      });
+      // Stora svarta ögon — typisk alien-look
+      const blink = ((o.eyeBlink || 0) % 220) > 210;
+      if (!blink) {
+        ctx.fillStyle = '#0a0a0a';
+        [[-mw * 0.16, mh * 0.04], [mw * 0.16, mh * 0.04]].forEach(([dx, dy]) => {
+          ctx.beginPath();
+          ctx.ellipse(bodyCx + dx, headCy + dy, 5, 7, 0, 0, Math.PI * 2);
+          ctx.fill();
+        });
+        // Reflektion (vit prick)
+        ctx.fillStyle = '#fff';
+        [[-mw * 0.16 + 1.5, mh * 0.04 - 2], [mw * 0.16 + 1.5, mh * 0.04 - 2]].forEach(([dx, dy]) => {
+          ctx.beginPath();
+          ctx.arc(bodyCx + dx, headCy + dy, 1.2, 0, Math.PI * 2);
+          ctx.fill();
+        });
+      }
+      // Liten rak mun-streck
+      ctx.strokeStyle = bodyDark;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(bodyCx - 5, headCy + mh * 0.18);
+      ctx.lineTo(bodyCx + 5, headCy + mh * 0.18);
+      ctx.stroke();
+      ctx.restore();
+      return;
+    }
+    if (o.type === 'crater') {
+      const cx = o.x + o.w * 0.5;
+      const groundY = terrainAt(cx) - o.depth;       // markhöjd PRECIS bredvid kratern (rim)
+      const [sx1, sy1] = worldToScreen(o.x, groundY);
+      const [sx2, sy2] = worldToScreen(o.x + o.w, groundY);
+      if (sx2 < -50 || sx1 > vw + 50) return;
+      const surfaceScreen = worldToScreen(0, o.surfaceY)[1];
+      // Svart hål — fyll kraterns insida
+      ctx.fillStyle = '#0a0a0a';
+      ctx.beginPath();
+      ctx.moveTo(sx1, sy1);
+      ctx.lineTo(sx1 + 4, surfaceScreen);
+      ctx.lineTo(sx2 - 4, surfaceScreen);
+      ctx.lineTo(sx2, sy2);
+      ctx.closePath();
+      ctx.fill();
+      // Gradient-skugga inne i hålet (rymd-känsla)
+      const grad = ctx.createLinearGradient(0, sy1, 0, surfaceScreen);
+      grad.addColorStop(0, 'rgba(20,20,30,0.4)');
+      grad.addColorStop(1, 'rgba(0,0,0,0.95)');
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(sx1, sy1);
+      ctx.lineTo(sx1 + 4, surfaceScreen);
+      ctx.lineTo(sx2 - 4, surfaceScreen);
+      ctx.lineTo(sx2, sy2);
+      ctx.closePath();
+      ctx.fill();
+      // Kant — ljusare regolit-rand på vardera sidan
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(sx1 - 18, sy1 + 2);
+      ctx.lineTo(sx1, sy1);
+      ctx.lineTo(sx1 + 4, surfaceScreen);
+      ctx.moveTo(sx2 - 4, surfaceScreen);
+      ctx.lineTo(sx2, sy2);
+      ctx.lineTo(sx2 + 18, sy2 + 2);
+      ctx.stroke();
+      // Små stenar runt kanten
+      ctx.fillStyle = '#9ca3af';
+      const seed = Math.floor(o.x);
+      for (let i = 0; i < 6; i++) {
+        const r = ((seed + i * 73) % 100) / 100;
+        const dx = (i < 3 ? -1 : 1) * (8 + r * 22);
+        const baseSx = (i < 3 ? sx1 : sx2) + dx;
+        const baseSy = (i < 3 ? sy1 : sy2) + 4 - r * 3;
+        ctx.beginPath();
+        ctx.arc(baseSx, baseSy, 2 + r * 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // Damm-puff från kratermynningen då och då
+      if (state.particles.length < 320 && state.time % 12 === ((seed % 12 + 12) % 12)) {
+        state.particles.push({
+          x: cx + (Math.random() - 0.5) * o.w * 0.6,
+          y: terrainAt(cx) - 2,
+          vx: (Math.random() - 0.5) * 0.6,
+          vy: -0.8 - Math.random() * 0.4,
+          life: 32, max: 32,
+          color: `rgba(156,163,175,${0.3 + Math.random() * 0.25})`,
+          size: 2 + Math.random() * 2,
+          g: 0.02, shape: 'square',
+        });
+      }
+      return;
+    }
+    if (o.type === 'tentacle') {
+      // 🐙 Tentakel — växer upp från sjöbotten, sin-svängande topp.
+      const swingX = Math.sin(state.time * 0.04 + o.phase) * o.swing * 30;
+      const baseSx = worldToScreen(o.x, o.baseY)[0];
+      const baseSy = worldToScreen(o.x, o.baseY)[1];
+      if (baseSx < -100 || baseSx > vw + 100) return;
+      const tipSx = worldToScreen(o.x + swingX, o.baseY - o.len)[0];
+      const tipSy = worldToScreen(o.x + swingX, o.baseY - o.len)[1];
+      // Tentakel-stam (kvadratisk kurva)
+      ctx.save();
+      ctx.lineCap = 'round';
+      ctx.strokeStyle = '#6b21a8';
+      ctx.lineWidth = 14;
+      ctx.beginPath();
+      ctx.moveTo(baseSx, baseSy);
+      ctx.quadraticCurveTo(baseSx + swingX * 0.5, (baseSy + tipSy) * 0.5, tipSx, tipSy);
+      ctx.stroke();
+      // Inre lila lager
+      ctx.strokeStyle = '#a855f7';
+      ctx.lineWidth = 8;
+      ctx.beginPath();
+      ctx.moveTo(baseSx, baseSy);
+      ctx.quadraticCurveTo(baseSx + swingX * 0.5, (baseSy + tipSy) * 0.5, tipSx, tipSy);
+      ctx.stroke();
+      // Sugkoppar
+      ctx.fillStyle = '#fbbf24';
+      ctx.strokeStyle = '#1f2937';
+      ctx.lineWidth = 0.8;
+      for (let i = 1; i < 6; i++) {
+        const tt = i / 6;
+        const cx2 = baseSx + (tipSx - baseSx) * tt + Math.sin(tt * Math.PI) * swingX * 0.2;
+        const cy2 = baseSy + (tipSy - baseSy) * tt;
+        ctx.beginPath(); ctx.arc(cx2 - 4, cy2, 1.8, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.beginPath(); ctx.arc(cx2 + 4, cy2, 1.8, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+      }
+      // Tip-knöl
+      ctx.fillStyle = '#7e22ce';
+      ctx.beginPath(); ctx.arc(tipSx, tipSy, 8, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 1.2;
+      ctx.stroke();
+      ctx.restore();
+      return;
+    }
     if (o.type === 'ramp') {
       const gy = terrainAt(o.x + o.w * 0.5);
       const [x1, y1] = worldToScreen(o.x, gy);
@@ -5835,6 +8106,71 @@ function drawObstacles() {
       ctx.closePath();
       ctx.fill(); ctx.stroke();
       ctx.restore();
+    } else if (o.type === 'bridge') {
+      // Hängbro: två trästolpar + sag-kurva + plankor + rep
+      const [bx1, by1] = worldToScreen(o.x, o.baseY);
+      const [bx2, by2] = worldToScreen(o.x + o.w, o.baseY);
+      if (bx2 < -50 || bx1 > vw + 50) return;
+      const wob = (o.wobbleAmp || 0) * Math.sin(o.wobble || 0);
+      const pH = o.polesH;
+      const sag = o.sag;
+      // Stolpar
+      ctx.fillStyle = '#451a03';
+      ctx.strokeStyle = '#1c0701';
+      ctx.lineWidth = 1.5;
+      ctx.fillRect(bx1 - 6, by1 - pH, 12, pH + 4);
+      ctx.strokeRect(bx1 - 6, by1 - pH, 12, pH + 4);
+      ctx.fillRect(bx2 - 6, by2 - pH, 12, pH + 4);
+      ctx.strokeRect(bx2 - 6, by2 - pH, 12, pH + 4);
+      // Toppliga stolp-knoppar
+      ctx.fillStyle = '#7c2d12';
+      ctx.fillRect(bx1 - 9, by1 - pH - 4, 18, 6);
+      ctx.fillRect(bx2 - 9, by2 - pH - 4, 18, 6);
+      // Övre rep — spänt rakt mellan stolparnas toppar
+      ctx.strokeStyle = '#a16207';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(bx1, by1 - pH + 2);
+      ctx.lineTo(bx2, by2 - pH + 2);
+      ctx.stroke();
+      // Plankor + nedre rep (sag-kurva, parabel)
+      const SEG = 28; // pixelsteg längs bron
+      const totalPx = bx2 - bx1;
+      const steps = Math.max(8, Math.floor(totalPx / SEG));
+      // Nedre rep (sag)
+      ctx.strokeStyle = '#854d0e';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      for (let i = 0; i <= steps; i++) {
+        const u = i / steps;
+        const sx = bx1 + totalPx * u;
+        const sagPx = 4 * sag * u * (1 - u);
+        const sy = by1 + sagPx + wob;
+        if (i === 0) ctx.moveTo(sx, sy);
+        else ctx.lineTo(sx, sy);
+      }
+      ctx.stroke();
+      // Plankor
+      const plankW = 8, plankH = 4;
+      for (let i = 0; i < steps; i++) {
+        const u = (i + 0.5) / steps;
+        const sx = bx1 + totalPx * u;
+        const sagPx = 4 * sag * u * (1 - u);
+        const sy = by1 + sagPx + wob;
+        // Vertikalt rep från övre rep ned till plankan
+        ctx.strokeStyle = 'rgba(120, 53, 15, 0.65)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(sx, by1 - pH + 2);
+        ctx.lineTo(sx, sy);
+        ctx.stroke();
+        // Plankan
+        ctx.fillStyle = i % 2 === 0 ? '#92400e' : '#78350f';
+        ctx.strokeStyle = '#431407';
+        ctx.lineWidth = 1;
+        ctx.fillRect(sx - plankW * 0.5, sy - plankH * 0.5, plankW, plankH);
+        ctx.strokeRect(sx - plankW * 0.5, sy - plankH * 0.5, plankW, plankH);
+      }
     } else if (o.type === 'trampoline') {
       const gy = terrainAt(o.x);
       const [x, y] = worldToScreen(o.x, gy);
@@ -5886,8 +8222,13 @@ function drawObstacles() {
         const sx = x - padW / 2 + (i + 0.5) * (padW / stripeCount);
         ctx.fillRect(sx - 2, matY + 3, 4, padH * 0.55 - 6);
       }
-      // Tier badge for mega
-      if (o.tier === 'mega') {
+      // Tier badge — i hell visas ALLTID ← oavsett tier (samma riktnings-cue som kanonerna).
+      if (o.x < 0) {
+        ctx.fillStyle = '#fecaca';
+        ctx.font = 'bold 12px "Courier New", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('←', x, matY - 3);
+      } else if (o.tier === 'mega') {
         ctx.fillStyle = '#fef3c7';
         ctx.font = 'bold 10px "Courier New", monospace';
         ctx.textAlign = 'center';
@@ -5905,6 +8246,133 @@ function drawObstacles() {
         ctx.lineWidth = 3;
         ctx.strokeRect(x - padW / 2 - 2, matY - 2, padW + 4, padH * 0.55 + 4);
       }
+    } else if (o.type === 'saucer') {
+      // 🪞 Saucer — neon-cyan bowl med pulsande ring. Däcket sjunker ner när fångad.
+      const [x, y] = worldToScreen(o.x, o.y);
+      if (x < -50 || x > vw + 50) return;
+      const flash = (o.flashT || 0);
+      const pulse = 0.5 + 0.5 * Math.sin(state.time * 0.18);
+      const ringR = o.r * (1 + 0.1 * pulse);
+      ctx.save();
+      const glow = ctx.createRadialGradient(x, y, o.r * 0.6, x, y, ringR * 1.6);
+      glow.addColorStop(0, `rgba(34, 211, 238, ${0.4 + flash * 0.04})`);
+      glow.addColorStop(1, 'rgba(34, 211, 238, 0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath(); ctx.arc(x, y, ringR * 1.6, 0, Math.PI * 2); ctx.fill();
+      const bowl = ctx.createRadialGradient(x - 4, y - 6, 4, x, y, o.r);
+      bowl.addColorStop(0, '#1e293b');
+      bowl.addColorStop(0.6, '#0f172a');
+      bowl.addColorStop(1, '#020617');
+      ctx.fillStyle = bowl;
+      ctx.beginPath();
+      ctx.ellipse(x, y, o.r, o.r * 0.55, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = flash > 0 ? '#ffffff' : '#22d3ee';
+      ctx.lineWidth = flash > 0 ? 3.5 : 2;
+      ctx.beginPath();
+      ctx.ellipse(x, y, o.r, o.r * 0.55, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.fillStyle = `rgba(34, 211, 238, ${0.3 + pulse * 0.3})`;
+      ctx.beginPath();
+      ctx.ellipse(x, y + 3, o.r * 0.55, o.r * 0.25, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#22d3ee';
+      ctx.font = 'bold 14px system-ui';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('S', x, y + 1);
+      ctx.textBaseline = 'alphabetic';
+      // Countdown-ring om fångat
+      if (o.captured && o.holdT > 0) {
+        const captureP = 1 - o.holdT / 90;
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(x, y, o.r * 1.2, -Math.PI / 2, -Math.PI / 2 + captureP * Math.PI * 2);
+        ctx.stroke();
+      }
+      ctx.restore();
+      return;
+    } else if (o.type === 'slingshot') {
+      // 🪂 Slingshot — triangulär neon-studsmatta. Pekar vänster (slope=-1) eller höger (slope=1).
+      const sy = terrainAt(o.x) - o.h;
+      const [x, y] = worldToScreen(o.x, sy);
+      if (x + o.w < -50 || x > vw + 50) return;
+      const flash = (o.flashT || 0);
+      if (o.flashT > 0) o.flashT--;
+      const baseY = y + o.h;
+      // Triangel: tip på toppen i slope-riktningen
+      const tipX = o.slope > 0 ? x + o.w : x;
+      const tipY = y;
+      const baseLeft = x;
+      const baseRight = x + o.w;
+      // Glow
+      ctx.save();
+      const glowAlpha = 0.4 + flash * 0.05;
+      const grad = ctx.createLinearGradient(x, y, x + o.w, baseY);
+      grad.addColorStop(0, `rgba(236, 72, 153, ${glowAlpha})`);
+      grad.addColorStop(1, `rgba(168, 85, 247, ${glowAlpha * 0.6})`);
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.moveTo(tipX, tipY);
+      ctx.lineTo(baseRight, baseY);
+      ctx.lineTo(baseLeft, baseY);
+      ctx.closePath();
+      ctx.fill();
+      // Neon-kant
+      ctx.strokeStyle = flash > 0 ? '#ffffff' : '#ec4899';
+      ctx.lineWidth = flash > 0 ? 4 : 2.5;
+      ctx.stroke();
+      // Cyan-streck inuti (LED-detalj)
+      ctx.strokeStyle = '#22d3ee';
+      ctx.lineWidth = 1.5;
+      const midX = (tipX + baseLeft + baseRight) / 3;
+      const midY = (tipY + baseY * 2) / 3;
+      ctx.beginPath();
+      ctx.moveTo(midX - 8, midY);
+      ctx.lineTo(midX + 8, midY);
+      ctx.stroke();
+      ctx.restore();
+      return;
+    } else if (o.type === 'droptarget' && !o.broken) {
+      // 🎯 Drop target — vit/röd pelare med "DROP"-text.
+      const dth = o.h;
+      const dty = terrainAt(o.x) - dth;
+      const [x, y] = worldToScreen(o.x, dty);
+      if (x + 22 < -50 || x > vw + 50) return;
+      // Skugga
+      const [gx, gy] = worldToScreen(o.x + 11, terrainAt(o.x));
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.beginPath(); ctx.ellipse(gx, gy + 2, 14, 3.5, 0, 0, Math.PI * 2); ctx.fill();
+      // Pelar-kropp (vit→ljusgrå)
+      const dpg = ctx.createLinearGradient(x, y, x + 22, y);
+      dpg.addColorStop(0, '#f8fafc');
+      dpg.addColorStop(0.5, '#e2e8f0');
+      dpg.addColorStop(1, '#94a3b8');
+      ctx.fillStyle = dpg;
+      ctx.fillRect(x, y, 22, dth);
+      ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1.5;
+      ctx.strokeRect(x, y, 22, dth);
+      // Röd topp + neon-glöd
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(x, y, 22, 8);
+      // Pulserande glöd runt pelaren
+      const pulse = 0.4 + 0.3 * Math.sin(state.time * 0.18 + o.x * 0.01);
+      ctx.strokeStyle = `rgba(34, 211, 238, ${pulse})`;
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x - 2, y - 2, 26, dth + 4);
+      // "DROP"-text vertikalt
+      ctx.save();
+      ctx.translate(x + 11, y + dth/2);
+      ctx.rotate(-Math.PI/2);
+      ctx.fillStyle = '#1e293b';
+      ctx.font = 'bold 10px system-ui';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('DROP', 0, 0);
+      ctx.restore();
+      ctx.textBaseline = 'alphabetic';
+      return;
     } else if (o.type === 'wall' && !o.broken) {
       const wy = terrainAt(o.x) - o.h;
       const [x, y] = worldToScreen(o.x, wy);
@@ -6000,6 +8468,8 @@ function drawObstacles() {
       if (x < -80 || x > vw + 80) return;
       ctx.save();
       ctx.translate(x, y);
+      // Hell — mirror sprite så piprinningen pekar visuellt åt vänster (i färdriktningen).
+      if (o.x < 0) ctx.scale(-1, 1);
       // Shadow
       ctx.fillStyle = 'rgba(0,0,0,0.35)';
       ctx.beginPath(); ctx.ellipse(0, 2, 26, 5, 0, 0, Math.PI * 2); ctx.fill();
@@ -6620,6 +9090,110 @@ function drawObstacles() {
       ctx.textAlign = 'center';
       ctx.fillText('🎯 MÅL', x, ty1 - 24);
       ctx.textAlign = 'left';
+    } else if (o.type === 'finishHell') {
+      const gy = terrainAt(o.x);
+      const [x, y] = worldToScreen(o.x, gy);
+      if (x < -150 || x > vw + 150) return;
+      // ===== HELL Target Chimney Tower (svart sten + röda fogar) =====
+      const towerW = 90;
+      const towerH = 360;
+      const tx1 = x - towerW / 2;
+      const ty1 = y - towerH;
+      // Tower base
+      ctx.fillStyle = '#1c0a0a';
+      ctx.fillRect(tx1 - 8, y - 20, towerW + 16, 20);
+      ctx.strokeStyle = '#7f1d1d'; ctx.lineWidth = 2.5;
+      ctx.strokeRect(tx1 - 8, y - 20, towerW + 16, 20);
+      // Tower body (svart sten)
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fillRect(tx1, ty1, towerW, towerH);
+      ctx.strokeStyle = '#7f1d1d'; ctx.lineWidth = 3;
+      ctx.strokeRect(tx1, ty1, towerW, towerH);
+      // Brick pattern (mörkröda fogar)
+      ctx.strokeStyle = 'rgba(220,38,38,0.45)'; ctx.lineWidth = 1;
+      for (let row = 0; row < Math.floor(towerH / 16); row++) {
+        const offX = row % 2 === 0 ? 0 : towerW / 6;
+        ctx.beginPath();
+        ctx.moveTo(tx1, ty1 + row * 16); ctx.lineTo(tx1 + towerW, ty1 + row * 16);
+        ctx.stroke();
+        for (let c = 0; c < 6; c++) {
+          const cx = tx1 + c * (towerW / 3) + offX;
+          if (cx > tx1 && cx < tx1 + towerW) {
+            ctx.beginPath();
+            ctx.moveTo(cx, ty1 + row * 16); ctx.lineTo(cx, ty1 + (row + 1) * 16);
+            ctx.stroke();
+          }
+        }
+      }
+      // Top cap (mörkröd)
+      ctx.fillStyle = '#7f1d1d';
+      ctx.fillRect(tx1 - 6, ty1 - 12, towerW + 12, 14);
+      ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 2.5;
+      ctx.strokeRect(tx1 - 6, ty1 - 12, towerW + 12, 14);
+      // Horizontal band
+      ctx.fillStyle = '#7f1d1d';
+      ctx.fillRect(tx1, ty1 + towerH * 0.55, towerW, 6);
+
+      // ===== HELL BULLSEYE (rött/svart) =====
+      const cy = y - 220;
+      const cx = x;
+      // Outer ring (mörklila)
+      ctx.fillStyle = '#581c87';
+      ctx.beginPath(); ctx.arc(cx, cy, 100, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 2.5; ctx.stroke();
+      // Ring 4 (lila)
+      ctx.fillStyle = '#7c3aed';
+      ctx.beginPath(); ctx.arc(cx, cy, 65, 0, Math.PI * 2); ctx.fill();
+      ctx.stroke();
+      // Ring 3 (mörkröd)
+      ctx.fillStyle = '#991b1b';
+      ctx.beginPath(); ctx.arc(cx, cy, 38, 0, Math.PI * 2); ctx.fill();
+      ctx.stroke();
+      // Bullseye (svart)
+      ctx.fillStyle = '#0a0a0a';
+      ctx.beginPath(); ctx.arc(cx, cy, 18, 0, Math.PI * 2); ctx.fill();
+      ctx.stroke();
+      // Center dot (glödande röd)
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath(); ctx.arc(cx, cy, 6, 0, Math.PI * 2); ctx.fill();
+
+      // Labels
+      ctx.fillStyle = '#fef3c7';
+      ctx.font = 'bold 11px "Courier New", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('2500', cx, cy - 30);
+      ctx.fillText('1000', cx + 48, cy - 2);
+      ctx.fillText('500',  cx + 78, cy + 28);
+      ctx.fillText('200',  cx + 108, cy + 8);
+
+      // Ladder (vänster sida — spegelvänd)
+      ctx.strokeStyle = '#7f1d1d'; ctx.lineWidth = 3.5;
+      ctx.beginPath();
+      ctx.moveTo(tx1 + 4, y);  ctx.lineTo(tx1 + 4, ty1 + 40);
+      ctx.moveTo(tx1 + 10, y); ctx.lineTo(tx1 + 10, ty1 + 40);
+      ctx.stroke();
+      ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 2;
+      for (let r = 0; r < 14; r++) {
+        const ry = y - 20 - r * 24;
+        if (ry < ty1 + 40) break;
+        ctx.beginPath();
+        ctx.moveTo(tx1 + 4, ry); ctx.lineTo(tx1 + 10, ry);
+        ctx.stroke();
+      }
+
+      // "🔥 HELL MÅL" banner
+      ctx.fillStyle = '#7f1d1d';
+      ctx.fillRect(tx1 - 14, ty1 - 40, towerW + 28, 22);
+      ctx.strokeStyle = '#fef3c7'; ctx.lineWidth = 2;
+      ctx.strokeRect(tx1 - 14, ty1 - 40, towerW + 28, 22);
+      ctx.fillStyle = '#fef3c7';
+      ctx.font = 'bold 14px "Courier New", monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('🔥 HELL MÅL', x, ty1 - 24);
+      ctx.textAlign = 'left';
+    }
+    } finally {
+      // (overlay-baserad mörkning, inga restore behövda här)
     }
   });
 }
@@ -6699,11 +9273,15 @@ function drawOneLadderMan(i) {
   ctx.translate(wx, wy);
   if (faceLeft) ctx.scale(-1, 1);  // mirror if facing left
   // Colors (match launcher worker)
+  // 🧑‍🚀 Rymden: vit rymddräkt + glashjälm
+  // 🤿 Djuphavet: mörkblå dykardräkt + dykarmask + syrgastank
+  const _astro = biomeAt(L.x) === SPACE_INDEX;
+  const _diver = biomeAt(L.x) === DEEP_INDEX;
   const SKIN = '#fde68a';
   const OUTLINE = '#0f172a';
-  const OVERALL = '#2563eb';
-  const CAP = '#1e40af';
-  const CAP_BRIM = '#0f172a';
+  const OVERALL = _astro ? '#e5e7eb' : (_diver ? '#1e3a8a' : '#2563eb');
+  const CAP = _astro ? '#f8fafc' : '#1e40af';
+  const CAP_BRIM = _astro ? '#cbd5e1' : '#0f172a';
   // Walking leg bounce
   const walkBob = L.walking > 0 ? Math.sin(state.time * 0.6) * 2 : 0;
   // Legs (overalls)
@@ -6735,17 +9313,92 @@ function drawOneLadderMan(i) {
   // Smile
   ctx.strokeStyle = OUTLINE; ctx.lineWidth = 1;
   ctx.beginPath(); ctx.arc(2, -34, 1.8, 0.15, Math.PI - 0.15); ctx.stroke();
-  // Hard hat
-  ctx.fillStyle = CAP;
-  ctx.beginPath();
-  ctx.ellipse(0, -41, 8, 5.5, 0, Math.PI, 0);
-  ctx.fill();
-  ctx.fillRect(-8, -41, 16, 2);
-  ctx.strokeStyle = CAP_BRIM; ctx.lineWidth = 1;
-  ctx.strokeRect(-8, -41, 16, 2);
-  // Hat yellow stripe
-  ctx.fillStyle = '#fbbf24';
-  ctx.fillRect(-8, -40, 16, 1);
+  if (!_astro && !_diver) {
+    // Hard hat
+    ctx.fillStyle = CAP;
+    ctx.beginPath();
+    ctx.ellipse(0, -41, 8, 5.5, 0, Math.PI, 0);
+    ctx.fill();
+    ctx.fillRect(-8, -41, 16, 2);
+    ctx.strokeStyle = CAP_BRIM; ctx.lineWidth = 1;
+    ctx.strokeRect(-8, -41, 16, 2);
+    // Hat yellow stripe
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillRect(-8, -40, 16, 1);
+  } else if (_astro) {
+    // 🧑‍🚀 Astronauthjälm runt huvudet (huvud-cirkel @ (0,-36) r=6.5)
+    const hcx = 0, hcy = -36, hr = 9;
+    const hg = ctx.createRadialGradient(hcx - 2, hcy - 2, 1.5, hcx, hcy, hr);
+    hg.addColorStop(0, '#ffffff');
+    hg.addColorStop(0.7, '#e2e8f0');
+    hg.addColorStop(1, '#94a3b8');
+    ctx.fillStyle = hg;
+    ctx.strokeStyle = OUTLINE; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.arc(hcx, hcy, hr, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    // Gold-visir (oval över ansiktet)
+    const vg = ctx.createLinearGradient(hcx, hcy - hr * 0.6, hcx, hcy + hr * 0.6);
+    vg.addColorStop(0, '#fde047');
+    vg.addColorStop(0.55, '#ca8a04');
+    vg.addColorStop(1, '#78350f');
+    ctx.fillStyle = vg;
+    ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 0.9;
+    ctx.beginPath();
+    ctx.ellipse(hcx, hcy + 0.5, hr * 0.78, hr * 0.7, 0, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+    // Reflektion
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.beginPath();
+    ctx.ellipse(hcx - 2, hcy - 1, 2.2, 1.0, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+    // Antennlampa
+    ctx.fillStyle = '#ef4444';
+    ctx.beginPath(); ctx.arc(hcx, hcy - hr - 1.5, 1.4, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = OUTLINE; ctx.lineWidth = 0.7; ctx.stroke();
+    // Liten PLSS-ryggsäck synlig bakom torso (silvergrå rektangel)
+    ctx.fillStyle = '#94a3b8';
+    ctx.fillRect(-10, -27, 3, 13);
+    ctx.strokeStyle = OUTLINE; ctx.lineWidth = 0.8;
+    ctx.strokeRect(-10, -27, 3, 13);
+  } else if (_diver) {
+    // 🤿 Dykarhjälm (silver-dome + glasmask + syrgastank)
+    const hcx = 0, hcy = -36, hr = 9;
+    const hg = ctx.createRadialGradient(hcx - 2, hcy - 3, 1.5, hcx, hcy, hr);
+    hg.addColorStop(0, '#f1f5f9');
+    hg.addColorStop(0.6, '#94a3b8');
+    hg.addColorStop(1, '#475569');
+    ctx.fillStyle = hg;
+    ctx.strokeStyle = OUTLINE; ctx.lineWidth = 1.2;
+    ctx.beginPath(); ctx.arc(hcx, hcy, hr, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+    // Glasmask (turkos→djupblå)
+    const vg = ctx.createLinearGradient(hcx, hcy - hr * 0.6, hcx, hcy + hr * 0.6);
+    vg.addColorStop(0, '#67e8f9');
+    vg.addColorStop(0.55, '#0c4a6e');
+    vg.addColorStop(1, '#020617');
+    ctx.fillStyle = vg;
+    ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 0.9;
+    ctx.beginPath();
+    ctx.ellipse(hcx, hcy + 0.5, hr * 0.78, hr * 0.7, 0, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+    // Reflektion
+    ctx.fillStyle = 'rgba(255,255,255,0.55)';
+    ctx.beginPath();
+    ctx.ellipse(hcx - 2, hcy - 1, 2.2, 1.0, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+    // Syrgastank (vit cylinder + röd topp)
+    ctx.fillStyle = '#e5e7eb';
+    ctx.fillRect(-10, -27, 3, 13);
+    ctx.strokeStyle = OUTLINE; ctx.lineWidth = 0.8;
+    ctx.strokeRect(-10, -27, 3, 13);
+    ctx.fillStyle = '#dc2626';
+    ctx.fillRect(-10, -27, 3, 2.5);
+    ctx.strokeRect(-10, -27, 3, 2.5);
+    // Slang från tank till hjälm (gul)
+    ctx.strokeStyle = '#fbbf24'; ctx.lineWidth = 1.4;
+    ctx.beginPath();
+    ctx.moveTo(-8, -25);
+    ctx.quadraticCurveTo(-12, -34, hcx - hr + 1, hcy + 2);
+    ctx.stroke();
+  }
   // Arm reaching to ladder — stroke from shoulder to a point on the ladder's base rail
   ctx.strokeStyle = OVERALL; ctx.lineWidth = 5; ctx.lineCap = 'round';
   // In local coords, ladder base (sbx, sby) is at (-standOff, +4). If mirrored (faceLeft), flip x sign.
@@ -6923,6 +9576,38 @@ function drawPickups() {
       ctx.quadraticCurveTo(-6, 16 + Math.sin(ft) * 2, 0, 22 + Math.sin(ft) * 3);
       ctx.quadraticCurveTo(6, 16 + Math.cos(ft) * 2, 0, 11);
       ctx.fill();
+      ctx.restore();
+    } else if (p.type === 'bubble') {
+      // 🫧 Bubble — cyan luftbubbla med vit highlight, fyller på syre.
+      ctx.save();
+      ctx.translate(x, y);
+      const pulse = 1 + Math.sin(state.time * 0.20 + p._i) * 0.08;
+      const bob = Math.sin(state.time * 0.10 + p._i * 0.5) * 4;
+      ctx.translate(0, bob);
+      ctx.scale(pulse, pulse);
+      // Glow
+      const bg = ctx.createRadialGradient(0, 0, 4, 0, 0, 26);
+      bg.addColorStop(0, 'rgba(186,230,253,0.55)');
+      bg.addColorStop(1, 'rgba(34,211,238,0)');
+      ctx.fillStyle = bg;
+      ctx.beginPath(); ctx.arc(0, 0, 26, 0, Math.PI * 2); ctx.fill();
+      // Bubbel-kropp
+      const bub = ctx.createRadialGradient(-4, -4, 2, 0, 0, 14);
+      bub.addColorStop(0, 'rgba(255,255,255,0.85)');
+      bub.addColorStop(0.5, 'rgba(186,230,253,0.55)');
+      bub.addColorStop(1, 'rgba(8,145,178,0.30)');
+      ctx.fillStyle = bub;
+      ctx.beginPath(); ctx.arc(0, 0, 14, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#0891b2'; ctx.lineWidth = 1.5;
+      ctx.stroke();
+      // Vit highlight uppe till vänster
+      ctx.fillStyle = 'rgba(255,255,255,0.85)';
+      ctx.beginPath(); ctx.arc(-4, -4, 3.5, 0, Math.PI * 2); ctx.fill();
+      // Liten andra bubbla nedanför
+      ctx.fillStyle = 'rgba(186,230,253,0.55)';
+      ctx.beginPath(); ctx.arc(7, 8, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.strokeStyle = '#0e7490'; ctx.lineWidth = 0.8;
+      ctx.stroke();
       ctx.restore();
     } else if (p.type === 'airjump') {
       // Airjump — blue parachute with up-arrow
@@ -7203,35 +9888,43 @@ function drawPickups() {
 // Effekten på tiren = stark uppåtsug + slumpmässiga sidokrafter (chaos), spinner upp tiren.
 function spawnTornado() {
   if (!state.tire) return;
-  // Försök spawna 400-1000px framför tiren. Om utanför desert: prova kortare
-  // avstånd ner till 200px, annars bakom tiren. Garanterar att tornadon faktiskt visas.
-  let aheadX = state.tire.x + 400 + Math.random() * 600;
-  if (biomeAt(aheadX) !== 0) {
-    // Sök närmare position som fortfarande är i desert
+  const tireBi = biomeAt(state.tire.x);
+  const inHell = tireBi === HELL_INDEX;
+  // I hell går banan åt vänster, så spawna åt vänster om tiren.
+  const dirSign = inHell ? -1 : 1;
+  // Försök spawna 400-1000px framför tiren. Om utanför target-biomet: prova kortare avstånd.
+  let aheadX = state.tire.x + dirSign * (400 + Math.random() * 600);
+  const targetBi = (x) => {
+    const b = biomeAt(x);
+    return inHell ? b === HELL_INDEX : b === 0;
+  };
+  if (!targetBi(aheadX)) {
     const candidates = [
-      state.tire.x + 250 + Math.random() * 200,
-      state.tire.x + 150,
-      state.tire.x - 200 - Math.random() * 200,
+      state.tire.x + dirSign * (250 + Math.random() * 200),
+      state.tire.x + dirSign * 150,
+      state.tire.x - dirSign * (200 + Math.random() * 200),
     ];
-    aheadX = candidates.find(x => biomeAt(x) === 0);
+    aheadX = candidates.find(targetBi);
     if (aheadX == null) return;
   }
   const groundY = terrainAt(aheadX);
   state.tornados.push({
     x: aheadX,
     y: groundY,                       // basen står på marken
-    height: 220 + Math.random() * 80, // 220-300px hög
-    radius: 60 + Math.random() * 20,  // 60-80px bred topp
+    height: (inHell ? 280 : 220) + Math.random() * 80, // hell tornados är högre
+    radius: (inHell ? 70 : 60) + Math.random() * 20,
     scale: 0.2,
-    phase: 'grow',                    // grow → active → shrink
+    phase: 'grow',
     phaseT: 0,
     growDur: 120,
-    activeDur: 360 + Math.floor(Math.random() * 180),  // 6-9s @ 60fps
+    activeDur: 360 + Math.floor(Math.random() * 180),
     shrinkDur: 120,
     rot: 0,
-    drift: (Math.random() < 0.5 ? -1 : 1) * (0.4 + Math.random() * 0.6),  // px/frame
+    drift: (Math.random() < 0.5 ? -1 : 1) * (0.4 + Math.random() * 0.6),
     wobblePhase: Math.random() * Math.PI * 2,
-    hitTire: false,                   // har redan gett bonuspoäng?
+    hitTire: false,
+    isHell: inHell,                   // mörk färg + spawnar stenar
+    rockSpawnT: 60,                   // frames till nästa sten (bara hell)
   });
   // Spawn-FX
   addParticles(aheadX, groundY, '#a78bfa', 18, { up: 4, spread: 8, size: 3 });
@@ -7275,12 +9968,18 @@ window.debugSpawnStorm = window.debugSpawnWater;
 
 function updateTornados() {
   if (state.phase !== PHASE.FLY) return;
-  // Spawn-roll: bara om tiren är i öken och inga tornados aktiva.
+  // Spawn-roll: tiren i öken eller hell, inga tornados aktiva.
   state.tornadoSpawnT--;
-  if (state.tornadoSpawnT <= 0 && state.tornados.length === 0 && state.tire && biomeAt(state.tire.x) === 0) {
-    // Hög chans (80%) per roll — vill säkra att en tornado dyker upp under öken-passagen.
-    if (Math.random() < 0.8) spawnTornado();
-    state.tornadoSpawnT = 180 + Math.floor(Math.random() * 180); // 3-6s mellan rolls
+  const _tireBi = state.tire ? biomeAt(state.tire.x) : -1;
+  const _inSpawnBiome = (_tireBi === 0 || _tireBi === HELL_INDEX);
+  // 1 tornado i taget — annars laggar det och hjulet får ingenstans att ta vägen.
+  const _maxActive = 1;
+  if (state.tornadoSpawnT <= 0 && state.tornados.length < _maxActive && state.tire && _inSpawnBiome) {
+    if (Math.random() < 0.92) spawnTornado();
+    // Hell ska vara värre — kortare intervall mellan tornados.
+    state.tornadoSpawnT = (_tireBi === HELL_INDEX)
+      ? 150 + Math.floor(Math.random() * 180)
+      : 180 + Math.floor(Math.random() * 180);
   }
   for (let i = state.tornados.length - 1; i >= 0; i--) {
     const tn = state.tornados[i];
@@ -7292,13 +9991,17 @@ function updateTornados() {
       if (tn.phaseT >= tn.growDur) { tn.phase = 'active'; tn.phaseT = 0; tn.scale = 1.0; }
     } else if (tn.phase === 'active') {
       tn.scale = 1.0;
-      // Drift horisontellt, men håll dig inom desert-biome
       tn.x += tn.drift;
-      if (biomeAt(tn.x) !== 0) tn.drift *= -1;  // studsa tillbaka vid biome-gräns
+      // Studsa tillbaka vid biome-gräns (fungerar både för öken=0 och hell=5).
+      const _expectBi = tn.isHell ? HELL_INDEX : 0;
+      if (biomeAt(tn.x) !== _expectBi) tn.drift *= -1;
       if (tn.phaseT >= tn.activeDur) { tn.phase = 'shrink'; tn.phaseT = 0; }
-      // Spiral-partiklar runt tornadon
+      // Spiral-partiklar runt tornadon — mörka i hell.
       if (state.time % 2 === 0) {
         const tr = tn.radius * tn.scale;
+        const _pColor = tn.isHell
+          ? `rgba(40, 25, 25, ${0.55 + Math.random() * 0.35})`
+          : `rgba(180, 160, 130, ${0.4 + Math.random() * 0.3})`;
         for (let p = 0; p < 3; p++) {
           const ang = tn.rot + (p / 3) * Math.PI * 2;
           const yOff = -Math.random() * tn.height * tn.scale;
@@ -7309,10 +10012,34 @@ function updateTornados() {
             vx: -Math.sin(ang) * 4 + (Math.random() - 0.5),
             vy: -1.2 - Math.random() * 1.5,
             life: 30, max: 30,
-            color: `rgba(180, 160, 130, ${0.4 + Math.random() * 0.3})`,
+            color: _pColor,
             size: 2 + Math.random() * 2,
             g: 0, shape: 'square',
           });
+        }
+      }
+      // Hell — kraftig vind ger sten-projektiler regelbundet.
+      if (tn.isHell) {
+        tn.rockSpawnT = (tn.rockSpawnT || 0) - 1;
+        if (tn.rockSpawnT <= 0 && state.tire) {
+          // Sten flyger från tornadon mot hjulets nuvarande position.
+          const dx = state.tire.x - tn.x;
+          const dy = state.tire.y - (tn.y - tn.height * tn.scale * 0.6);
+          const dist = Math.max(80, Math.hypot(dx, dy));
+          const speed = 8 + Math.random() * 3;
+          state.tornadoRocks = state.tornadoRocks || [];
+          state.tornadoRocks.push({
+            x: tn.x + (Math.random() - 0.5) * tn.radius * 0.4,
+            y: tn.y - tn.height * tn.scale * (0.5 + Math.random() * 0.3),
+            vx: (dx / dist) * speed + (Math.random() - 0.5) * 1.5,
+            vy: (dy / dist) * speed - 1.5,
+            r: 9 + Math.random() * 4,
+            rot: Math.random() * Math.PI * 2,
+            vrot: (Math.random() - 0.5) * 0.2,
+            life: 240,
+          });
+          tn.rockSpawnT = 90 + Math.floor(Math.random() * 90);
+          tone(120, 0.1, 'sawtooth', 0.06, -200);
         }
       }
     } else if (tn.phase === 'shrink') {
@@ -7331,8 +10058,12 @@ function updateTornados() {
 
 function applyTornadoForces() {
   if (state.phase !== PHASE.FLY || !state.tire || state.tornados.length === 0) return;
+  // Eskape-fönster: när spelaren har tappat eller dragit-skjutit ut sig så vill vi
+  // inte att tornado-suget direkt suger tillbaka däcket. Låt den flyga fritt en stund.
+  if ((state.tornadoEscapeT || 0) > 0) return;
   const t = state.tire;
   const TS = state.timeScale || 1;
+  state.tornadoStuck = null;
   for (const tn of state.tornados) {
     if (tn.scale < 0.3) continue; // för liten för effekt
     const cx = tn.renderX || tn.x;
@@ -7369,6 +10100,7 @@ function applyTornadoForces() {
     const localFrac = Math.max(0, Math.min(1, yFromBase / (tn.height * tn.scale)));
     const localR = tn.radius * tn.scale * (0.5 + localFrac * 0.5); // smalare nedtill, bredare upptill
     if (Math.abs(dx) > localR + TIRE_R + 30) continue;
+    state.tornadoStuck = tn;
     const grip = Math.max(0, 1 - Math.abs(dx) / (localR + TIRE_R + 30));
     // Stark uppåt-sug
     t.vy -= (1.4 + grip * 1.6) * TS;
@@ -7406,10 +10138,150 @@ function drawTornados() {
     ctx.font = `${Math.max(20, Math.round(fontPx))}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = 'rgba(0,0,0,0.35)';
-    ctx.fillText('🌪️', 4, 6);
-    ctx.fillStyle = '#fff';
-    ctx.fillText('🌪️', 0, 0);
+    // Tornado-emoji — i hell lägger vi extra svart skugga + röd glöd-tint istället för filter.
+    if (tn.isHell) {
+      ctx.fillStyle = 'rgba(0,0,0,0.7)';
+      ctx.fillText('🌪️', 6, 8);
+      ctx.fillStyle = '#fff';
+      ctx.fillText('🌪️', 0, 0);
+      ctx.globalAlpha = 0.4 + Math.sin(state.time * 0.12) * 0.15;
+      ctx.fillStyle = '#7f1d1d';
+      ctx.fillText('🌪️', 0, 0);
+      ctx.globalAlpha = 1;
+    } else {
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      ctx.fillText('🌪️', 4, 6);
+      ctx.fillStyle = '#fff';
+      ctx.fillText('🌪️', 0, 0);
+    }
+    ctx.restore();
+  }
+}
+
+// ====== WIND ROCKS 🪨 (hell — flyger med kraftig vindstöt) ======
+function updateWindRocks() {
+  if (state.phase !== PHASE.FLY) return;
+  if (state.windDisabled) return;
+  if (!state.tire) return;
+  if (biomeAt(state.tire.x) !== HELL_INDEX) return;
+  if (!state.wind || !state.wind.gustActive) return;
+  const wstr = state.wind.strength;
+  if (Math.abs(wstr) < 0.4) return;
+  state.windRockSpawnT = (state.windRockSpawnT || 0) - (state.timeScale || 1);
+  if (state.windRockSpawnT > 0) return;
+  state.windRockSpawnT = 50 + Math.floor(Math.random() * 60);
+  const arr = state.tornadoRocks || (state.tornadoRocks = []);
+  if (arr.length > 16) return;
+  const dir = wstr > 0 ? 1 : -1;
+  const camX = state.cam.x;
+  const vw = viewWidth();
+  // Spawn precis utanför motvindssidan så stenen flyger genom vyn
+  const spawnX = (dir > 0) ? camX - 80 : camX + vw + 80;
+  const groundY = terrainAt(spawnX);
+  const spawnY = groundY - (220 + Math.random() * 200);
+  const baseSpeed = 7 + Math.abs(wstr) * 6;
+  arr.push({
+    x: spawnX,
+    y: spawnY,
+    vx: dir * (baseSpeed + Math.random() * 2),
+    vy: -7 - Math.random() * 3,
+    rot: Math.random() * Math.PI * 2,
+    vrot: (Math.random() - 0.5) * 0.18,
+    r: 11 + Math.random() * 6,
+    life: 360,
+  });
+}
+
+// ====== TORNADO ROCKS 🪨 (hell — kastas ut från tornados) ======
+function updateTornadoRocks() {
+  if (state.phase !== PHASE.FLY) return;
+  const TS = state.timeScale || 1;
+  const arr = state.tornadoRocks || (state.tornadoRocks = []);
+  const t = state.tire;
+  for (let i = arr.length - 1; i >= 0; i--) {
+    const r = arr[i];
+    r.vy += 0.32 * TS;
+    r.x += r.vx * TS;
+    r.y += r.vy * TS;
+    r.rot += r.vrot * TS;
+    r.life -= TS;
+    // Damm-svans
+    if (state.particles.length < 380 && (state.time % 3) === 0) {
+      state.particles.push({
+        x: r.x + (Math.random() - 0.5) * 4,
+        y: r.y + (Math.random() - 0.5) * 4,
+        vx: -r.vx * 0.2 + (Math.random() - 0.5) * 0.6,
+        vy: -r.vy * 0.15 + (Math.random() - 0.5) * 0.6,
+        life: 22 + Math.floor(Math.random() * 12),
+        max: 30,
+        color: `rgba(60, 40, 40, ${0.5 + Math.random() * 0.3})`,
+        size: 1.5 + Math.random() * 1.5,
+        g: 0.04, shape: 'square',
+      });
+    }
+    // Kollision med hjulet
+    if (t && state.phase === PHASE.FLY && !state.drowning) {
+      const dx = t.x - r.x;
+      const dy = t.y - r.y;
+      if (Math.hypot(dx, dy) < TIRE_R + r.r) {
+        addParticles(r.x, r.y, '#451a0a', 16, { up: 5, spread: 7, size: 3 });
+        addParticles(r.x, r.y, '#7f1d1d', 10, { up: 4, spread: 6, size: 2 });
+        shake(8); state.hitstop = 2;
+        tone(140, 0.18, 'sawtooth', 0.18, -250);
+        const wasShielded = state.shieldT > 0;
+        damageTire(8, 18, '🪨 STEN');
+        if (!wasShielded) {
+          t.vx += dx > 0 ? 4 : -4;
+          t.vy -= 1.5;
+        }
+        arr.splice(i, 1);
+        continue;
+      }
+    }
+    // Mark-impakt
+    const groundY = terrainAt(r.x);
+    if (r.y > groundY) {
+      addParticles(r.x, groundY - 4, '#451a0a', 12, { up: 4, spread: 7, size: 3 });
+      tone(110, 0.16, 'sawtooth', 0.1, -350);
+      arr.splice(i, 1);
+      continue;
+    }
+    if (r.life <= 0) { arr.splice(i, 1); continue; }
+    // Cull utanför vyn
+    if (state.tire) {
+      const farX = state.cam.x + viewWidth() + 700;
+      const nearX = state.cam.x - 700;
+      if (r.x < nearX || r.x > farX) { arr.splice(i, 1); continue; }
+    }
+  }
+}
+
+function drawTornadoRocks() {
+  if (!state.tornadoRocks || state.tornadoRocks.length === 0) return;
+  for (const r of state.tornadoRocks) {
+    const [sx, sy] = worldToScreen(r.x, r.y);
+    ctx.save();
+    ctx.translate(sx, sy);
+    ctx.rotate(r.rot);
+    const z = state.zoom || 1;
+    const rr = r.r * z;
+    // Mörk stenkropp
+    const g = ctx.createRadialGradient(-rr * 0.3, -rr * 0.3, rr * 0.2, 0, 0, rr);
+    g.addColorStop(0, '#52525b');
+    g.addColorStop(0.6, '#27272a');
+    g.addColorStop(1, '#0c0a09');
+    ctx.fillStyle = g;
+    ctx.beginPath(); ctx.arc(0, 0, rr, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#0c0a09'; ctx.lineWidth = 1.5; ctx.stroke();
+    // Sprickor
+    ctx.strokeStyle = 'rgba(120,40,40,0.55)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(-rr * 0.5, -rr * 0.3);
+    ctx.lineTo(rr * 0.3, rr * 0.2);
+    ctx.moveTo(-rr * 0.2, rr * 0.4);
+    ctx.lineTo(rr * 0.4, -rr * 0.1);
+    ctx.stroke();
     ctx.restore();
   }
 }
@@ -7444,7 +10316,9 @@ function spawnBirdFlock(forceX) {
 function updateBirds() {
   if (state.phase !== PHASE.FLY) return;
   state.birdSpawnT--;
-  if (state.birdSpawnT <= 0 && state.tire) {
+  // Inga fåglar i rymden — där flyger UFOn istället. Inga fåglar i djuphavet — undervatten.
+  const _bi = state.tire ? biomeAt(state.tire.x) : -1;
+  if (state.birdSpawnT <= 0 && state.tire && _bi !== SPACE_INDEX && _bi !== DEEP_INDEX) {
     spawnBirdFlock();
     state.birdSpawnT = 180 + Math.floor(Math.random() * 360); // 3-9s mellan flockar
   }
@@ -7480,26 +10354,43 @@ function updateBirds() {
         b.gone = true;
         b.vx *= 0.4;
         b.vy = -2;
-        // Liten knockback på hjulet
         const t = state.tire;
-        t.vx += dx > 0 ? 1.2 : -1.2;
-        t.vy -= 1.0;
-        // Fjäder-partiklar
-        for (let p = 0; p < 8; p++) {
-          state.particles.push({
-            x: b.x, y: b.y,
-            vx: (Math.random() - 0.5) * 5,
-            vy: -1 - Math.random() * 3,
-            life: 60, max: 60,
-            color: `rgba(255, 255, 255, ${0.7 + Math.random() * 0.3})`,
-            size: 2 + Math.random() * 2,
-            g: 0.05, shape: 'square',
-          });
+        // STOMP: hjulet ovanför fågeln + på väg ned → krossa utan skada
+        const isStomp = dy < -4 && t.vy > 1;
+        if (isStomp) {
+          t.vy = -Math.max(8, Math.abs(t.vy) * 0.9);
+          for (let p = 0; p < 12; p++) {
+            state.particles.push({
+              x: b.x, y: b.y,
+              vx: (Math.random() - 0.5) * 5,
+              vy: -1 - Math.random() * 3,
+              life: 60, max: 60,
+              color: `rgba(255, 255, 255, ${0.7 + Math.random() * 0.3})`,
+              size: 2 + Math.random() * 2,
+              g: 0.05, shape: 'square',
+            });
+          }
+          awardScore(35, '🪶 STOMP!', '#fbbf24');
+          bumpMult(0.3);
+          tone(820, 0.12, 'square', 0.1, 200);
+        } else {
+          t.vx += dx > 0 ? 1.2 : -1.2;
+          t.vy -= 1.0;
+          for (let p = 0; p < 8; p++) {
+            state.particles.push({
+              x: b.x, y: b.y,
+              vx: (Math.random() - 0.5) * 5,
+              vy: -1 - Math.random() * 3,
+              life: 60, max: 60,
+              color: `rgba(255, 255, 255, ${0.7 + Math.random() * 0.3})`,
+              size: 2 + Math.random() * 2,
+              g: 0.05, shape: 'square',
+            });
+          }
+          awardScore(10, '🪶 PUFF!', '#fef3c7');
+          tone(620, 0.12, 'square', 0.08, 80);
+          damageTire(5, 10, '🐦 FÅGEL');
         }
-        awardScore(10, '🪶 PUFF!', '#fef3c7');
-        tone(620, 0.12, 'square', 0.08, 80);
-        // Liten skada 5-10%
-        damageTire(5, 10, '🐦 FÅGEL');
       }
     }
   }
@@ -7526,6 +10417,1033 @@ function drawBirds() {
     ctx.fillText('🐦', 2, 3);
     ctx.fillStyle = '#fff';
     ctx.fillText('🐦', 0, 0);
+    ctx.restore();
+  }
+}
+
+// ====== BATS 🦇 (hell-variant av fåglar) ======
+function spawnBatFlock(forceX) {
+  if (!state.tire) return;
+  // I hell går spelaren åt vänster — spawna åt vänster om hjulet.
+  const baseX = forceX != null ? forceX
+    : state.tire.x - 600 - Math.random() * 400;
+  if (biomeAt(baseX) !== HELL_INDEX) return;
+  const groundY = terrainAt(baseX);
+  const flightY = groundY - 180 - Math.random() * 220;
+  const flockSize = 5 + Math.floor(Math.random() * 5); // 5-9 fladdermöss
+  // 70% mot hjulet (höger), 30% från hjulet (vänster) — jagar oftast.
+  const dir = Math.random() < 0.7 ? 1 : -1;
+  const speed = (1.2 + Math.random() * 1.5) * dir;
+  const phaseOffset = Math.random() * Math.PI * 2;
+  for (let i = 0; i < flockSize; i++) {
+    state.bats.push({
+      x: baseX + i * (28 + Math.random() * 18) * (dir > 0 ? -1 : 1),
+      baseY: flightY + i * 6,
+      y: flightY,
+      vx: speed,
+      phase: phaseOffset + i * 0.3,
+      wing: Math.random() * Math.PI * 2,
+      hit: false,
+      gone: false,
+      flapSpeed: 0.34 + Math.random() * 0.12,
+    });
+  }
+}
+
+function updateBats() {
+  if (state.phase !== PHASE.FLY) return;
+  state.batSpawnT--;
+  // Spawnar bara om hjulet är i hell.
+  if (state.batSpawnT <= 0 && state.tire && biomeAt(state.tire.x) === HELL_INDEX) {
+    if (Math.random() < 0.9) spawnBatFlock();
+    // Ofta dubbel-flock samtidigt
+    if (Math.random() < 0.4) spawnBatFlock(state.tire.x - 800 - Math.random() * 500);
+    state.batSpawnT = 120 + Math.floor(Math.random() * 180); // 2-5s mellan flockar
+  }
+  const TS = state.timeScale || 1;
+  const camLeft = state.cam.x - 600;
+  const camRight = state.cam.x + W / (state.cam.zoom || 1) + 200;
+  for (let i = state.bats.length - 1; i >= 0; i--) {
+    const b = state.bats[i];
+    if (b.gone) {
+      b.vy = (b.vy || 0) + 0.25 * TS;
+      b.x += b.vx * TS;
+      b.y += b.vy * TS;
+      b.wing += 0.5 * TS;
+      if (b.y > terrainAt(b.x) - 5) state.bats.splice(i, 1);
+      continue;
+    }
+    b.x += b.vx * TS;
+    b.wing += b.flapSpeed * TS;
+    b.y = b.baseY + Math.sin(state.time * 0.08 + b.phase) * 28;
+    if (b.x < camLeft - 200 || b.x > camRight + 600) {
+      state.bats.splice(i, 1);
+      continue;
+    }
+    if (state.tire && !b.hit) {
+      const dx = state.tire.x - b.x;
+      const dy = state.tire.y - b.y;
+      if (Math.hypot(dx, dy) < TIRE_R + 14) {
+        b.hit = true;
+        b.gone = true;
+        b.vx *= 0.4;
+        b.vy = -2;
+        const t = state.tire;
+        const isStomp = dy < -4 && t.vy > 1;
+        if (isStomp) {
+          t.vy = -Math.max(8, Math.abs(t.vy) * 0.9);
+          for (let p = 0; p < 12; p++) {
+            state.particles.push({
+              x: b.x, y: b.y,
+              vx: (Math.random() - 0.5) * 5,
+              vy: -1 - Math.random() * 3,
+              life: 60, max: 60,
+              color: `rgba(60, 40, 60, ${0.7 + Math.random() * 0.3})`,
+              size: 2 + Math.random() * 2,
+              g: 0.05, shape: 'square',
+            });
+          }
+          awardScore(40, '🦇 STOMP!', '#fbbf24');
+          bumpMult(0.3);
+          tone(720, 0.12, 'square', 0.1, 200);
+        } else {
+          t.vx += dx > 0 ? 1.4 : -1.4;
+          t.vy -= 1.0;
+          for (let p = 0; p < 8; p++) {
+            state.particles.push({
+              x: b.x, y: b.y,
+              vx: (Math.random() - 0.5) * 5,
+              vy: -1 - Math.random() * 3,
+              life: 60, max: 60,
+              color: `rgba(60, 40, 60, ${0.7 + Math.random() * 0.3})`,
+              size: 2 + Math.random() * 2,
+              g: 0.05, shape: 'square',
+            });
+          }
+          awardScore(15, '🦇 PUFF!', '#a78bfa');
+          tone(420, 0.12, 'sawtooth', 0.1, -100);
+          damageTire(6, 12, '🦇 FLADDERMUS');
+        }
+      }
+    }
+  }
+}
+
+function drawBats() {
+  if (!state.bats || state.bats.length === 0) return;
+  for (const b of state.bats) {
+    const [sx, sy] = worldToScreen(b.x, b.y);
+    ctx.save();
+    ctx.translate(sx, sy);
+    if (b.gone) {
+      ctx.rotate(Math.sin(b.wing) * 0.6);
+      ctx.globalAlpha = 0.85;
+    } else {
+      ctx.rotate(Math.sin(b.wing) * 0.18);
+    }
+    if (b.vx > 0) ctx.scale(-1, 1);
+    ctx.font = '20px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.fillText('🦇', 2, 3);
+    ctx.fillStyle = '#fff';
+    ctx.fillText('🦇', 0, 0);
+    ctx.restore();
+  }
+}
+
+// ====== UFOs 🛸 (rymden — anfaller likt fåglar) ======
+function spawnUfoFlock(forceX) {
+  if (!state.tire) return;
+  const baseX = forceX != null ? forceX
+    : state.tire.x + 600 + Math.random() * 500;
+  const _bi = biomeAt(baseX);
+  if (_bi !== SPACE_INDEX && _bi !== DEEP_INDEX) return;
+  const _kind = _bi === DEEP_INDEX ? 'shark' : 'ufo';
+  const groundY = terrainAt(baseX);
+  const flightY = groundY - 220 - Math.random() * 220;
+  const flockSize = 1 + Math.floor(Math.random() * 2); // 1-2
+  // 70% mot hjulet, 30% från
+  const dir = Math.random() < 0.7 ? -1 : 1;
+  const speed = (1.2 + Math.random() * 1.4) * dir;
+  const phaseOffset = Math.random() * Math.PI * 2;
+  for (let i = 0; i < flockSize; i++) {
+    state.ufos.push({
+      x: baseX + i * (60 + Math.random() * 30) * (dir > 0 ? -1 : 1),
+      baseY: flightY + i * 14,
+      y: flightY,
+      vx: speed,
+      phase: phaseOffset + i * 0.5,
+      hover: Math.random() * Math.PI * 2,
+      hit: false,
+      gone: false,
+      lightT: Math.random() * Math.PI * 2,
+      r: 22,
+      kind: _kind,
+    });
+  }
+}
+
+function updateUfos() {
+  if (state.phase !== PHASE.FLY) return;
+  if (!state.ufos) return;
+  state.ufoSpawnT--;
+  const _ufoBi = state.tire ? biomeAt(state.tire.x) : -1;
+  if (state.ufoSpawnT <= 0 && state.tire && (_ufoBi === SPACE_INDEX || _ufoBi === DEEP_INDEX)) {
+    spawnUfoFlock();
+    state.ufoSpawnT = 200 + Math.floor(Math.random() * 280); // 3-8s mellan
+  }
+  const TS = state.timeScale || 1;
+  const camLeft = state.cam.x - 400;
+  const camRight = state.cam.x + W / (state.cam.zoom || 1) + 600;
+  for (let i = state.ufos.length - 1; i >= 0; i--) {
+    const u = state.ufos[i];
+    if (u.gone) {
+      u.vy = (u.vy || 0) + 0.22 * TS;
+      u.x += u.vx * TS;
+      u.y += u.vy * TS;
+      u.hover += 0.4 * TS;
+      if (u.y > terrainAt(u.x) - 5) state.ufos.splice(i, 1);
+      continue;
+    }
+    u.x += u.vx * TS;
+    u.lightT += 0.15 * TS;
+    // Hovrande sinusrörelse + svag jakt mot hjulets y-höjd
+    const targetY = state.tire ? state.tire.y - 80 : u.baseY;
+    u.baseY += (targetY - u.baseY) * 0.008;
+    u.y = u.baseY + Math.sin(state.time * 0.05 + u.phase) * 18;
+    if (u.x < camLeft - 200 || u.x > camRight + 600) {
+      state.ufos.splice(i, 1);
+      continue;
+    }
+    if (state.tire && !u.hit) {
+      const dx = state.tire.x - u.x;
+      const dy = state.tire.y - u.y;
+      if (Math.hypot(dx, dy) < TIRE_R + u.r) {
+        u.hit = true;
+        u.gone = true;
+        u.vx *= 0.4;
+        u.vy = -1;
+        const t = state.tire;
+        const isStomp = dy < -4 && t.vy > 1;
+        if (isStomp) {
+          t.vy = -Math.max(8, Math.abs(t.vy) * 0.9);
+          for (let p = 0; p < 16; p++) {
+            state.particles.push({
+              x: u.x, y: u.y,
+              vx: (Math.random() - 0.5) * 6,
+              vy: -1 - Math.random() * 4,
+              life: 60, max: 60,
+              color: `rgba(${Math.random() < 0.5 ? '148,163,184' : '34,211,238'},${0.7 + Math.random() * 0.3})`,
+              size: 2 + Math.random() * 3,
+              g: 0.05, shape: 'square',
+            });
+          }
+          if (u.kind === 'shark') {
+            awardScore(80, '🦈 STOMP!', '#22d3ee');
+          } else {
+            awardScore(60, '🛸 STOMP!', '#22d3ee');
+          }
+          bumpMult(0.4);
+          tone(820, 0.14, 'square', 0.12, 220);
+        } else {
+          t.vx += dx > 0 ? 1.6 : -1.6;
+          t.vy -= 1.0;
+          for (let p = 0; p < 10; p++) {
+            state.particles.push({
+              x: u.x, y: u.y,
+              vx: (Math.random() - 0.5) * 5,
+              vy: -1 - Math.random() * 3,
+              life: 60, max: 60,
+              color: `rgba(34,211,238,${0.6 + Math.random() * 0.3})`,
+              size: 2 + Math.random() * 3,
+              g: 0.05, shape: 'square',
+            });
+          }
+          if (u.kind === 'shark') {
+            awardScore(20, '🦈 BETT!', '#dc2626');
+            tone(280, 0.18, 'sawtooth', 0.14, -200);
+            damageTire(15, 22, '🦈 HAJ');
+            if (state.tire) state.deathCause = state.deathCause || 'shark';
+          } else {
+            awardScore(20, '🛸 KRASCH!', '#22d3ee');
+            tone(380, 0.16, 'sawtooth', 0.12, -180);
+            damageTire(8, 14, '🛸 UFO');
+          }
+        }
+      }
+    }
+  }
+}
+
+function drawUfos() {
+  if (!state.ufos || state.ufos.length === 0) return;
+  for (const u of state.ufos) {
+    const [sx, sy] = worldToScreen(u.x, u.y);
+    ctx.save();
+    ctx.translate(sx, sy);
+    if (u.gone) {
+      ctx.rotate(Math.sin(u.hover) * 0.5);
+      ctx.globalAlpha = 0.85;
+    }
+    if (u.kind === 'shark') {
+      // 🦈 Haj — torpedformad kropp + fenor + tänder. Speglas baserat på vx.
+      const facing = u.vx < 0 ? -1 : 1;
+      ctx.scale(facing, 1);
+      // Skugga
+      ctx.fillStyle = 'rgba(0,0,0,0.30)';
+      ctx.beginPath(); ctx.ellipse(0, 8, 28, 6, 0, 0, Math.PI * 2); ctx.fill();
+      // Kropp (torpedo)
+      const bodyGrad = ctx.createLinearGradient(0, -10, 0, 10);
+      bodyGrad.addColorStop(0, '#94a3b8');
+      bodyGrad.addColorStop(0.55, '#475569');
+      bodyGrad.addColorStop(1, '#1e293b');
+      ctx.fillStyle = bodyGrad;
+      ctx.beginPath();
+      ctx.moveTo(-30, 0);
+      ctx.quadraticCurveTo(-18, -12, 8, -8);
+      ctx.quadraticCurveTo(28, -2, 32, 0);
+      ctx.quadraticCurveTo(28, 2, 8, 8);
+      ctx.quadraticCurveTo(-18, 12, -30, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 1.2; ctx.stroke();
+      // Vit mage
+      ctx.fillStyle = '#e2e8f0';
+      ctx.beginPath();
+      ctx.moveTo(-22, 4);
+      ctx.quadraticCurveTo(0, 11, 22, 4);
+      ctx.quadraticCurveTo(0, 7, -22, 4);
+      ctx.closePath(); ctx.fill();
+      // Ryggfena
+      ctx.fillStyle = '#334155';
+      ctx.beginPath();
+      ctx.moveTo(-4, -8);
+      ctx.lineTo(2, -22);
+      ctx.lineTo(8, -8);
+      ctx.closePath(); ctx.fill();
+      ctx.strokeStyle = '#0f172a'; ctx.stroke();
+      // Stjärtfena
+      ctx.fillStyle = '#475569';
+      ctx.beginPath();
+      ctx.moveTo(-30, 0);
+      ctx.lineTo(-44, -10);
+      ctx.lineTo(-38, 0);
+      ctx.lineTo(-44, 10);
+      ctx.closePath(); ctx.fill();
+      ctx.stroke();
+      // Öga
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath(); ctx.arc(20, -3, 2.4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath(); ctx.arc(20.5, -3, 1.2, 0, Math.PI * 2); ctx.fill();
+      // Gäl-streck
+      ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 0.8;
+      for (let g = 0; g < 3; g++) {
+        ctx.beginPath();
+        ctx.moveTo(8 - g * 3, -4);
+        ctx.lineTo(8 - g * 3, 4);
+        ctx.stroke();
+      }
+      // Tänder
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(28, 2); ctx.lineTo(30, 5); ctx.lineTo(26, 4); ctx.closePath(); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(24, 4); ctx.lineTo(26, 7); ctx.lineTo(22, 5); ctx.closePath(); ctx.fill();
+      ctx.restore();
+      continue;
+    }
+    // Ljusstrålen under (när inte krossad)
+    if (!u.gone) {
+      const beamLen = 70;
+      const beamGrad = ctx.createLinearGradient(0, 8, 0, beamLen);
+      beamGrad.addColorStop(0, 'rgba(34,211,238,0.45)');
+      beamGrad.addColorStop(1, 'rgba(34,211,238,0)');
+      ctx.fillStyle = beamGrad;
+      ctx.beginPath();
+      ctx.moveTo(-6, 8);
+      ctx.lineTo(6, 8);
+      ctx.lineTo(18, beamLen);
+      ctx.lineTo(-18, beamLen);
+      ctx.closePath();
+      ctx.fill();
+    }
+    // Skugga
+    ctx.fillStyle = 'rgba(0,0,0,0.35)';
+    ctx.beginPath();
+    ctx.ellipse(0, 5, 26, 9, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Disk-kropp (metall)
+    const bodyGrad = ctx.createLinearGradient(0, -4, 0, 8);
+    bodyGrad.addColorStop(0, '#cbd5e1');
+    bodyGrad.addColorStop(1, '#475569');
+    ctx.fillStyle = bodyGrad;
+    ctx.beginPath();
+    ctx.ellipse(0, 2, 24, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#1e293b';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+    // Kupol (glas)
+    const domeGrad = ctx.createRadialGradient(-3, -8, 1, 0, -4, 14);
+    domeGrad.addColorStop(0, '#a7f3d0');
+    domeGrad.addColorStop(0.6, '#22d3ee');
+    domeGrad.addColorStop(1, '#0e7490');
+    ctx.fillStyle = domeGrad;
+    ctx.beginPath();
+    ctx.ellipse(0, -4, 12, 10, 0, Math.PI, 0);
+    ctx.fill();
+    ctx.strokeStyle = '#155e75';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    // Blinkande lampor
+    for (let li = 0; li < 4; li++) {
+      const lx = -18 + li * 12;
+      const phase = (u.lightT + li * 0.7);
+      const on = Math.sin(phase) > 0;
+      ctx.fillStyle = on ? '#fde047' : '#7c2d12';
+      ctx.beginPath();
+      ctx.arc(lx, 4, 2.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+// ====== JELLYFISH 🪼 (djuphavet — driver passivt, skadar vid kontakt) ======
+function spawnJellyfish() {
+  if (!state.tire) return;
+  const baseX = state.tire.x + 600 + Math.random() * 600;
+  if (biomeAt(baseX) !== DEEP_INDEX) return;
+  const groundY = terrainAt(baseX);
+  const y = groundY - 200 - Math.random() * 350;
+  state.jellyfish.push({
+    x: baseX,
+    y,
+    vx: (Math.random() - 0.5) * 0.8,
+    vy: -0.3 - Math.random() * 0.4,           // driver långsamt uppåt
+    r: 22 + Math.random() * 8,
+    phase: Math.random() * Math.PI * 2,
+    pulseT: 0,
+    cooldown: 0,
+  });
+}
+
+function updateJellyfish() {
+  if (state.phase !== PHASE.FLY) return;
+  if (!state.jellyfish) state.jellyfish = [];
+  state.jellyfishSpawnT--;
+  const _jbi = state.tire ? biomeAt(state.tire.x) : -1;
+  if (state.jellyfishSpawnT <= 0 && state.tire && _jbi === DEEP_INDEX && state.jellyfish.length < 3) {
+    spawnJellyfish();
+    state.jellyfishSpawnT = 200 + Math.floor(Math.random() * 280);
+  }
+  const TS = state.timeScale || 1;
+  const camLeft = state.cam.x - 600;
+  const camRight = state.cam.x + viewWidth() + 600;
+  const t = state.tire;
+  for (let i = state.jellyfish.length - 1; i >= 0; i--) {
+    const j = state.jellyfish[i];
+    j.phase += 0.08 * TS;
+    j.pulseT += 0.06 * TS;
+    // Sin-svängande sidoflöde
+    j.x += (j.vx + Math.sin(j.phase) * 0.3) * TS;
+    j.y += j.vy * TS;
+    if (j.cooldown > 0) j.cooldown--;
+    // Cull bortom screen
+    if (j.x < camLeft || j.x > camRight + 200 || j.y < terrainAt(j.x) - 1500) {
+      state.jellyfish.splice(i, 1);
+      continue;
+    }
+    // Kollision
+    if (t && state.phase === PHASE.FLY && !state.drowning && !j.cooldown) {
+      const dx = t.x - j.x, dy = t.y - j.y;
+      if (Math.hypot(dx, dy) < TIRE_R + j.r) {
+        const isStomp = dy < -4 && t.vy > 1;
+        if (isStomp) {
+          state.jellyfish.splice(i, 1);
+          t.vy = -Math.max(8, Math.abs(t.vy) * 0.85);
+          addParticles(j.x, j.y, '#a855f7', 18, { up: 5, spread: 7, size: 3 });
+          addParticles(j.x, j.y, '#f0abfc', 12, { up: 4, spread: 5, size: 3 });
+          awardScore(50, '🪼 STOMP!', '#a855f7');
+          tone(700, 0.12, 'sine', 0.14, 200);
+          continue;
+        }
+        j.cooldown = 60;
+        shake(8); state.hitstop = 2;
+        tone(280, 0.18, 'sawtooth', 0.14, -180);
+        addParticles(j.x, j.y, '#a855f7', 14, { up: 4, spread: 6, size: 3 });
+        const wasShielded = state.shieldT > 0;
+        const died = damageTire(15, 26, '🪼 MANET');
+        if (!died && !wasShielded) state.deathCause = state.deathCause || 'jellyfish';
+        if (!died) { t.vx += dx > 0 ? 2 : -2; t.vy -= 1.5; }
+      }
+    }
+  }
+}
+
+function drawJellyfish() {
+  if (!state.jellyfish || state.jellyfish.length === 0) return;
+  for (const j of state.jellyfish) {
+    const [sx, sy] = worldToScreen(j.x, j.y);
+    const pulse = 1 + Math.sin(j.pulseT) * 0.15;
+    ctx.save();
+    ctx.translate(sx, sy);
+    // Glow
+    const glow = ctx.createRadialGradient(0, 0, j.r * 0.4, 0, 0, j.r * 2.2);
+    glow.addColorStop(0, 'rgba(168,85,247,0.45)');
+    glow.addColorStop(1, 'rgba(168,85,247,0)');
+    ctx.fillStyle = glow;
+    ctx.beginPath(); ctx.arc(0, 0, j.r * 2.2, 0, Math.PI * 2); ctx.fill();
+    // Klocka (dome)
+    const dome = ctx.createRadialGradient(0, -j.r * 0.3, 2, 0, 0, j.r * pulse);
+    dome.addColorStop(0, 'rgba(240,171,252,0.85)');
+    dome.addColorStop(0.6, 'rgba(168,85,247,0.7)');
+    dome.addColorStop(1, 'rgba(107,33,168,0.5)');
+    ctx.fillStyle = dome;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, j.r * pulse, j.r * 0.8 * pulse, 0, Math.PI, 2 * Math.PI);
+    ctx.fill();
+    // Manet-kant
+    ctx.strokeStyle = '#7e22ce'; ctx.lineWidth = 1.5;
+    ctx.stroke();
+    // Inre highlight
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.beginPath();
+    ctx.ellipse(-j.r * 0.3, -j.r * 0.3, j.r * 0.3, j.r * 0.18, -0.4, 0, Math.PI * 2);
+    ctx.fill();
+    // Tentakler — 5 stycken sin-svängande
+    ctx.strokeStyle = 'rgba(168,85,247,0.85)';
+    ctx.lineWidth = 1.5;
+    ctx.lineCap = 'round';
+    for (let ti = 0; ti < 5; ti++) {
+      const tx0 = -j.r * 0.6 + (j.r * 1.2) * (ti / 4);
+      const len = j.r * 1.4 + Math.sin(j.phase + ti * 0.7) * 6;
+      ctx.beginPath();
+      ctx.moveTo(tx0, j.r * 0.1);
+      ctx.quadraticCurveTo(
+        tx0 + Math.sin(j.phase * 0.8 + ti) * 6, j.r * 0.1 + len * 0.55,
+        tx0 + Math.sin(j.phase + ti * 1.3) * 8, j.r * 0.1 + len
+      );
+      ctx.stroke();
+    }
+    ctx.lineCap = 'butt';
+    // Skadeflash
+    if (j.cooldown > 30) {
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.beginPath(); ctx.arc(0, 0, j.r, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+// ====== SEA MINES 💣 (djuphavet — drivande, exploderar i AOE vid kontakt) ======
+function spawnMine() {
+  if (!state.tire) return;
+  const baseX = state.tire.x + 700 + Math.random() * 700;
+  if (biomeAt(baseX) !== DEEP_INDEX) return;
+  const groundY = terrainAt(baseX);
+  const y = groundY - 180 - Math.random() * 320;
+  state.mines.push({
+    x: baseX, y,
+    vx: (Math.random() - 0.5) * 0.4,
+    vy: -0.1 - Math.random() * 0.2,
+    r: 16,
+    blastR: 90,                     // AOE-radie
+    blinkT: 0,
+    armed: true,
+    detonating: 0,                  // 0 = ej, >0 = explosion-frame
+    bobPhase: Math.random() * Math.PI * 2,
+  });
+}
+
+function updateMines() {
+  if (state.phase !== PHASE.FLY) return;
+  if (!state.mines) state.mines = [];
+  state.mineSpawnT--;
+  const _mbi = state.tire ? biomeAt(state.tire.x) : -1;
+  if (state.mineSpawnT <= 0 && state.tire && _mbi === DEEP_INDEX && state.mines.length < 3) {
+    spawnMine();
+    state.mineSpawnT = 360 + Math.floor(Math.random() * 360);
+  }
+  const TS = state.timeScale || 1;
+  const camLeft = state.cam.x - 600;
+  const camRight = state.cam.x + viewWidth() + 600;
+  const t = state.tire;
+  for (let i = state.mines.length - 1; i >= 0; i--) {
+    const m = state.mines[i];
+    m.blinkT += 0.18 * TS;
+    m.bobPhase += 0.05 * TS;
+    if (m.detonating > 0) {
+      m.detonating--;
+      if (m.detonating <= 0) state.mines.splice(i, 1);
+      continue;
+    }
+    // Sakta drift med sin-bobbing
+    m.x += (m.vx + Math.sin(m.bobPhase) * 0.15) * TS;
+    m.y += m.vy * TS;
+    if (m.x < camLeft || m.x > camRight + 200) {
+      state.mines.splice(i, 1);
+      continue;
+    }
+    if (t && state.phase === PHASE.FLY && !state.drowning && m.armed) {
+      const dx = t.x - m.x, dy = t.y - m.y;
+      const dist = Math.hypot(dx, dy);
+      if (dist < TIRE_R + m.r) {
+        // Direkt-kontakt — detonera
+        m.armed = false;
+        m.detonating = 18;
+        addParticles(m.x, m.y, '#fbbf24', 32, { up: 8, spread: 14, size: 5 });
+        addParticles(m.x, m.y, '#ef4444', 24, { up: 7, spread: 12, size: 4 });
+        addParticles(m.x, m.y, '#1f2937', 16, { up: 5, spread: 10, size: 4 });
+        shake(20); state.hitstop = 5;
+        tone(80, 0.4, 'sawtooth', 0.30, -600);
+        const wasShielded = state.shieldT > 0;
+        const died = damageTire(45, 70, '💣 MINA');
+        if (!died && !wasShielded) state.deathCause = state.deathCause || 'mine';
+        if (!died) {
+          // Knuffa hjulet bort + uppåt
+          const inv = 1 / Math.max(0.5, dist);
+          t.vx += dx * inv * 8;
+          t.vy += dy * inv * 8 - 4;
+        }
+      } else if (dist < m.blastR && !m.armed) {
+        // Inom AOE efter detonation — mindre skada
+        m.armed = false;
+        damageTire(15, 25, '💣 BLAST');
+      }
+    }
+  }
+}
+
+function drawMines() {
+  if (!state.mines || state.mines.length === 0) return;
+  for (const m of state.mines) {
+    const [sx, sy] = worldToScreen(m.x, m.y);
+    ctx.save();
+    ctx.translate(sx, sy);
+    if (m.detonating > 0) {
+      // Explosion: växande gul-orange-cirkel
+      const f = 1 - m.detonating / 18;
+      const r = m.blastR * f * 1.1;
+      const eg = ctx.createRadialGradient(0, 0, r * 0.2, 0, 0, r);
+      eg.addColorStop(0, `rgba(254,240,138,${1 - f})`);
+      eg.addColorStop(0.4, `rgba(251,146,60,${0.8 * (1 - f)})`);
+      eg.addColorStop(1, 'rgba(127,29,29,0)');
+      ctx.fillStyle = eg;
+      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+      continue;
+    }
+    // Mörk metall-kropp
+    const bodyGrad = ctx.createRadialGradient(-3, -3, 1, 0, 0, m.r);
+    bodyGrad.addColorStop(0, '#475569');
+    bodyGrad.addColorStop(0.7, '#1e293b');
+    bodyGrad.addColorStop(1, '#0f172a');
+    ctx.fillStyle = bodyGrad;
+    ctx.beginPath(); ctx.arc(0, 0, m.r, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#020617'; ctx.lineWidth = 1.5;
+    ctx.stroke();
+    // Spikar (8 stycken)
+    ctx.fillStyle = '#334155';
+    ctx.strokeStyle = '#020617'; ctx.lineWidth = 0.8;
+    for (let s = 0; s < 8; s++) {
+      const ang = (s / 8) * Math.PI * 2;
+      const cx = Math.cos(ang) * m.r;
+      const cy = Math.sin(ang) * m.r;
+      const tx2 = Math.cos(ang) * (m.r + 6);
+      const ty2 = Math.sin(ang) * (m.r + 6);
+      const pcx = Math.cos(ang + 0.25) * m.r;
+      const pcy = Math.sin(ang + 0.25) * m.r;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(tx2, ty2);
+      ctx.lineTo(pcx, pcy);
+      ctx.closePath();
+      ctx.fill(); ctx.stroke();
+    }
+    // Blink-lampa (röd, pulserar)
+    const blink = (Math.sin(m.blinkT) + 1) * 0.5;
+    ctx.fillStyle = `rgba(239, 68, 68, ${0.5 + blink * 0.5})`;
+    ctx.beginPath(); ctx.arc(0, 0, 4, 0, Math.PI * 2); ctx.fill();
+    if (blink > 0.7) {
+      ctx.fillStyle = `rgba(254, 202, 202, ${blink})`;
+      ctx.beginPath(); ctx.arc(0, 0, 2, 0, Math.PI * 2); ctx.fill();
+    }
+    // Kedja/lina ner mot havsbotten (visuell antydan)
+    ctx.strokeStyle = 'rgba(15, 23, 42, 0.6)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, m.r);
+    ctx.lineTo(0, m.r + 30);
+    ctx.stroke();
+    ctx.restore();
+  }
+}
+
+// ====== OCTOPUS MINIBOSS 🦑 (djuphavet — 1/run, 4 tentakler, 3 HP) ======
+function spawnOctopus() {
+  if (!state.tire) return;
+  if (state.octopusSpawned) return;
+  // Spawna i mitten av kartan (deep-banan är BIOME_LEN*4 = 60000m, så ~30000)
+  const spawnX = WORLD_LEN * 0.5;
+  const groundY = terrainAt(spawnX);
+  state.octopuses.push({
+    x: spawnX, y: groundY - 80,            // sitter på sjöbotten
+    r: 38,
+    hp: 3,
+    hpMax: 3,
+    flashT: 0,
+    stunT: 0,
+    angerT: 0,
+    tentaclePhase: Math.random() * Math.PI * 2,
+    eyeBlink: 0,
+    dead: false,
+  });
+  state.octopusSpawned = true;
+}
+
+function updateOctopus() {
+  if (state.phase !== PHASE.FLY) return;
+  if (!state.octopuses) state.octopuses = [];
+  // Spawna 1 gång när spelaren närmar sig mittpunkten
+  if (state.tire && !state.octopusSpawned && biomeAt(state.tire.x) === DEEP_INDEX) {
+    if (Math.abs(state.tire.x - WORLD_LEN * 0.5) < 1500) {
+      spawnOctopus();
+      flashToast('🦑 BLÄCKFISK!', '#a855f7');
+    }
+  }
+  const TS = state.timeScale || 1;
+  const t = state.tire;
+  for (let i = state.octopuses.length - 1; i >= 0; i--) {
+    const o = state.octopuses[i];
+    if (o.dead) {
+      state.octopuses.splice(i, 1);
+      continue;
+    }
+    o.tentaclePhase += 0.04 * TS;
+    o.eyeBlink = (o.eyeBlink + 1) % 200;
+    if (o.flashT > 0) o.flashT--;
+    if (o.stunT > 0) { o.stunT--; continue; }
+    if (o.angerT > 0) o.angerT--;
+    // Kollision: kropp + 4 tentakler som svänger
+    if (t && state.phase === PHASE.FLY && !state.drowning) {
+      const dx = t.x - o.x, dy = t.y - o.y;
+      const distBody = Math.hypot(dx, dy);
+      // Stomp-kill av kroppen — kräver dy < -threshold + vy > 1
+      if (distBody < TIRE_R + o.r) {
+        const isStomp = dy < -8 && t.vy > 1;
+        if (isStomp) {
+          o.hp--;
+          o.flashT = 12;
+          o.stunT = 60;
+          o.angerT = 240;
+          t.vy = -Math.max(10, Math.abs(t.vy) * 0.85);
+          addParticles(o.x, o.y - o.r, '#a855f7', 26, { up: 6, spread: 10, size: 4 });
+          addParticles(o.x, o.y - o.r, '#f0abfc', 18, { up: 5, spread: 8, size: 3 });
+          shake(12); state.hitstop = 4;
+          tone(420, 0.18, 'square', 0.18, 220);
+          if (o.hp <= 0) {
+            // Boss död — stor belöning
+            o.dead = true;
+            awardScore(2000, '🦑 BLÄCKFISK BESEGRAD!', '#a855f7');
+            addParticles(o.x, o.y, '#a855f7', 40, { up: 9, spread: 16, size: 5 });
+            addParticles(o.x, o.y, '#f0abfc', 28, { up: 7, spread: 13, size: 4 });
+            addParticles(o.x, o.y, '#7e22ce', 20, { up: 5, spread: 10, size: 4 });
+            shake(20); state.hitstop = 8;
+            tone(600, 0.3, 'sine', 0.22, 340);
+            // Bonus: pärla / mynt-burst
+            for (let p = 0; p < 8; p++) {
+              const ang = (p / 8) * Math.PI * 2;
+              state.particles.push({
+                x: o.x, y: o.y,
+                vx: Math.cos(ang) * 4, vy: Math.sin(ang) * 4 - 3,
+                life: 80, max: 80,
+                color: 'rgba(251,191,36,0.95)',
+                size: 4, g: 0.06, shape: 'circle',
+              });
+            }
+          } else {
+            awardScore(150, `🦑 -1 HP! (${o.hp}/${o.hpMax})`, '#a855f7');
+          }
+        } else {
+          // Sidotreff = skada
+          shake(10); state.hitstop = 3;
+          addParticles(o.x, o.y, '#7e22ce', 14, { up: 4, spread: 6, size: 3 });
+          const wasShielded = state.shieldT > 0;
+          const died = damageTire(20, 35, '🦑 BLÄCKFISK');
+          if (!died && !wasShielded) state.deathCause = state.deathCause || 'octopus';
+          if (!died) { t.vx += dx > 0 ? 5 : -5; t.vy -= 3; }
+        }
+      }
+      // Tentakel-attacker — 4 stycken som svänger ut. Vid arg = snabbare.
+      const tentSwing = o.angerT > 0 ? 1.6 : 1.0;
+      for (let ti = 0; ti < 4; ti++) {
+        const ang = o.tentaclePhase * tentSwing + ti * (Math.PI * 2 / 4);
+        const reach = 90 + Math.sin(ang * 1.3) * 30;
+        const tx2 = o.x + Math.cos(ang) * reach;
+        const ty2 = o.y + Math.sin(ang) * reach * 0.7 - 20;     // tilt uppåt
+        const tdx = t.x - tx2, tdy = t.y - ty2;
+        if (Math.hypot(tdx, tdy) < TIRE_R + 14 && !o._tCool) {
+          o._tCool = 30;
+          shake(8);
+          tone(280, 0.2, 'sawtooth', 0.16, -150);
+          addParticles(tx2, ty2, '#a855f7', 14, { up: 4, spread: 6, size: 3 });
+          const wasShielded = state.shieldT > 0;
+          const died = damageTire(15, 28, '🦑 TENTAKEL');
+          if (!died && !wasShielded) state.deathCause = state.deathCause || 'octopus';
+          if (!died) { t.vx += tdx > 0 ? -3 : 3; t.vy -= 2; }
+        }
+      }
+      if (o._tCool > 0) o._tCool--;
+    }
+  }
+}
+
+function drawOctopus() {
+  if (!state.octopuses || state.octopuses.length === 0) return;
+  for (const o of state.octopuses) {
+    const [sx, sy] = worldToScreen(o.x, o.y);
+    ctx.save();
+    ctx.translate(sx, sy);
+    // Tentakler först (bakom kroppen)
+    const tentSwing = o.angerT > 0 ? 1.6 : 1.0;
+    ctx.lineCap = 'round';
+    for (let ti = 0; ti < 4; ti++) {
+      const ang = o.tentaclePhase * tentSwing + ti * (Math.PI * 2 / 4);
+      const reach = 90 + Math.sin(ang * 1.3) * 30;
+      const tx2 = Math.cos(ang) * reach;
+      const ty2 = Math.sin(ang) * reach * 0.7 - 20;
+      // Tentakel-kurva
+      ctx.strokeStyle = '#6b21a8'; ctx.lineWidth = 12;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.quadraticCurveTo(tx2 * 0.5, ty2 * 0.3 - 10, tx2, ty2);
+      ctx.stroke();
+      ctx.strokeStyle = '#a855f7'; ctx.lineWidth = 7;
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.quadraticCurveTo(tx2 * 0.5, ty2 * 0.3 - 10, tx2, ty2);
+      ctx.stroke();
+      // Sugkoppar
+      ctx.fillStyle = '#fbbf24';
+      ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 0.6;
+      for (let k = 1; k < 5; k++) {
+        const ttk = k / 5;
+        const cx = tx2 * ttk;
+        const cy = ty2 * ttk - 5 * (1 - ttk);
+        const perpX = -Math.sin(ang) * 4;
+        const perpY = Math.cos(ang) * 4;
+        ctx.beginPath();
+        ctx.arc(cx + perpX, cy + perpY, 1.4, 0, Math.PI * 2);
+        ctx.fill(); ctx.stroke();
+      }
+    }
+    ctx.lineCap = 'butt';
+    // Kropp
+    const flashAlpha = o.flashT > 0 ? 0.4 : 0;
+    const bodyGrad = ctx.createRadialGradient(-6, -10, 4, 0, 0, o.r);
+    bodyGrad.addColorStop(0, '#c084fc');
+    bodyGrad.addColorStop(0.6, '#a855f7');
+    bodyGrad.addColorStop(1, '#6b21a8');
+    ctx.fillStyle = bodyGrad;
+    ctx.beginPath();
+    ctx.ellipse(0, -8, o.r, o.r * 1.05, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#3b0764'; ctx.lineWidth = 1.5;
+    ctx.stroke();
+    if (flashAlpha > 0) {
+      ctx.fillStyle = `rgba(255,255,255,${flashAlpha})`;
+      ctx.beginPath();
+      ctx.ellipse(0, -8, o.r, o.r * 1.05, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    // Ögon
+    const blink = (o.eyeBlink % 180) > 175 ? 0.2 : 1;
+    ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.ellipse(-12, -16, 6, 6 * blink, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(12, -16, 6, 6 * blink, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = o.angerT > 0 ? '#dc2626' : '#1f2937';
+    ctx.beginPath(); ctx.arc(-12, -16, 3 * blink, 0, Math.PI * 2); ctx.fill();
+    ctx.beginPath(); ctx.arc(12, -16, 3 * blink, 0, Math.PI * 2); ctx.fill();
+    // HP-bar ovanför
+    const hpW = 60, hpH = 6;
+    ctx.fillStyle = 'rgba(15,23,42,0.85)';
+    ctx.fillRect(-hpW/2, -o.r - 22, hpW, hpH);
+    ctx.fillStyle = o.hp > 1 ? '#22c55e' : '#ef4444';
+    ctx.fillRect(-hpW/2, -o.r - 22, hpW * (o.hp / o.hpMax), hpH);
+    ctx.strokeStyle = '#a855f7'; ctx.lineWidth = 1;
+    ctx.strokeRect(-hpW/2, -o.r - 22, hpW, hpH);
+    ctx.fillStyle = '#fbbf24';
+    ctx.font = 'bold 9px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${o.hp}/${o.hpMax} 🦑`, 0, -o.r - 26);
+    ctx.restore();
+  }
+}
+
+// ====== BLACK HOLES 🌑 (rymden — drar in spelaren, drag-skjut för att fly) ======
+function spawnBlackHole(forceX) {
+  if (!state.tire) return;
+  const baseX = forceX != null ? forceX
+    : state.tire.x + 700 + Math.random() * 600;
+  if (biomeAt(baseX) !== SPACE_INDEX) return;
+  const gy = terrainAt(baseX);
+  const y = gy - (280 + Math.random() * 200); // 280-480 över marken
+  const maxR = 55 + Math.random() * 25;       // 55-80 px slutradie
+  state.blackHoles.push({
+    x: baseX,
+    y,
+    r: 12,                 // växer från liten
+    maxR,
+    growMax: 150,          // frames till full storlek
+    growT: 0,
+    rot: 0,
+    capturing: false,      // true när hjulet är fångat (utan möjlighet att fly)
+    captureT: 0,
+    born: 0,
+    life: 1800,            // ~30s livstid totalt
+    pullR: maxR * 5.5,     // dragradie skalas mot maxR
+    eventR: maxR * 0.55,   // event horizon — fångar tiren när inom denna
+  });
+}
+
+function updateBlackHoles() {
+  if (state.phase !== PHASE.FLY) return;
+  state.blackHoleSpawnT--;
+  if (state.blackHoleSpawnT <= 0 && state.tire) {
+    if (biomeAt(state.tire.x + 600) === SPACE_INDEX
+        && (!state.blackHoles || state.blackHoles.length < 2)) {
+      spawnBlackHole();
+    }
+    state.blackHoleSpawnT = 720 + Math.floor(Math.random() * 720); // 12-24s
+  }
+  const TS = state.timeScale || 1;
+  const t = state.tire;
+  const camLeft = state.cam.x - 400;
+  const camRight = state.cam.x + W / (state.cam.zoom || 1) + 600;
+  for (let i = state.blackHoles.length - 1; i >= 0; i--) {
+    const b = state.blackHoles[i];
+    b.born += TS;
+    if (b.growT < b.growMax) {
+      b.growT += TS;
+      b.r = 12 + (b.maxR - 12) * (b.growT / b.growMax);
+    } else {
+      b.r = b.maxR;
+    }
+    b.rot += 0.05 * TS;
+    // Despawn långt bakom kameran eller efter livstid
+    if (b.x < camLeft - 300 || b.born > b.life) {
+      state.blackHoles.splice(i, 1);
+      continue;
+    }
+    // Bara aktiv när nära kamerafönstret + tire i spel + ingen drowning
+    if (!t || state.drowning) continue;
+    if (b.x < camLeft - 200 || b.x > camRight + 200) continue;
+    const dx = b.x - t.x;
+    const dy = b.y - t.y;
+    const dist = Math.hypot(dx, dy);
+    // Sköld räddar — pull verkar inte
+    if (state.shieldT > 0) continue;
+    // Drag-zonen
+    if (dist < b.pullR && dist > b.eventR + TIRE_R) {
+      const norm = 1 - (dist - b.eventR) / (b.pullR - b.eventR);
+      const pull = Math.pow(Math.max(0, norm), 1.6) * 1.4;
+      const inv = 1 / Math.max(0.0001, dist);
+      t.vx += dx * inv * pull * TS;
+      t.vy += dy * inv * pull * TS;
+      // Spiral-partiklar mot hålet
+      if (state.time % 2 === 0 && Math.random() < 0.7) {
+        const ang = Math.atan2(dy, dx) + (Math.PI * 0.5);
+        const px = t.x + Math.cos(ang) * (TIRE_R + 6);
+        const py = t.y + Math.sin(ang) * (TIRE_R + 6);
+        state.particles.push({
+          x: px, y: py,
+          vx: -dx * inv * 1.6,
+          vy: -dy * inv * 1.6,
+          life: 32, max: 32,
+          color: `rgba(${Math.random() < 0.5 ? '147,51,234' : '236,72,153'},${0.6 + Math.random() * 0.3})`,
+          size: 2 + Math.random() * 2,
+          g: 0, shape: 'circle',
+        });
+      }
+    }
+    // Fångas — hjulet träffar event horizon
+    if (dist < b.eventR + TIRE_R && !state.drowning) {
+      addParticles(t.x, t.y, '#9333ea', 24, { up: 4, spread: 8, size: 4 });
+      addParticles(t.x, t.y, '#ec4899', 18, { up: 3, spread: 6, size: 3 });
+      shake(18); state.hitstop = 5;
+      tone(180, 0.4, 'sawtooth', 0.24, -550);
+      setTimeout(() => tone(80, 0.5, 'sine', 0.2, -650), 90);
+      state.health = 0;
+      state.damageFlashT = 30;
+      state.deathCause = 'blackhole';
+      state.drowning = {
+        t: 0,
+        max: 70,
+        surfaceY: t.y,
+        startY: t.y,
+        sinkTo: t.y,
+        isBlackHole: true,
+        bhX: b.x,
+        bhY: b.y,
+        bhStartDist: Math.max(20, dist),
+        bhStartAngle: Math.atan2(t.y - b.y, t.x - b.x),
+      };
+      t.vx = 0; t.vy = 0;
+      flashToast('🌑 SLUKAD!', '#9333ea');
+      setTimeout(() => finishRun(false), 950);
+      return;
+    }
+  }
+}
+
+function drawBlackHoles() {
+  if (!state.blackHoles || state.blackHoles.length === 0) return;
+  for (const b of state.blackHoles) {
+    const [sx, sy] = worldToScreen(b.x, b.y);
+    const r = b.r;
+    ctx.save();
+    // Yttre distortion-aura
+    const auraR = r * 4.5;
+    const aura = ctx.createRadialGradient(sx, sy, r * 1.1, sx, sy, auraR);
+    aura.addColorStop(0, 'rgba(76,29,149,0.55)');
+    aura.addColorStop(0.4, 'rgba(147,51,234,0.18)');
+    aura.addColorStop(1, 'rgba(15,23,42,0)');
+    ctx.fillStyle = aura;
+    ctx.beginPath(); ctx.arc(sx, sy, auraR, 0, Math.PI * 2); ctx.fill();
+    // Roterande accretion-skiva (ellips)
+    ctx.translate(sx, sy);
+    ctx.rotate(b.rot);
+    const ringR = r * 1.7;
+    const ringGrad = ctx.createRadialGradient(0, 0, r * 0.9, 0, 0, ringR);
+    ringGrad.addColorStop(0, 'rgba(255,255,255,0)');
+    ringGrad.addColorStop(0.4, 'rgba(236,72,153,0.55)');
+    ringGrad.addColorStop(0.7, 'rgba(168,85,247,0.7)');
+    ringGrad.addColorStop(1, 'rgba(30,27,75,0)');
+    ctx.fillStyle = ringGrad;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, ringR, ringR * 0.35, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Inre ljusring (event horizon kant-glow)
+    ctx.shadowBlur = 18;
+    ctx.shadowColor = '#a855f7';
+    ctx.strokeStyle = 'rgba(217,180,255,0.85)';
+    ctx.lineWidth = 2.2;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, r * 1.1, r * 0.45, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+    ctx.rotate(-b.rot);
+    // Mörka kärnan
+    const core = ctx.createRadialGradient(0, 0, 0, 0, 0, r);
+    core.addColorStop(0, '#000000');
+    core.addColorStop(0.7, '#0b0014');
+    core.addColorStop(1, 'rgba(15,23,42,0.4)');
+    ctx.fillStyle = core;
+    ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
     ctx.restore();
   }
 }
@@ -7599,14 +11517,21 @@ function updatePenguins() {
         p.y = py;
         p.vy = -3;
         p.vx *= 0.3;
-        // Hjulet får en liten knockback + lite skada
-        t.vx += dx > 0 ? 1.5 : -1.5;
-        t.vy -= 1.4;
-        addParticles(px, py, '#ffffff', 14, { up: 4, spread: 6, size: 3 });
-        addParticles(px, py, '#0c4a6e', 10, { up: 3, spread: 5, size: 3 });
-        awardScore(40, '🐧 BOWLING!', '#bae6fd');
-        tone(540, 0.12, 'square', 0.1, 80);
-        damageTire(3, 8, '🐧 PINGVIN');
+        const isStomp = dy < -6 && t.vy > 1;
+        addParticles(px, py, '#ffffff', isStomp ? 20 : 14, { up: 4, spread: 6, size: 3 });
+        addParticles(px, py, '#0c4a6e', isStomp ? 14 : 10, { up: 3, spread: 5, size: 3 });
+        if (isStomp) {
+          t.vy = -Math.max(9, Math.abs(t.vy) * 0.9);
+          awardScore(80, '🐧 STOMP!', '#fbbf24');
+          bumpMult(0.4);
+          tone(820, 0.14, 'square', 0.12, 240);
+        } else {
+          t.vx += dx > 0 ? 1.5 : -1.5;
+          t.vy -= 1.4;
+          awardScore(40, '🐧 BOWLING!', '#bae6fd');
+          tone(540, 0.12, 'square', 0.1, 80);
+          damageTire(3, 8, '🐧 PINGVIN');
+        }
       }
     }
   }
@@ -7701,60 +11626,102 @@ function drawFreezeWind() {
 }
 
 // ====== FIREBALLS 🔥 (vulkanen — eldbollar regnar slumpmässigt) ======
-function spawnFireball(forceX) {
+function spawnFireball(forceX, kind) {
   if (!state.tire) return;
   const t = state.tire;
   // Spawna framför hjulet, inte direkt ovanpå (ska kunna undvikas).
+  // Hell är reversed: spawna åt VÄNSTER om hjulet (i färdriktningen).
+  const inHell = biomeAt(t.x) === HELL_INDEX;
+  const dirSign = inHell ? -1 : 1;
   const cx = forceX != null ? forceX
-    : t.x + 250 + Math.random() * 600;
-  // Bara om mål-x är på vulkanen
-  if (biomeAt(cx) !== 4) return;
+    : t.x + dirSign * (250 + Math.random() * 600);
+  // Bara om mål-x är på vulkanen, hell, rymden (månen) eller djuphavet
+  const targetBi = biomeAt(cx);
+  if (targetBi !== 4 && targetBi !== HELL_INDEX && targetBi !== SPACE_INDEX && targetBi !== DEEP_INDEX) return;
   const groundY = terrainAt(cx);
-  // Spawn-höjd: högt upp så spelaren ser den falla. Lite vinkel.
-  const startY = groundY - 700 - Math.random() * 200;
-  const driftX = (Math.random() - 0.5) * 1.6;
+  const _kind = kind || 'fire';
+  // Harpuner: skjuts horisontellt från sidan, snabb. Annat: faller från ovan.
+  let startX, startY, vx, vy;
+  if (_kind === 'harpoon') {
+    const horizDir = Math.random() < 0.5 ? 1 : -1;
+    startX = cx - horizDir * 700;
+    startY = groundY - 100 - Math.random() * 200;
+    vx = horizDir * (8 + Math.random() * 2);
+    vy = 0;
+  } else {
+    startY = groundY - 700 - Math.random() * 200;
+    const driftX = (Math.random() - 0.5) * 1.6;
+    startX = cx + driftX * 30;
+    vx = driftX;
+    vy = 7 + Math.random() * 3;
+  }
   state.fireballs.push({
-    x: cx + driftX * 30,
+    x: startX,
     y: startY,
-    vx: driftX,
-    vy: 7 + Math.random() * 3,
-    r: 14 + Math.random() * 6,
-    rot: Math.random() * Math.PI * 2,
-    vrot: (Math.random() - 0.5) * 0.16,
+    vx, vy,
+    r: _kind === 'harpoon' ? 10 : (14 + Math.random() * 6),
+    rot: _kind === 'harpoon' ? (vx > 0 ? 0 : Math.PI) : Math.random() * Math.PI * 2,
+    vrot: _kind === 'harpoon' ? 0 : (Math.random() - 0.5) * 0.16,
     trailT: 0,
     targetX: cx,
     targetGroundY: groundY,
+    kind: _kind,
   });
-  tone(220, 0.18, 'sawtooth', 0.08, -200);
+  if (_kind === 'rock') tone(140, 0.16, 'square', 0.06, -240);
+  else if (_kind === 'harpoon') tone(560, 0.10, 'square', 0.08, 100);
+  else tone(220, 0.18, 'sawtooth', 0.08, -200);
 }
 
 function updateFireballs() {
   if (state.phase !== PHASE.FLY) return;
   const TS = state.timeScale || 1;
-  // Spawna bara om hjulet är på vulkanen ELLER närmar sig den
-  if (state.tire && (biomeAt(state.tire.x) === 4 || biomeAt(state.tire.x + 600) === 4)) {
+  // Spawna bara om hjulet är på vulkanen ELLER i hell ELLER närmar sig dem
+  const _tx = state.tire ? state.tire.x : 0;
+  const _bi = state.tire ? biomeAt(_tx) : -1;
+  const _onVolcano = (_bi === 4 || biomeAt(_tx + 600) === 4);
+  const _inHell = (_bi === HELL_INDEX || biomeAt(_tx - 600) === HELL_INDEX);
+  const _inSpace = (_bi === SPACE_INDEX || biomeAt(_tx + 600) === SPACE_INDEX);
+  const _inDeep = (_bi === DEEP_INDEX || biomeAt(_tx + 600) === DEEP_INDEX);
+  if (state.tire && (_onVolcano || _inHell || _inSpace || _inDeep)) {
     state.fireballSpawnT--;
     if (state.fireballSpawnT <= 0) {
-      // 1-3 eldbollar per "regn" — slumpmässigt klustrade
       const r = Math.random();
-      const count = r < 0.55 ? 1 : r < 0.85 ? 2 : 3;
+      // Hell: nu 2–3 per regn, hälften är stenar. Rymden: bara stenar. Deep: harpuner.
+      const count = _inHell
+        ? (r < 0.4 ? 2 : 3)
+        : _inSpace
+        ? (r < 0.5 ? 1 : 2)
+        : _inDeep
+        ? 1
+        : (r < 0.55 ? 1 : r < 0.85 ? 2 : 3);
       for (let i = 0; i < count; i++) {
-        spawnFireball();
+        const kind = _inDeep
+          ? 'harpoon'
+          : _inSpace
+          ? 'rock'
+          : (_inHell && Math.random() < 0.5) ? 'rock' : 'fire';
+        spawnFireball(undefined, kind);
       }
-      // Nästa regn om ~1.5-3.5s
-      state.fireballSpawnT = 90 + Math.floor(Math.random() * 120);
+      state.fireballSpawnT = _inHell
+        ? 70 + Math.floor(Math.random() * 90)
+        : _inSpace
+        ? 110 + Math.floor(Math.random() * 140)
+        : _inDeep
+        ? 180 + Math.floor(Math.random() * 240)
+        : 90 + Math.floor(Math.random() * 120);
     }
   }
   const t = state.tire;
   for (let i = state.fireballs.length - 1; i >= 0; i--) {
     const fb = state.fireballs[i];
-    fb.vy += 0.18 * TS; // svag gravitation
+    if (fb.kind !== 'harpoon') fb.vy += 0.18 * TS; // svag gravitation (ej för harpuner)
     fb.x += fb.vx * TS;
     fb.y += fb.vy * TS;
     fb.rot += fb.vrot * TS;
     fb.trailT++;
-    // Spawn-eld-svans
+    // Trail — eld-låga eller sten-damm beroende på kind
     if (state.particles.length < 380 && fb.trailT % 2 === 0) {
+      const isRock = fb.kind === 'rock';
       state.particles.push({
         x: fb.x + (Math.random() - 0.5) * 6,
         y: fb.y + (Math.random() - 0.5) * 6,
@@ -7762,7 +11729,9 @@ function updateFireballs() {
         vy: -fb.vy * 0.2 + (Math.random() - 0.5) * 0.6,
         life: 22 + Math.floor(Math.random() * 14),
         max: 36,
-        color: `rgba(${Math.random() < 0.5 ? '254,240,138' : '251,146,60'},${0.55 + Math.random() * 0.35})`,
+        color: isRock
+          ? `rgba(${Math.random() < 0.5 ? '120,113,108' : '68,64,60'},${0.45 + Math.random() * 0.3})`
+          : `rgba(${Math.random() < 0.5 ? '254,240,138' : '251,146,60'},${0.55 + Math.random() * 0.35})`,
         size: 2 + Math.random() * 2,
         g: 0.04, shape: 'square',
       });
@@ -7772,16 +11741,30 @@ function updateFireballs() {
       const dx = t.x - fb.x;
       const dy = t.y - fb.y;
       if (Math.hypot(dx, dy) < TIRE_R + fb.r) {
-        // Stark eldskada (sköld blockar)
-        addParticles(fb.x, fb.y, '#fef3c7', 24, { up: 8, spread: 10, size: 4 });
-        addParticles(fb.x, fb.y, '#fb923c', 18, { up: 6, spread: 8, size: 4 });
-        addParticles(fb.x, fb.y, '#dc2626', 14, { up: 5, spread: 7, size: 3 });
-        shake(14); state.hitstop = 3;
-        tone(180, 0.25, 'sawtooth', 0.22, -300);
+        const isRock = fb.kind === 'rock';
+        const isHarpoon = fb.kind === 'harpoon';
+        if (isHarpoon) {
+          addParticles(fb.x, fb.y, '#fbbf24', 14, { up: 5, spread: 6, size: 3 });
+          addParticles(fb.x, fb.y, '#94a3b8', 10, { up: 4, spread: 5, size: 3 });
+          addParticles(fb.x, fb.y, '#dc2626', 8, { up: 3, spread: 4, size: 3 });
+        } else if (isRock) {
+          addParticles(fb.x, fb.y, '#78716c', 22, { up: 7, spread: 10, size: 4 });
+          addParticles(fb.x, fb.y, '#44403c', 16, { up: 5, spread: 8, size: 3 });
+          addParticles(fb.x, fb.y, '#1c1917', 10, { up: 4, spread: 6, size: 3 });
+        } else {
+          addParticles(fb.x, fb.y, '#fef3c7', 24, { up: 8, spread: 10, size: 4 });
+          addParticles(fb.x, fb.y, '#fb923c', 18, { up: 6, spread: 8, size: 4 });
+          addParticles(fb.x, fb.y, '#dc2626', 14, { up: 5, spread: 7, size: 3 });
+        }
+        shake(isHarpoon ? 10 : 14); state.hitstop = 3;
+        tone(isRock ? 130 : (isHarpoon ? 320 : 180), 0.25, isRock ? 'square' : 'sawtooth', 0.22, -300);
         const wasShielded = state.shieldT > 0;
-        const died = damageTire(25, 50, '🔥 ELDBOLL');
+        const dmgMin = isHarpoon ? 28 : (isRock ? 18 : 25);
+        const dmgMax = isHarpoon ? 50 : (isRock ? 35 : 50);
+        const lbl = isHarpoon ? '🎯 HARPUN' : (isRock ? '🪨 STENREGN' : '🔥 ELDBOLL');
+        const died = damageTire(dmgMin, dmgMax, lbl);
         if (!died && !wasShielded) {
-          state.deathCause = state.deathCause || 'fireball';
+          state.deathCause = state.deathCause || (isHarpoon ? 'harpoon' : (isRock ? 'rock' : 'fireball'));
         }
         if (!died) {
           // Knuffa hjulet bort
@@ -7795,13 +11778,19 @@ function updateFireballs() {
     // Mark-impakt
     const groundY = terrainAt(fb.x);
     if (fb.y > groundY) {
-      // Explosion-burst
-      addParticles(fb.x, groundY - 4, '#fef3c7', 26, { up: 10, spread: 14, size: 4 });
-      addParticles(fb.x, groundY - 4, '#fb923c', 22, { up: 8, spread: 12, size: 4 });
-      addParticles(fb.x, groundY - 4, '#dc2626', 16, { up: 6, spread: 10, size: 3 });
-      addParticles(fb.x, groundY - 4, '#1f2937', 10, { up: 4, spread: 8, size: 3 });
+      const isRock = fb.kind === 'rock';
+      if (isRock) {
+        addParticles(fb.x, groundY - 4, '#78716c', 24, { up: 9, spread: 13, size: 4 });
+        addParticles(fb.x, groundY - 4, '#44403c', 18, { up: 6, spread: 11, size: 3 });
+        addParticles(fb.x, groundY - 4, '#1c1917', 12, { up: 4, spread: 9, size: 3 });
+      } else {
+        addParticles(fb.x, groundY - 4, '#fef3c7', 26, { up: 10, spread: 14, size: 4 });
+        addParticles(fb.x, groundY - 4, '#fb923c', 22, { up: 8, spread: 12, size: 4 });
+        addParticles(fb.x, groundY - 4, '#dc2626', 16, { up: 6, spread: 10, size: 3 });
+        addParticles(fb.x, groundY - 4, '#1f2937', 10, { up: 4, spread: 8, size: 3 });
+      }
       shake(8);
-      tone(110, 0.3, 'sawtooth', 0.18, -400);
+      tone(isRock ? 90 : 110, 0.3, isRock ? 'square' : 'sawtooth', 0.18, -400);
       state.fireballs.splice(i, 1);
       continue;
     }
@@ -7824,34 +11813,89 @@ function drawFireballs() {
     const r = fb.r * z;
     ctx.save();
     ctx.translate(sx, sy);
-    // Yttre glow
-    const glow = ctx.createRadialGradient(0, 0, r * 0.3, 0, 0, r * 2.4);
-    glow.addColorStop(0, 'rgba(254,240,138,0.85)');
-    glow.addColorStop(0.4, 'rgba(251,146,60,0.55)');
-    glow.addColorStop(1, 'rgba(220,38,38,0)');
-    ctx.fillStyle = glow;
-    ctx.beginPath(); ctx.arc(0, 0, r * 2.4, 0, Math.PI * 2); ctx.fill();
-    // Eld-kärna
-    const core = ctx.createRadialGradient(-r * 0.2, -r * 0.2, r * 0.1, 0, 0, r);
-    core.addColorStop(0, '#ffffff');
-    core.addColorStop(0.4, '#fde047');
-    core.addColorStop(0.75, '#f97316');
-    core.addColorStop(1, '#7f1d1d');
-    ctx.fillStyle = core;
-    ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
-    // Yttre lågor — flickering
-    ctx.rotate(fb.rot);
-    ctx.fillStyle = 'rgba(254,240,138,0.7)';
-    for (let i = 0; i < 5; i++) {
-      const ang = (i / 5) * Math.PI * 2;
-      const flickR = r * (0.6 + Math.random() * 0.3);
+    if (fb.kind === 'harpoon') {
+      // 🎯 Harpun — silver-skaft med spets + röda fjädrar bak. Roterar med rörelseriktningen.
+      ctx.rotate(Math.atan2(fb.vy, fb.vx));
+      // Skaft (silver)
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(-22, -2, 36, 4);
+      ctx.strokeStyle = '#475569'; ctx.lineWidth = 0.8;
+      ctx.strokeRect(-22, -2, 36, 4);
+      // Spets (mörkstål)
+      ctx.fillStyle = '#1e293b';
       ctx.beginPath();
-      ctx.moveTo(Math.cos(ang) * r * 0.8, Math.sin(ang) * r * 0.8);
-      ctx.quadraticCurveTo(
-        Math.cos(ang + 0.2) * flickR * 1.4, Math.sin(ang + 0.2) * flickR * 1.4,
-        Math.cos(ang + 0.4) * r * 0.7, Math.sin(ang + 0.4) * r * 0.7
-      );
+      ctx.moveTo(14, 0); ctx.lineTo(22, -4); ctx.lineTo(22, 4); ctx.closePath();
       ctx.fill();
+      ctx.fillStyle = '#94a3b8';
+      ctx.beginPath();
+      ctx.moveTo(22, 0); ctx.lineTo(28, -3); ctx.lineTo(28, 3); ctx.closePath();
+      ctx.fill();
+      // Hullingar
+      ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.moveTo(16, -2); ctx.lineTo(12, -6); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(16, 2); ctx.lineTo(12, 6); ctx.stroke();
+      // Fjädrar bak (rött)
+      ctx.fillStyle = '#dc2626';
+      ctx.beginPath();
+      ctx.moveTo(-22, -2); ctx.lineTo(-30, -7); ctx.lineTo(-26, 0); ctx.lineTo(-30, 7); ctx.lineTo(-22, 2); ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = '#7f1d1d'; ctx.lineWidth = 0.8;
+      ctx.stroke();
+      ctx.restore();
+      continue;
+    }
+    if (fb.kind === 'rock') {
+      // Sten — mörk gradient med röd glöd-spricka för hell-känsla.
+      const glow = ctx.createRadialGradient(0, 0, r * 0.5, 0, 0, r * 2.0);
+      glow.addColorStop(0, 'rgba(127,29,29,0.5)');
+      glow.addColorStop(0.5, 'rgba(60,20,20,0.25)');
+      glow.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath(); ctx.arc(0, 0, r * 2.0, 0, Math.PI * 2); ctx.fill();
+      ctx.rotate(fb.rot);
+      const stone = ctx.createRadialGradient(-r * 0.3, -r * 0.3, r * 0.2, 0, 0, r);
+      stone.addColorStop(0, '#78716c');
+      stone.addColorStop(0.6, '#44403c');
+      stone.addColorStop(1, '#1c1917');
+      ctx.fillStyle = stone;
+      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+      // Sprickor med röd glöd
+      ctx.strokeStyle = 'rgba(220,38,38,0.6)';
+      ctx.lineWidth = Math.max(1, r * 0.08);
+      ctx.beginPath();
+      ctx.moveTo(-r * 0.6, -r * 0.2); ctx.lineTo(r * 0.3, r * 0.4);
+      ctx.moveTo(r * 0.5, -r * 0.5); ctx.lineTo(-r * 0.1, r * 0.2);
+      ctx.stroke();
+    } else {
+      // Yttre glow
+      const glow = ctx.createRadialGradient(0, 0, r * 0.3, 0, 0, r * 2.4);
+      glow.addColorStop(0, 'rgba(254,240,138,0.85)');
+      glow.addColorStop(0.4, 'rgba(251,146,60,0.55)');
+      glow.addColorStop(1, 'rgba(220,38,38,0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath(); ctx.arc(0, 0, r * 2.4, 0, Math.PI * 2); ctx.fill();
+      // Eld-kärna
+      const core = ctx.createRadialGradient(-r * 0.2, -r * 0.2, r * 0.1, 0, 0, r);
+      core.addColorStop(0, '#ffffff');
+      core.addColorStop(0.4, '#fde047');
+      core.addColorStop(0.75, '#f97316');
+      core.addColorStop(1, '#7f1d1d');
+      ctx.fillStyle = core;
+      ctx.beginPath(); ctx.arc(0, 0, r, 0, Math.PI * 2); ctx.fill();
+      // Yttre lågor — flickering
+      ctx.rotate(fb.rot);
+      ctx.fillStyle = 'rgba(254,240,138,0.7)';
+      for (let i = 0; i < 5; i++) {
+        const ang = (i / 5) * Math.PI * 2;
+        const flickR = r * (0.6 + Math.random() * 0.3);
+        ctx.beginPath();
+        ctx.moveTo(Math.cos(ang) * r * 0.8, Math.sin(ang) * r * 0.8);
+        ctx.quadraticCurveTo(
+          Math.cos(ang + 0.2) * flickR * 1.4, Math.sin(ang + 0.2) * flickR * 1.4,
+          Math.cos(ang + 0.4) * r * 0.7, Math.sin(ang + 0.4) * r * 0.7
+        );
+        ctx.fill();
+      }
     }
     ctx.restore();
   }
@@ -7919,26 +11963,32 @@ function drawAshParticles() {
 // ====== STORMS ⛈️ ======
 function spawnStorm(forceX) {
   if (!state.tire) return;
+  // I hell går banan åt vänster, så spawna åt vänster om hjulet.
+  const inHell = biomeAt(state.tire.x) === HELL_INDEX;
+  const dirSign = inHell ? -1 : 1;
   const cx = forceX != null ? forceX
-    : state.tire.x + 700 + Math.random() * 600;
+    : state.tire.x + dirSign * (700 + Math.random() * 600);
   const groundY = terrainAt(cx);
-  const cloudY = groundY - 380; // högt upp
+  const cloudY = groundY - 380;
   state.storms.push({
     x: cx,
     y: cloudY,
-    w: 220 + Math.random() * 80,   // bredd på regn-kolumn
+    w: 220 + Math.random() * 80,
     drift: (Math.random() < 0.5 ? -1 : 1) * (0.2 + Math.random() * 0.4),
     phase: 'grow',
     phaseT: 0,
     growDur: 90,
-    activeDur: 540 + Math.floor(Math.random() * 360), // 9-15s aktiv
+    activeDur: 540 + Math.floor(Math.random() * 360),
     shrinkDur: 120,
     scale: 0.2,
-    chargeT: 0,           // ackumulerad exponering — vid >= 90 frames slår blixten
+    chargeT: 0,
     flickerT: 0,
     nextLightningWarn: 0,
-    struck: false,
+    strikeCooldown: 0,        // frames innan molnet kan ladda upp till nästa player-driven blixt
+    strikeCount: 0,           // hur många blixtar molnet redan släppt
+    autoStrikeT: 120 + Math.floor(Math.random() * 120), // 2-4s till första autonoma blixten
     rainSeed: Math.random() * 1000,
+    isHell: biomeAt(cx) === HELL_INDEX,
   });
   tone(110, 0.4, 'sawtooth', 0.05, -100);
 }
@@ -7946,25 +11996,38 @@ function spawnStorm(forceX) {
 function updateStorms() {
   if (state.phase !== PHASE.FLY) return;
   state.stormSpawnT--;
-  if (state.stormSpawnT <= 0 && state.storms.length === 0 && state.tire) {
-    if (Math.random() < 0.65) {
-      // Vägd kluster-storlek: oftast 1-2, sällan 4-5
+  const _stormInHell = state.tire && biomeAt(state.tire.x) === HELL_INDEX;
+  const _stormInSpace = state.tire && biomeAt(state.tire.x) === SPACE_INDEX;
+  const _stormInDeep  = state.tire && biomeAt(state.tire.x) === DEEP_INDEX;
+  // Hell tål fler moln nu när rendering är light-weight (ingen ctx.filter).
+  const _stormCap = _stormInHell ? 3 : 1;
+  // Inga åskmoln i rymden eller djuphavet — där finns ingen atmosfär.
+  if (state.stormSpawnT <= 0 && state.storms.length < _stormCap && state.tire && !_stormInSpace && !_stormInDeep) {
+    if (_stormInHell || Math.random() < 0.65) {
       const r = Math.random();
-      const count = r < 0.45 ? 1 : r < 0.75 ? 2 : r < 0.90 ? 3 : r < 0.97 ? 4 : 5;
-      const baseX = state.tire.x + 700 + Math.random() * 600;
+      // I hell: 1-3 moln per kluster för riktig storm-känsla.
+      const count = _stormInHell
+        ? (r < 0.45 ? 1 : r < 0.80 ? 2 : 3)
+        : (r < 0.45 ? 1 : r < 0.75 ? 2 : r < 0.90 ? 3 : r < 0.97 ? 4 : 5);
+      const dir = _stormInHell ? -1 : 1;
+      const baseX = state.tire.x + dir * (700 + Math.random() * 600);
       const spacing = 260 + Math.random() * 60;
       for (let i = 0; i < count; i++) {
-        spawnStorm(baseX + i * spacing);
+        spawnStorm(baseX + i * dir * spacing);
       }
-      if (count >= 3) flashToast(`⛈️ ÅSKVÄDER (${count} moln)`, '#60a5fa');
+      if (count >= 2 && _stormInHell) flashToast(`⛈️ ÅSKSTORM (${count} moln)`, '#7f1d1d');
+      else if (count >= 3) flashToast(`⛈️ ÅSKVÄDER (${count} moln)`, '#60a5fa');
     }
-    state.stormSpawnT = 750 + Math.floor(Math.random() * 450); // 12-20s mellan rolls
+    state.stormSpawnT = _stormInHell
+      ? 240 + Math.floor(Math.random() * 240)
+      : 750 + Math.floor(Math.random() * 450);
   }
   const TS = state.timeScale || 1;
   for (let i = state.storms.length - 1; i >= 0; i--) {
     const st = state.storms[i];
     st.phaseT++;
     st.flickerT = Math.max(0, st.flickerT - 1);
+    if (st.strikeCooldown > 0) st.strikeCooldown--;
     if (st.phase === 'grow') {
       st.scale = 0.2 + 0.8 * (st.phaseT / st.growDur);
       if (st.phaseT >= st.growDur) { st.phase = 'active'; st.phaseT = 0; st.scale = 1.0; }
@@ -7972,6 +12035,14 @@ function updateStorms() {
       st.scale = 1.0;
       st.x += st.drift * TS;
       if (st.phaseT >= st.activeDur) { st.phase = 'shrink'; st.phaseT = 0; }
+      // Autonom blixt — molnet blixtrar regelbundet under hela active-fasen,
+      // oavsett om hjulet är under det eller inte. Skadar bara om spelaren råkar vara i regnet.
+      st.autoStrikeT--;
+      if (st.autoStrikeT <= 0) {
+        autoStrikeStorm(st);
+        st.strikeCount++;
+        st.autoStrikeT = 80 + Math.floor(Math.random() * 140); // 1.3-3.7s till nästa
+      }
       // Spawna regn-droppar i kolumnen
       const groundY = terrainAt(st.x);
       const dropsPerFrame = 4;
@@ -8028,9 +12099,9 @@ function updateFog() {
     state.fogT = Math.max(0, state.fogT - TS);
     return;
   }
-  // Bara canyon (1) eller neon (2)
+  // Canyon (1), neon (2), eller hell (5 — mörk dimma)
   const b = biomeAt(state.tire.x);
-  if (b !== 1 && b !== 2) return;
+  if (b !== 1 && b !== 2 && b !== HELL_INDEX) return;
   state.fogSpawnT -= TS;
   if (state.fogSpawnT > 0) return;
   // Roll: 65% chans att dimma faktiskt sätter igång
@@ -8038,7 +12109,9 @@ function updateFog() {
     const dur = 360 + Math.floor(Math.random() * 180); // 6-9s
     state.fogT = dur;
     state.fogTotal = dur;
-    flashToast('🌫️ DIMMA', '#cbd5e1');
+    state.fogIsHell = (b === HELL_INDEX);
+    if (state.fogIsHell) flashToast('🌫️ MÖRK DIMMA', '#7f1d1d');
+    else                 flashToast('🌫️ DIMMA', '#cbd5e1');
   }
   state.fogSpawnT = 1080 + Math.floor(Math.random() * 720); // 18-30s till nästa roll
 }
@@ -8050,13 +12123,20 @@ function drawFog() {
   const fadeIn = Math.min(1, elapsed / 60);
   const fadeOut = Math.min(1, state.fogT / 60);
   const intensity = Math.min(fadeIn, fadeOut);
-  const maxA = 0.55;
+  const isHell = !!state.fogIsHell;
+  const maxA = isHell ? 0.7 : 0.55;
   const a = maxA * intensity;
-  // Bas-overlay
+  // Bas-overlay — mörk i hell, ljus annars.
   const grad = ctx.createLinearGradient(0, 0, 0, H);
-  grad.addColorStop(0, `rgba(200,210,225,${a})`);
-  grad.addColorStop(0.5, `rgba(180,190,205,${a})`);
-  grad.addColorStop(1, `rgba(160,170,190,${a * 0.85})`);
+  if (isHell) {
+    grad.addColorStop(0,   `rgba(15,5,8,${a})`);
+    grad.addColorStop(0.5, `rgba(40,12,18,${a})`);
+    grad.addColorStop(1,   `rgba(20,4,8,${a * 0.95})`);
+  } else {
+    grad.addColorStop(0,   `rgba(200,210,225,${a})`);
+    grad.addColorStop(0.5, `rgba(180,190,205,${a})`);
+    grad.addColorStop(1,   `rgba(160,170,190,${a * 0.85})`);
+  }
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, W, H);
   // Drivande dim-svep — två lager som rör sig olika fart
@@ -8064,7 +12144,7 @@ function drawFog() {
   const t2 = (state.time * 0.3) % (W + 200);
   ctx.save();
   ctx.globalAlpha = 0.18 * intensity;
-  ctx.fillStyle = '#e2e8f0';
+  ctx.fillStyle = isHell ? '#1a0606' : '#e2e8f0';
   for (let i = 0; i < 6; i++) {
     const x = (i * (W / 5) - t1 + 200) % (W + 200) - 100;
     const y = H * 0.2 + i * (H * 0.12);
@@ -8074,7 +12154,7 @@ function drawFog() {
     ctx.fill();
   }
   ctx.globalAlpha = 0.12 * intensity;
-  ctx.fillStyle = '#cbd5e1';
+  ctx.fillStyle = isHell ? '#3b0a0a' : '#cbd5e1';
   for (let i = 0; i < 5; i++) {
     const x = (i * (W / 4) - t2 + 200) % (W + 200) - 100;
     const y = H * 0.5 + i * (H * 0.10);
@@ -8155,18 +12235,18 @@ function updateRockfalls() {
             shake(10);
             tone(220, 0.18, 'square', 0.18, 200);
           } else {
-            // 50% skada + studs (samma mönster som spike-trap)
+            // Skada + STARK vänster-knockback (slungas iväg bakåt).
             addParticles(t.x, t.y, '#94a3b8', 22, { up: 6, spread: 8, size: 4 });
             addParticles(t.x, t.y, '#1e293b', 14, { up: 4, spread: 6, size: 3 });
             shake(16); state.hitstop = 4;
             tone(140, 0.24, 'sawtooth', 0.22, -350);
             const wasShielded = false;
-            const died = damageTire(20, 50, '🪨 RASSTEN');
+            const died = damageTire(15, 32, '🪨 RASSTEN');
             if (!died && !wasShielded) {
               state.deathCause = state.deathCause || 'rockfall';
-              // Knuffa hjulet bort + nedåt
-              t.vx += dx > 0 ? 4 : -4;
-              t.vy += 3;
+              // Slunga bakåt-vänster + lite upp så det känns som en knuff, inte ett stomp.
+              t.vx = Math.min(t.vx, 0) - 9;
+              t.vy = Math.min(t.vy - 2, -2);
             }
           }
           state.rockfalls.splice(i, 1);
@@ -8275,11 +12355,158 @@ function drawRockfalls() {
   }
 }
 
+// ====== CONDORS 🦅 (canyon — dykbombande rovfåglar) ======
+function spawnCondor(forceX) {
+  if (!state.tire) return;
+  const t = state.tire;
+  // Spawn FRAMFÖR spelaren och OVANFÖR viewporten så kondoren syns dyka NER från toppen.
+  // Ger mer reaktionstid eftersom man hinner se den glida in uppifrån.
+  const baseX = forceX != null ? forceX : (t.x + 400 + Math.random() * 320);
+  if (biomeAt(baseX) !== 1) return;
+  const flightY = state.cam.y - 100 - Math.random() * 120;  // ovanför viewporten
+  state.condors.push({
+    x: baseX,
+    y: flightY,
+    vx: -1.0 - Math.random() * 0.8,                          // drift mot spelaren
+    vy: 0.9 + Math.random() * 0.4,                           // glid NEDÅT in i viewporten
+    diving: false,
+    diveT: 70 + Math.floor(Math.random() * 60),              // 1.2-2.2s pre-dive
+    wing: 0,
+    flapSpeed: 0.18 + Math.random() * 0.08,
+    hit: false,
+    gone: false,
+  });
+  tone(380, 0.18, 'sawtooth', 0.06, -120);
+}
+
+function updateCondors() {
+  if (state.phase !== PHASE.FLY) return;
+  state.condorSpawnT--;
+  const _bi = state.tire ? biomeAt(state.tire.x) : -1;
+  const _nearCanyon = state.tire && (_bi === 1 || biomeAt(state.tire.x + 600) === 1);
+  if (state.condorSpawnT <= 0 && _nearCanyon) {
+    spawnCondor();
+    state.condorSpawnT = 300 + Math.floor(Math.random() * 360); // 5-11s
+  }
+  const TS = state.timeScale || 1;
+  const t = state.tire;
+  const camLeft = state.cam.x - 600;
+  const camRight = state.cam.x + W / (state.cam.zoom || 1) + 600;
+  for (let i = state.condors.length - 1; i >= 0; i--) {
+    const c = state.condors[i];
+    if (c.gone) {
+      c.vy = (c.vy || 0) + 0.32 * TS;
+      c.x += c.vx * TS;
+      c.y += c.vy * TS;
+      c.wing += 0.6 * TS;
+      if (c.y > terrainAt(c.x) - 5) state.condors.splice(i, 1);
+      continue;
+    }
+    c.wing += c.flapSpeed * TS;
+    if (!c.diving) {
+      c.diveT -= TS;
+      c.x += c.vx * TS;
+      // Använd vy om satt (ny pre-dive: glider ned uppifrån), annars sin-bobbing.
+      if (c.vy) c.y += c.vy * TS;
+      else c.y += Math.sin(state.time * 0.05) * 0.6;
+      if (c.diveT <= 0 && t) c.diving = true;
+    } else if (c.retreating) {
+      // Retreat-läge: kondoren flyger upp och åt sidan, försvinner ovanför viewporten.
+      c.vy -= 0.18 * TS;                                     // accelererar uppåt
+      c.x += c.vx * TS;
+      c.y += c.vy * TS;
+    } else if (t) {
+      const dx = t.x - c.x;
+      const dy = t.y - c.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const speed = 6.5;
+      c.vx = (dx / len) * speed;
+      c.vy = (dy / len) * speed;
+      c.x += c.vx * TS;
+      c.y += c.vy * TS;
+      // Om kondoren har flugit förbi spelaren utan att träffa → börja retreat uppåt.
+      // Condition: dyket har tagit den UNDER spelarens höjd OCH den har ökat avståndet.
+      if (c.y > t.y + 60 || (Math.abs(c.x - t.x) > 250 && c.y > t.y - 30)) {
+        c.retreating = true;
+        c.vy = -3 - Math.random() * 1.5;                      // initial uppåt-impuls
+        c.vx = (c.x < t.x ? -1 : 1) * (1.5 + Math.random()); // sidoflykt
+      }
+    }
+    // Cull: ta bort när kondoren är tydligt OVANFÖR viewporten (uppe i himlen),
+    // eller har drivit långt utanför sido-marginalen i retreat.
+    const wellAboveView = c.y < state.cam.y - 280;
+    if (wellAboveView || c.x < camLeft - 600 || c.x > camRight + 800) {
+      state.condors.splice(i, 1);
+      continue;
+    }
+    if (t && !c.hit && state.phase === PHASE.FLY && !state.drowning) {
+      const dx = t.x - c.x;
+      const dy = t.y - c.y;
+      if (Math.hypot(dx, dy) < TIRE_R + 22) {
+        c.hit = true;
+        c.gone = true;
+        c.vy = -2;
+        const wasShielded = state.shieldT > 0;
+        const isStomp = dy < -8 && t.vy > 1;
+        if (wasShielded) {
+          awardScore(220, '🛡️ KONDOR KROSSAD!', '#22d3ee');
+          shake(10);
+        } else if (isStomp) {
+          t.vy = -Math.max(10, Math.abs(t.vy) * 0.95);
+          awardScore(180, '🦅 STOMP!', '#fbbf24');
+          bumpMult(0.5);
+          shake(10);
+          state.hitstop = 3;
+          tone(880, 0.16, 'square', 0.14, 280);
+        } else {
+          const died = damageTire(14, 26, '🦅 KONDOR');
+          if (!died) {
+            t.vx = Math.min(t.vx, 0) - 7;
+            t.vy = Math.min(t.vy - 1.5, -1.5);
+            state.deathCause = state.deathCause || 'condor';
+          }
+          shake(12);
+          state.hitstop = 3;
+        }
+        addParticles(c.x, c.y, '#1c1917', isStomp ? 18 : 12, { up: 5, spread: 8, size: 3 });
+        addParticles(c.x, c.y, '#fef3c7', isStomp ? 10 : 6, { up: 4, spread: 6, size: 2 });
+        tone(280, 0.22, 'sawtooth', 0.16, -200);
+      }
+    }
+  }
+}
+
+function drawCondors() {
+  for (const c of state.condors) {
+    const [sx, sy] = worldToScreen(c.x, c.y);
+    if (sx < -60 || sx > W + 60 || sy < -60 || sy > H + 60) continue;
+    ctx.save();
+    ctx.translate(sx, sy);
+    if (c.gone) {
+      ctx.rotate(Math.sin(c.wing) * 0.7);
+      ctx.globalAlpha = 0.85;
+    } else if (c.diving) {
+      ctx.rotate(Math.atan2(c.vy, c.vx) + (c.vx < 0 ? 0 : Math.PI));
+    } else {
+      ctx.rotate(Math.sin(c.wing) * 0.18);
+    }
+    if (c.vx > 0 && !c.diving) ctx.scale(-1, 1);
+    ctx.font = '38px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillStyle = 'rgba(0,0,0,0.45)';
+    ctx.fillText('🦅', 3, 4);
+    ctx.fillStyle = '#fff';
+    ctx.fillText('🦅', 0, 0);
+    ctx.restore();
+  }
+}
+
 function applyStormEffects() {
   if (state.phase !== PHASE.FLY || !state.tire || state.storms.length === 0) return;
   const t = state.tire;
   for (const st of state.storms) {
-    if (st.phase === 'shrink' || st.scale < 0.6 || st.struck) continue;
+    if (st.phase === 'shrink' || st.scale < 0.6 || (st.strikeCooldown || 0) > 0) continue;
     const dx = t.x - st.x;
     // Blixt-räckvidd är 2× molnets bredd — slår även lite utanför själva regnkolumnen.
     const inXBand = Math.abs(dx) < st.w;
@@ -8315,22 +12542,63 @@ function applyStormEffects() {
               g: 0.05, shape: 'square',
             });
           }
-          st.chargeT = 0;     // reset så det krävs ny exponering för ny blixt
-          st.struck = true;   // detta moln har "skjutit" — laddar inte mer
+          st.chargeT = 0;
+          st.strikeCount++;
+          st.strikeCooldown = 90 + Math.floor(Math.random() * 60); // 1.5-2.5s innan omladdning
         } else {
           triggerLightning(st, t);
-          st.struck = true;
+          st.chargeT = 0;
+          st.strikeCount++;
+          st.strikeCooldown = 90 + Math.floor(Math.random() * 60);
         }
       }
     } else {
       // Lämnar regn precis innan blixten — fire en "near miss" som slår ner där hjulet var.
       // Kräver att laddningen kommit en bit (≥ 25 frames, dvs varning hann fyras).
-      if (st.chargeT >= 25 && !st.struck) {
+      if (st.chargeT >= 25 && (st.strikeCooldown || 0) === 0) {
         triggerNearMissLightning(st, t);
-        st.struck = true;
+        st.chargeT = 0;
+        st.strikeCount++;
+        st.strikeCooldown = 90 + Math.floor(Math.random() * 60);
       }
       // Snabb decay om vi inte triggrade near-miss
       st.chargeT = Math.max(0, st.chargeT - 4);
+    }
+  }
+}
+
+// Autonom blixt — molnet släpper en bolt regelbundet, oavsett spelarposition.
+// Visuellt fullt synlig; skadar bara om hjulet är i regnkolumnen vid blixttillfället.
+function autoStrikeStorm(st) {
+  state.lightningFlashT = 22;
+  state.lightningFlashMax = 22;
+  shake(18);
+  tone(85, 0.35, 'sawtooth', 0.22, -300);
+  setTimeout(() => tone(60, 0.5, 'sawtooth', 0.18, -500), 60);
+  for (let p = 0; p < 26; p++) {
+    state.particles.push({
+      x: st.x + (Math.random() - 0.5) * 30,
+      y: st.y + 50 + Math.random() * 220,
+      vx: (Math.random() - 0.5) * 4,
+      vy: (Math.random() - 0.5) * 4,
+      life: 24, max: 24,
+      color: `rgba(254, 240, 138, ${0.8 + Math.random() * 0.2})`,
+      size: 3 + Math.random() * 2,
+      g: 0, shape: 'square',
+    });
+  }
+  st.flickerT = 8;
+  // Skada bara om hjulet faktiskt befinner sig i molnets regnkolumn.
+  if (state.tire && state.phase === PHASE.FLY) {
+    const dx = state.tire.x - st.x;
+    const inXBand = Math.abs(dx) < st.w;
+    const inYBand = state.tire.y > st.y + 30;
+    if (inXBand && inYBand && state.shieldT <= 0) {
+      const died = damageTire(8, 22, '⚡ BLIXT');
+      if (!died) {
+        state.tire.vx += (Math.random() - 0.5) * 4;
+        state.tire.vy -= 3;
+      }
     }
   }
 }
@@ -8431,19 +12699,27 @@ function drawStorms() {
       ctx.fillStyle = grad;
       ctx.beginPath(); ctx.arc(sx, sy, r * 1.6, 0, Math.PI * 2); ctx.fill();
     }
-    // Stormmolnet
+    // Stormmolnet — mörka i hell.
     ctx.save();
     ctx.translate(sx, sy);
     ctx.font = `${Math.max(40, Math.round(fontPx))}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillStyle = 'rgba(0,0,0,0.35)';
-    ctx.fillText('⛈️', 4, 6);
-    ctx.fillStyle = '#fff';
-    ctx.fillText('⛈️', 0, 0);
+    if (st.isHell) {
+      // Hell-storm — extra svart skugga, ingen ctx.filter (perf).
+      ctx.fillStyle = 'rgba(0,0,0,0.75)';
+      ctx.fillText('⛈️', 6, 8);
+      ctx.fillStyle = '#475569';
+      ctx.fillText('⛈️', 0, 0);
+    } else {
+      ctx.fillStyle = 'rgba(0,0,0,0.5)';
+      ctx.fillText('⛈️', 4, 6);
+      ctx.fillStyle = '#fff';
+      ctx.fillText('⛈️', 0, 0);
+    }
     ctx.restore();
     // Charge-indikator (gul stapel under molnet) när hjulet är i regnet
-    if (st.chargeT > 0 && !st.struck) {
+    if (st.chargeT > 0 && (st.strikeCooldown || 0) === 0) {
       const pct = Math.min(1, st.chargeT / 45);
       const barW = 60;
       const barX = sx - barW / 2;
@@ -8642,6 +12918,116 @@ function drawWindDust() {
   }
 }
 
+// 🌀 Propeller — synlig "jetpack-motor" som sitter på däckets bak-övre hörn.
+// När spelaren INTE drar: skaftet slantar bakåt-uppåt → thrust framåt-nedåt (auto).
+// När spelaren DRAR: propellern roterar runt däcket så att blad-disken pekar
+// MOTSATT drag-riktningen → vatten sprutas i drag-motsatt riktning → reaktionskraft = drag-riktningen.
+function drawPropeller() {
+  if (!state.tire) return;
+  const t = state.tire;
+  if (biomeAt(t.x) !== DEEP_INDEX) return;
+  if (state.drowning) return;
+  if (state.phase !== PHASE.FLY) return;
+  // Skärm-vinkel som propellern ska peka åt (mot blad-disk-änden).
+  // Auto-mode: bakåt-uppåt (sin*facing-style → vi konverterar via skärm-vinkel direkt).
+  let propAngle;            // skärm-vinkel från mount mot blad-disk (radianer, 0 = +x på skärmen)
+  let mountWX, mountWY;
+  const _drag = state.relaunchDrag;
+  const _dragActive = _drag && _drag.active && state.rollBudget > 0;
+  let _ddx = 0, _ddy = 0, _dragLen = 0;
+  if (_dragActive) {
+    _ddx = _drag.curX - _drag.startX;
+    _ddy = _drag.curY - _drag.startY;
+    _dragLen = Math.hypot(_ddx, _ddy);
+  }
+  if (_dragActive && _dragLen >= RELAUNCH_DRAG_MIN) {
+    // Drag-mode: spelaren drar i pilens riktning = där thrust ska gå.
+    // Vatten/bubblor måste sprutas i MOTSATT riktning av draget → propellern (bladdisken)
+    // måste sitta på MOTSATT sida av däcket från drag-riktningen.
+    // Pilen åt vänster = propeller på höger sida av däcket, sprutar vatten till höger,
+    // reaktion = däcket åker vänster (drag-riktningen). ✓
+    const dragAng = Math.atan2(_ddy, _ddx);
+    const mountAng = dragAng + Math.PI;     // mount på MOTSATT sida från drag
+    propAngle = mountAng;                   // skaft fortsätter utåt från däckets surface
+    mountWX = t.x + Math.cos(mountAng) * (TIRE_R - 2);
+    mountWY = t.y + Math.sin(mountAng) * (TIRE_R - 2);
+  } else {
+    // Auto-mode (oförändrat): mount på övre-bak, propeller pekar bakåt-uppåt
+    const facing = t.vx >= 0 ? 1 : -1;
+    mountWX = t.x - facing * (TIRE_R - 2);
+    mountWY = t.y - TIRE_R * 0.45;
+    // Skärm-vinkel mot bakåt-uppåt: -facing-x och -y → atan2(-1, -facing)
+    propAngle = Math.atan2(-1, -facing);    // facing=1: ~135°, facing=-1: ~45°
+    // Justera: TILT styrde tidigare hur snett — vi vill ha 1.0 rad ABOVE horizontal-back.
+    // atan2(-sin TILT, -facing*cos TILT)
+    const TILT = 1.0;
+    propAngle = Math.atan2(-Math.sin(TILT), -facing * Math.cos(TILT));
+  }
+  const [mx, my] = worldToScreen(mountWX, mountWY);
+  const speed = Math.hypot(t.vx, t.vy);
+  const spinSpeed = 0.6 + speed * 0.18 + (_dragActive ? 1.4 : 0);  // snurrar snabbare under drag
+  const SHAFT_LEN = 26;
+  const SHAFT_H = 7;
+  const HUB_X = SHAFT_LEN + 2;               // hub i +x i lokala coords (efter rotate pekar +x dit propellern ska)
+  const HUB_R = 8;
+  const BLADE_LEN = 22;
+  const BLADE_W = 5;
+  ctx.save();
+  ctx.translate(mx, my);
+  ctx.rotate(propAngle);                     // +x lokalt pekar nu mot blad-disken på skärmen
+  // Skaft (silver-cylinder från mount mot blad-disk i +x lokalt)
+  ctx.fillStyle = '#475569';
+  ctx.fillRect(0, -SHAFT_H/2, SHAFT_LEN, SHAFT_H);
+  ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 1;
+  ctx.strokeRect(0, -SHAFT_H/2, SHAFT_LEN, SHAFT_H);
+  // Centralhub vid blad-disk-änden
+  const hg = ctx.createRadialGradient(HUB_X - 2, -2, 0.5, HUB_X, 0, HUB_R);
+  hg.addColorStop(0, '#e2e8f0');
+  hg.addColorStop(1, '#475569');
+  ctx.fillStyle = hg;
+  ctx.beginPath(); ctx.arc(HUB_X, 0, HUB_R, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#0f172a'; ctx.lineWidth = 1;
+  ctx.stroke();
+  // 3 blad — roterar runt hub.
+  const ang = state.time * spinSpeed;
+  for (let b = 0; b < 3; b++) {
+    const a = ang + b * (Math.PI * 2 / 3);
+    ctx.save();
+    ctx.translate(HUB_X, 0);
+    ctx.rotate(a);
+    const bladeGrad = ctx.createLinearGradient(0, -BLADE_LEN, 0, BLADE_LEN);
+    bladeGrad.addColorStop(0, '#cbd5e1');
+    bladeGrad.addColorStop(0.5, '#94a3b8');
+    bladeGrad.addColorStop(1, '#475569');
+    ctx.fillStyle = bladeGrad;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, BLADE_LEN, BLADE_W, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 0.6;
+    ctx.stroke();
+    ctx.restore();
+  }
+  ctx.restore();
+  // Bubbel-trail: vatten-flödet OUT från propellern går i propAngle-riktningen.
+  // Blad-diskens världs-position = mount + (cos propAngle, sin propAngle) * HUB_X
+  if (speed > 0.4 && state.particles.length < 380 && state.time % 3 === 0) {
+    const cosA = Math.cos(propAngle), sinA = Math.sin(propAngle);
+    const bladeWX = mountWX + cosA * HUB_X;
+    const bladeWY = mountWY + sinA * HUB_X;
+    state.particles.push({
+      x: bladeWX + (Math.random() - 0.5) * 8,
+      y: bladeWY + (Math.random() - 0.5) * 6,
+      vx: cosA * (0.9 + Math.random() * 0.6) + (Math.random() - 0.5) * 0.3,  // ut längs propellerns riktning
+      vy: sinA * (0.9 + Math.random() * 0.6) + (Math.random() - 0.5) * 0.3,
+      life: 32 + Math.floor(Math.random() * 12),
+      max: 44,
+      color: `rgba(${Math.random() < 0.5 ? '186,230,253' : '34,211,238'},${0.45 + Math.random() * 0.3})`,
+      size: 1.6 + Math.random() * 1.8,
+      g: -0.04, shape: 'circle',
+    });
+  }
+}
+
 function drawTire() {
   if (!state.tire) return;
   const t = state.tire;
@@ -8654,6 +13040,26 @@ function drawTire() {
     ctx.save();
     ctx.globalAlpha = alpha;
     const [x, y] = worldToScreen(t.x, t.y);
+    if (d.isBlackHole) {
+      // Spiral: hjulet krymper också mot 0 för "spaghettifiering"
+      const scale = Math.max(0.05, 1 - f * 0.95);
+      ctx.translate(x, y);
+      ctx.rotate(t.rot);
+      ctx.scale(scale, scale);
+      drawTireShape(TIRE_R);
+      ctx.restore();
+      return;
+    }
+    if (d.isSpaceDrift) {
+      // Driftar ut: hjulet krymper sakta + fadar — ingen clip
+      const scale = Math.max(0.15, 1 - f * 0.6);
+      ctx.translate(x, y);
+      ctx.rotate(t.rot);
+      ctx.scale(scale, scale);
+      drawTireShape(TIRE_R);
+      ctx.restore();
+      return;
+    }
     const [, surfScreenY] = worldToScreen(0, d.surfaceY);
     // Clip: rita bara den del av hjulet som är OVANFÖR vattenytan
     ctx.beginPath();
@@ -8758,8 +13164,10 @@ function drawTire() {
     }
     ctx.restore();
   }
+  // I djuphavet stängs alla flam-/eldskenseffekter av så propellern syns tydligt.
+  const _inDeep = biomeAt(t.x) === DEEP_INDEX;
   // Speed streaks — long thin lines trailing opposite to velocity when fast
-  if (speed > 8) {
+  if (speed > 8 && !_inDeep) {
     const [tx, ty] = worldToScreen(t.x, t.y);
     const ang = Math.atan2(t.vy, t.vx);
     const len = Math.min(120, speed * 6);
@@ -8781,17 +13189,20 @@ function drawTire() {
     }
     ctx.restore();
   }
-  // Motion trail (soft amber glow)
-  t.trail.forEach(tr => {
-    const [x, y] = worldToScreen(tr.x, tr.y);
-    ctx.globalAlpha = tr.a * 0.35;
-    ctx.fillStyle = '#fbbf24';
-    ctx.beginPath(); ctx.arc(x, y, TIRE_R * tr.a * 0.95, 0, Math.PI * 2); ctx.fill();
-  });
-  ctx.globalAlpha = 1;
+  // Motion trail (soft amber glow) — också av i djuphavet
+  if (!_inDeep) {
+    t.trail.forEach(tr => {
+      const [x, y] = worldToScreen(tr.x, tr.y);
+      ctx.globalAlpha = tr.a * 0.35;
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath(); ctx.arc(x, y, TIRE_R * tr.a * 0.95, 0, Math.PI * 2); ctx.fill();
+    });
+    ctx.globalAlpha = 1;
+  }
   const [x, y] = worldToScreen(t.x, t.y);
-  // Speed halo — soft radial glow around the tire when moving fast
-  if (speed > 6) {
+  // Speed halo — soft radial glow around the tire when moving fast.
+  // Hoppas över i djuphavet så propellern syns tydligt utan eldsken.
+  if (speed > 6 && biomeAt(t.x) !== DEEP_INDEX) {
     const glowR = TIRE_R * (1.5 + Math.min(1.2, speed / 20));
     const ga = Math.min(0.55, (speed - 6) / 18);
     const gg = ctx.createRadialGradient(x, y, TIRE_R * 0.4, x, y, glowR);
@@ -8984,6 +13395,73 @@ function drawDailyPbFlag() {
   ctx.restore();
 }
 
+// 🚩 Checkpoint-flaggor (Mario-style) — bara i single-world, 3 stycken vid 25/50/75%.
+// Onådda = grå/röd flagga, nådda = grön flagga.
+function drawCheckpoints() {
+  if (!state.checkpoints || state.checkpoints.length === 0) return;
+  const visL = state.cam.x - 80;
+  const visR = state.cam.x + viewWidth() + 80;
+  for (const cp of state.checkpoints) {
+    if (cp.x < visL || cp.x > visR) continue;
+    const gy = terrainAt(cp.x);
+    const [x, y] = worldToScreen(cp.x, gy);
+    const poleH = 110;
+    // Pole (mörkgrå)
+    ctx.fillStyle = '#1f2937';
+    ctx.fillRect(x - 2, y - poleH, 4, poleH);
+    ctx.fillStyle = '#374151';
+    ctx.fillRect(x - 1, y - poleH, 1.5, poleH);
+    // Topp-knopp
+    ctx.fillStyle = cp.reached ? '#fbbf24' : '#94a3b8';
+    ctx.beginPath(); ctx.arc(x, y - poleH - 2, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#1f2937'; ctx.lineWidth = 1; ctx.stroke();
+    // Flagga (vajande)
+    const wave = Math.sin(performance.now() / 200 + cp.idx * 0.4) * 3;
+    const flagColor = cp.reached ? '#22c55e' : '#ef4444';
+    const flagBorder = cp.reached ? '#15803d' : '#7f1d1d';
+    const flashAlpha = cp.flashT > 0 ? (cp.flashT / 60) : 0;
+    ctx.fillStyle = flagColor;
+    ctx.strokeStyle = flagBorder;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x + 2, y - poleH + 4);
+    ctx.lineTo(x + 38 + wave, y - poleH + 14);
+    ctx.lineTo(x + 2, y - poleH + 24);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // Symbol på flaggan
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 10px system-ui';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(cp.reached ? '✓' : '!', x + 14, y - poleH + 14);
+    ctx.textBaseline = 'alphabetic';
+    // Pulserande aura när nådd (kort flash) eller dimmad text annars
+    if (flashAlpha > 0) {
+      ctx.save();
+      ctx.globalAlpha = flashAlpha;
+      const glow = ctx.createRadialGradient(x, y - poleH/2, 5, x, y - poleH/2, 60);
+      glow.addColorStop(0, 'rgba(34, 197, 94, 0.5)');
+      glow.addColorStop(1, 'rgba(34, 197, 94, 0)');
+      ctx.fillStyle = glow;
+      ctx.beginPath(); ctx.arc(x, y - poleH/2, 60, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+    }
+    // Label "1/3" osv ovanför
+    ctx.save();
+    ctx.font = 'bold 9px system-ui';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = cp.reached ? '#22c55e' : '#94a3b8';
+    ctx.strokeStyle = 'rgba(0,0,0,0.7)';
+    ctx.lineWidth = 2.5;
+    const label = `CHECKPOINT${cp.reached ? ' ✓' : ''}`;
+    ctx.strokeText(label, x, y - poleH - 12);
+    ctx.fillText(label, x, y - poleH - 12);
+    ctx.restore();
+  }
+}
+
 function render() {
   ctx.clearRect(0, 0, W, H);
 
@@ -8994,6 +13472,7 @@ function render() {
   // --- Screen-space backdrop (not zoomed) ---
   ctx.save();
   ctx.translate(sx, sy);
+  // Hell-mörkning hanteras med en enda screen-overlay längst ner — inget filter här (perf).
   drawSky();
   drawClouds();
   drawMountains();
@@ -9011,22 +13490,42 @@ function render() {
   drawWetGroundOverlay();
   drawDistanceMarkers();
   drawDailyPbFlag();
+  drawCheckpoints();
   drawBackWall();
   drawLauncher();
   drawObstacles();
   drawPickups();
   drawLadderMan();
   drawBirds();
+  drawBats();
+  drawUfos();
   drawPenguins();
   drawTornados();
+  drawTornadoRocks();
   drawStorms();
   drawRockfalls();
+  drawCondors();
   drawFireballs();
+  drawBlackHoles();
+  drawJellyfish();
+  drawMines();
+  drawOctopus();
   drawTireShadow();
+  drawPropeller();
   drawTire();
   drawParticles();
   drawPopups();
   ctx.restore();
+  // Hell screen-overlay — billig mörkning utan ctx.filter (perf).
+  // Fade in över de sista 400 px innan x=0 så övergången inte blir abrupt.
+  {
+    const camX = state.cam ? state.cam.x : 0;
+    if (camX < 0) {
+      const a = Math.min(1, -camX / 400) * 0.45;
+      ctx.fillStyle = `rgba(28, 8, 8, ${a})`;
+      ctx.fillRect(0, 0, W, H);
+    }
+  }
   // Dimma-overlay (screen-space, dimmer hela världen)
   drawFog();
   // Blixt-overlay (screen-space, efter zoom-restore)
@@ -9078,17 +13577,110 @@ function render() {
 
   // Cinematic vignette (always)
   drawVignette();
+  // Röd low-HP-vignette under 20% liv (pulsar snabbare vid lägre liv)
+  drawLowHpOverlay();
 
   // Screen-space overlays (no shake)
   drawWindIndicator();
   drawWindDust();
+  drawOxygenMeter();
   drawRelaunchDrag();
+}
+
+// ❤️ Pulserande röd vignette när liv < 20%. Tjocka röda kant-band längs alla
+// sidor av skärmen, pulsar snabbare ju lägre liv.
+function drawLowHpOverlay() {
+  if (!state.tire || state.phase !== PHASE.FLY) return;
+  const hp = Math.max(0, state.health || 0);
+  const hpMax = state.healthMax || 200;
+  const hpPct = hp / hpMax;
+  if (hpPct >= 0.2) return;
+  // Floor på 0.25 så det syns tydligt även vid 19% (precis under tröskeln)
+  const intensity = Math.max(0.25, (0.2 - hpPct) / 0.2);
+  const pulseFreq = 0.10 + intensity * 0.18;
+  const pulse = 0.5 + 0.5 * Math.sin(state.time * pulseFreq);
+  const alpha = (0.55 + intensity * 0.40) * (0.55 + pulse * 0.45);
+  ctx.save();
+  // Bandtjocklek skalar med intensitet
+  const bandH = H * (0.10 + intensity * 0.06);   // 10-16% av höjden
+  const bandW = W * (0.08 + intensity * 0.05);   // 8-13% av bredden
+  // Övre band (gradient: röd → transparent ner)
+  const topG = ctx.createLinearGradient(0, 0, 0, bandH);
+  topG.addColorStop(0, `rgba(220, 38, 38, ${alpha})`);
+  topG.addColorStop(1, `rgba(220, 38, 38, 0)`);
+  ctx.fillStyle = topG;
+  ctx.fillRect(0, 0, W, bandH);
+  // Nedre band
+  const botG = ctx.createLinearGradient(0, H - bandH, 0, H);
+  botG.addColorStop(0, `rgba(220, 38, 38, 0)`);
+  botG.addColorStop(1, `rgba(220, 38, 38, ${alpha})`);
+  ctx.fillStyle = botG;
+  ctx.fillRect(0, H - bandH, W, bandH);
+  // Vänster band
+  const leftG = ctx.createLinearGradient(0, 0, bandW, 0);
+  leftG.addColorStop(0, `rgba(220, 38, 38, ${alpha})`);
+  leftG.addColorStop(1, `rgba(220, 38, 38, 0)`);
+  ctx.fillStyle = leftG;
+  ctx.fillRect(0, 0, bandW, H);
+  // Höger band
+  const rightG = ctx.createLinearGradient(W - bandW, 0, W, 0);
+  rightG.addColorStop(0, `rgba(220, 38, 38, 0)`);
+  rightG.addColorStop(1, `rgba(220, 38, 38, ${alpha})`);
+  ctx.fillStyle = rightG;
+  ctx.fillRect(W - bandW, 0, bandW, H);
+  ctx.restore();
+}
+
+// 💨 Oxygen meter — visas bara i djuphavet (DEEP_INDEX)
+function drawOxygenMeter() {
+  if (!state.tire) return;
+  if (biomeAt(state.tire.x) !== DEEP_INDEX) return;
+  const oMax = state.oxygenMax || 100;
+  const oCur = Math.max(0, state.oxygen || 0);
+  const pct = oCur / oMax;
+  // Position: nere till vänster ovanför wind/HUD
+  const barW = 180, barH = 16;
+  const x = 16, y = H - 76;
+  ctx.save();
+  // Bakgrund
+  ctx.fillStyle = 'rgba(8, 47, 73, 0.85)';
+  ctx.strokeStyle = 'rgba(34, 211, 238, 0.7)';
+  ctx.lineWidth = 1.5;
+  if (typeof ctx.roundRect === 'function') {
+    ctx.beginPath(); ctx.roundRect(x - 6, y - 4, barW + 50, barH + 8, 6); ctx.fill(); ctx.stroke();
+  } else {
+    ctx.fillRect(x - 6, y - 4, barW + 50, barH + 8);
+    ctx.strokeRect(x - 6, y - 4, barW + 50, barH + 8);
+  }
+  // Fyllning (cyan→röd när låg)
+  const col = pct > 0.5 ? '#22d3ee' : pct > 0.25 ? '#fbbf24' : '#ef4444';
+  // Pulse när < 25%
+  const pulse = pct < 0.25 ? (0.6 + 0.4 * Math.sin(state.time * 0.4)) : 1;
+  ctx.globalAlpha = pulse;
+  ctx.fillStyle = col;
+  ctx.fillRect(x, y, barW * pct, barH);
+  ctx.globalAlpha = 1;
+  // Border på fyllning
+  ctx.strokeStyle = '#082f49'; ctx.lineWidth = 1;
+  ctx.strokeRect(x, y, barW, barH);
+  // Ikon + text
+  ctx.fillStyle = '#e0f2fe';
+  ctx.font = 'bold 13px system-ui, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('💨 ' + Math.round(oCur), x + barW + 6, y + barH - 3);
+  ctx.restore();
 }
 
 // Visual aim arrow while the user is drag-charging a relaunch
 function drawRelaunchDrag() {
   const d = state.relaunchDrag;
   if (!d || !d.active || !state.tire) return;
+  // Slut på kraft → göm UI och avbryt drag (gäller alla biomer, men särskilt deep)
+  if (state.rollBudget <= 0) {
+    d.active = false;
+    d.pid = -1;
+    return;
+  }
   const rect = canvas.getBoundingClientRect();
   const sx0 = d.startX - rect.left;
   const sy0 = d.startY - rect.top;

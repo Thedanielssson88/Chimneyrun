@@ -630,6 +630,26 @@ canvas {
   font-size: 16px; cursor: pointer; line-height: 1;
 }
 .lb-close:hover { background: rgba(255,255,255,0.16); }
+.lb-world-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: -6px auto 12px;
+  padding: 5px 12px;
+  background: rgba(251,191,36,0.15);
+  border: 1px solid rgba(251,191,36,0.4);
+  border-radius: 999px;
+  font-family: "Courier New", monospace;
+  font-weight: 900;
+  font-size: 0.85em;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+}
+.lb-world-badge.hell {
+  background: rgba(239,68,68,0.18);
+  border-color: rgba(239,68,68,0.5);
+  color: #fca5a5;
+}
 .lb-tabs {
   display: flex; gap: 6px; margin-bottom: 12px;
   background: rgba(0,0,0,0.3); padding: 4px; border-radius: 10px;
@@ -1364,6 +1384,7 @@ canvas {
 }
 .shield-btn.hidden { display: none; }
 .shield-btn.cooling { opacity: 0.45; filter: grayscale(0.6); pointer-events: none; }
+.shield-btn.disabled { opacity: 0.4; filter: grayscale(1); pointer-events: none; cursor: not-allowed; }
 .shield-btn.active { box-shadow: 0 0 48px rgba(103, 232, 249, 1), 0 8px 22px rgba(0,0,0,0.55), inset 0 -6px 10px rgba(8,51,68,0.8), inset 0 4px 10px rgba(207,250,254,0.6); }
 .shield-btn:active { transform: scale(0.92); }
 @keyframes shieldPulse {
@@ -1948,6 +1969,92 @@ canvas {
   letter-spacing: 0.08em;
 }
 
+/* === WORLD SELECTION === */
+.world-card {
+  max-width: 480px;
+  width: calc(100% - 32px);
+  max-height: calc(100% - 24px);
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 14px 12px;
+  overflow: hidden;
+}
+.world-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  padding: 10px 14px;
+  background: rgba(251,191,36,0.15);
+  border: 1px solid rgba(251,191,36,0.4);
+  border-radius: 12px;
+}
+.world-title {
+  font-family: "Courier New", monospace;
+  font-weight: 900;
+  font-size: 1.2em;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+}
+.world-coins {
+  font-family: "Courier New", monospace;
+  font-weight: 900;
+  font-size: 1.05em;
+  color: var(--accent);
+}
+.world-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.world-tile {
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  gap: 10px;
+  align-items: center;
+  background: rgba(0,0,0,0.35);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  text-align: left;
+  transition: border-color 0.15s, background 0.15s;
+}
+.world-tile.active {
+  border-color: var(--accent);
+  background: rgba(251,191,36,0.12);
+  box-shadow: 0 0 0 1px rgba(251,191,36,0.3) inset;
+}
+.world-tile.locked .world-emoji { filter: grayscale(0.6) opacity(0.7); }
+.world-emoji { font-size: 2.2em; text-align: center; line-height: 1; }
+.world-name { font-weight: 900; font-size: 1.05em; margin-bottom: 2px; }
+.world-meta { font-size: 0.78em; color: var(--text2); font-family: "Courier New", monospace; }
+.world-hs { color: var(--accent); font-weight: 700; }
+.world-btn {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #0f172a;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-weight: 900;
+  font-size: 0.92em;
+  font-family: "Courier New", monospace;
+  cursor: pointer;
+  white-space: nowrap;
+  min-width: 86px;
+}
+.world-btn.locked { background: #374151; color: #94a3b8; cursor: not-allowed; }
+.world-btn.active-tag {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #ffffff;
+  cursor: default;
+}
+
 @media (max-width: 520px) {
   .brand { font-size: 0.82em; }
   .stat { font-size: 0.72em; padding: 3px 7px; }
@@ -1967,4 +2074,8 @@ canvas {
   .tl-label { font-size: 0.88em; }
   .tl-section-head { font-size: 1em; padding: 13px 14px; }
   .tl-value { font-size: 0.95em; }
+  .world-tile { grid-template-columns: 44px 1fr auto; padding: 8px 10px; }
+  .world-emoji { font-size: 1.7em; }
+  .world-name { font-size: 0.92em; }
+  .world-meta { font-size: 0.7em; }
 }

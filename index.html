@@ -14,7 +14,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
 <link rel="icon" type="image/svg+xml" href="icon.svg">
-<link rel="stylesheet" href="style.css?v=195">
+<link rel="stylesheet" href="style.css?v=299">
 </head>
 <body>
 
@@ -33,6 +33,7 @@
       <span class="stat">⭐ <span id="stars">0</span>/<span id="starsMax">0</span></span>
       <span class="stat hs-badge">🏆 <span id="hs">0</span></span>
     </div>
+    <button class="btn-ghost" id="btnWorld" title="Världar">🌍</button>
     <button class="btn-ghost" id="btnShop" title="Verkstad">🔧</button>
     <button class="btn-ghost" id="btnHelp">?</button>
   </header>
@@ -175,6 +176,7 @@
       <div class="overlay-card lb-card">
         <button class="lb-close" onclick="closeLeaderboard()" aria-label="Stäng">✕</button>
         <h2>🏆 TOPPLISTA</h2>
+        <div id="lbWorldBadge" class="lb-world-badge"></div>
         <div class="lb-tabs">
           <button class="lb-tab active" data-lbtab="alltime">🏆 Topp 10</button>
           <button class="lb-tab" data-lbtab="today">📅 Idag</button>
@@ -184,9 +186,21 @@
           <span class="lb-sort-label">Sortera:</span>
           <button class="lb-sort-btn active" data-lbsort="score">Poäng</button>
           <button class="lb-sort-btn" data-lbsort="distM">Distans</button>
+          <button class="lb-sort-btn lb-hell-btn" data-lbmode="hell">🔥 Hell</button>
         </div>
         <div id="lbList" class="lb-list"></div>
         <button class="btn-primary lb-resume" onclick="closeLeaderboard()">▶ Fortsätt spela</button>
+      </div>
+    </div>
+
+    <div id="worldOverlay" class="overlay hidden">
+      <div class="overlay-card world-card">
+        <div class="world-header">
+          <span class="world-title">🌍 VÄRLDAR</span>
+          <span class="world-coins">🪙 <span id="worldCoins">0</span></span>
+        </div>
+        <div id="worldGrid" class="world-grid"></div>
+        <button class="btn-primary" onclick="closeWorldModal()">⟲ Stäng</button>
       </div>
     </div>
 
@@ -322,7 +336,7 @@
 
 </div>
 
-<script src="game.js?v=195"></script>
+<script src="game.js?v=299"></script>
 <script>
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
